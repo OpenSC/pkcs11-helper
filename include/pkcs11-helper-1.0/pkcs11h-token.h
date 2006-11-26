@@ -133,9 +133,9 @@ pkcs11h_token_login (
 
 /**
  * @brief Ensure token is accessible.
- * @brief token_id	Token id object.
- * @brief user_data	Optional user data, to be passed to hooks.
- * @brief mask_prompt	Allow prompt @ref PKCS11H_PROMPT_MASK.
+ * @param token_id	Token id object.
+ * @param user_data	Optional user data, to be passed to hooks.
+ * @param mask_prompt	Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @return CK_RV.
  */
 CK_RV

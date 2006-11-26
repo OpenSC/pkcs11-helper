@@ -50,16 +50,20 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-EXTRA_DIST=Doxyfile Doxyfile_footer.html
+EXTRA_DIST=Doxyfile Doxyfile_footer.html *.gif
 
 if ENABLE_DOC
 
 apidir=$(htmldir)/api
 api_DATA=api.out/html/*
 
-api.out/html/*:	$(EXTRA_DIST) ../../include/pkcs11-helper-1.0/*.h
+api.out/html/*: \
+		$(EXTRA_DIST) \
+		../../include/pkcs11-helper-1.0/*.h \
+		*.gif
 	-rm -fr api.out
 	$(DOXYGEN)
+	cp *.gif api.out/html
 
 clean-generic:
 	-rm -fr api.out

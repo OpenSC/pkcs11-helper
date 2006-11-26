@@ -64,7 +64,7 @@ m4 Macros License
 	pkg.m4
 		Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
 
-OpenSSL License (Optional component)
+OpenSSL License (Optional component, parsing certificates, engine)
 
 	This product includes software developed by the OpenSSL Project
 	for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)
@@ -73,7 +73,7 @@ OpenSSL License (Optional component)
 	(eay@cryptsoft.com).  This product includes software written by Tim
 	Hudson (tjh@cryptsoft.com).
 
-GNUTLS License (Optional component)
+GNUTLS License (Optional component, for a complete GPLed license, replaces OpenSSL)
 
 	Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Nikos Mavroyanopoulos
 	See the end for copying conditions.
@@ -82,7 +82,7 @@ GNUTLS License (Optional component)
 	Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
 	USA.
 
-Doxygen License (Optional component)
+Doxygen License (Optional component, documentation)
 
 	Copyright © 1997-2006 by Dimitri van Heesch.
 

@@ -73,7 +73,7 @@
  * pkcs11-helper is not designed to manage card content, since object attributes
  * are usually vendor specific, and 99% of application need to access
  * existing objects in order to perform signature and decryption.
- * @par The following modules are available:
+ * @par Modules:
  * - @ref pkcs11h-core.h "Core" - Initialize library, adding providers, hooks.
  * - @ref pkcs11h-token.h "Token" - Handle tokens.
  * - @ref pkcs11h-certificate.h "Certificate" - Handle certificate objects.
@@ -85,6 +85,9 @@
  * - The pkcs11-helper is available in POSIX complient systems and WIN32.
  * - pkcs11-helper should work with almost every PKCS#11 provider, since it
  *   uses the minimum features of the provider.
+ * @par Support
+ * pkcs11-helper support is available via the
+ * <a href="http://www.opensc-project.org">OpenSC Project</a>.
  * @par License
  * @ref License is dual BSD or GPL.
  */

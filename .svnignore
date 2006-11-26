@@ -5,12 +5,18 @@
 *.gz
 *.o
 *.obj
-*.html
 *.exe
 *.dll
+*.lib
+*.a
+*.def
+*.exp
+*.idb
+*.manifest
 *.out
 
 test-*
+*.[0-9].html
 
 configure
 Makefile.in

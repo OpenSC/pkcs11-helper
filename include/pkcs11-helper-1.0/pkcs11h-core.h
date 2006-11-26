@@ -1,6 +1,4 @@
-/**
- * @page License License
- * @code
+/*
  * Copyright (c) 2005-2006 Alon Bar-Lev <alon.barlev@gmail.com>
  * All rights reserved.
  *
@@ -20,7 +18,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program (see the file COPYING[.GPL2] included with this
+ *  along with this program (see the file COPYING.GPL included with this
  *  distribution); if not, write to the Free Software Foundation, Inc.,
  *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
@@ -50,7 +48,6 @@
  * ER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI-
  * LITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * @endcode
  */
 
 /**
@@ -91,6 +88,9 @@
  * - @ref pkcs11h-locate.h "Locate" - Simplified object locate interface.
  * - @ref pkcs11h-openssl.h "OpenSSL" - OpenSSL engine support.
  * - @ref pkcs11h-standalone.h "Standalone Debugging" - Token structure debugging interface.
+ * @page License
+ * @par pkcs11-helper License
+ * @include COPYING
  */
 
 /**

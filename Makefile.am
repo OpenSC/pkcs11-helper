@@ -18,7 +18,7 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this program (see the file COPYING[.GPL2] included with this
+#  along with this program (see the file COPYING.GPL included with this
 #  distribution); if not, write to the Free Software Foundation, Inc.,
 #  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
@@ -56,7 +56,7 @@ AUTOMAKE_OPTIONS=foreign dist-bzip2
 
 SUBDIRS=man include lib m4dir doc tests
 
-dist_doc_DATA=README COPYING.GPL COPYING.BSD
+dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 
 EXTRA_DIST=config-w32-vc.h
 

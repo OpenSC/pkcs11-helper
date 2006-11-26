@@ -1,0 +1,42 @@
+pkcs11-helper
+Copyright (c) 2006 Alon Bar-Lev <alon.barlev@gmail.com>
+
+$Id$
+
+2006-??-?? - Version 1.02
+
+* First standalone version.
+
+* Fix invalid certificate max size handling (Zeljko Vrba).
+
+* Added object serialization.
+
+* Added user data to hooks.
+
+* Added a force login method.
+
+* Added support for gnutls in addition to openssl.
+
+* Fixup threading lock issues.
+
+* Added support for duplicate serial tokens, based on label.
+
+* Added workaround for OpenSC cards, OpenSC bug#108, thanks to Kaupo Arulo.
+
+* Added a methods to lock session between two sign/decrypt operations.
+
+* Modified openssl interface.
+
+* Added engines for system and crypto to minimize dependencies.
+
+* Added win32 crypto engine.
+
+* Added decrypt option using C_UnwrapKey.
+
+2006-06-26 - Version 1.01
+
+* Fix handling mutiple providers.
+
+2006-05-14 - Version 1.00
+
+* First stable release.

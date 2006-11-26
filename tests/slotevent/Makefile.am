@@ -57,6 +57,6 @@ DEPS= \
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=slotevent
-noinst_PROGRAMS=slotevent
-slotevent_SOURCES=slotevent.c
+TESTS=test-slotevent
+noinst_PROGRAMS=test-slotevent
+test_slotevent_SOURCES=slotevent.c

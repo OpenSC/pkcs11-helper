@@ -55,14 +55,14 @@ EXTRA_DIST=Doxyfile Doxyfile_footer.html
 if ENABLE_DOC
 
 apidir=$(htmldir)/api
-api_DATA=api/html/*
+api_DATA=api.out/html/*
 
-api/html/*:	$(EXTRA_DIST) ../../include/pkcs11-helper-1.0/*.h
-	-rm -fr api
+api.out/html/*:	$(EXTRA_DIST) ../../include/pkcs11-helper-1.0/*.h
+	-rm -fr api.out
 	$(DOXYGEN)
 
 clean-generic:
-	-rm -fr api
+	-rm -fr api.out
 
 endif
 

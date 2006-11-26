@@ -1,11 +1,17 @@
+.deps
+.libs
+
 *.bz2
 *.gz
 *.o
 *.obj
 *.html
 *.exe
-.deps
-.libs
+*.dll
+*.out
+
+test-*
+
 configure
 Makefile.in
 config.log
@@ -21,4 +27,10 @@ autom4te.cache
 missing
 aclocal.m4
 install-sh
+ltmain.sh
+libtool
+
+config-w32-vc.h
+pkcs11-helper.exports
+libpkcs11-helper-1.pc
 

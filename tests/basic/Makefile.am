@@ -57,6 +57,6 @@ DEPS= \
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=basic
-noinst_PROGRAMS=basic
-basic_SOURCES=basic.c
+TESTS=test-basic
+noinst_PROGRAMS=test-basic
+test_basic_SOURCES=basic.c

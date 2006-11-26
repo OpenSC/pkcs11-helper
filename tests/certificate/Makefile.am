@@ -57,6 +57,6 @@ DEPS= \
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=certificate
-noinst_PROGRAMS=certificate
-certificate_SOURCES=certificate.c
+TESTS=test-certificate
+noinst_PROGRAMS=test-certificate
+test_certificate_SOURCES=certificate.c

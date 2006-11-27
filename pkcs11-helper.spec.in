@@ -2,6 +2,7 @@
 %define         version @VERSION@
 %define         release 2
 %define         prefix  /usr
+%define         with_doc        0
 
 Summary:        pkcs11-helper is a helper library for the use with smart cards and the PKCS#11 API
 Name:           %{name}
@@ -14,7 +15,9 @@ Group:          Applications/System
 Url:            http://www.opensc-project.org
 Source:         http://www.opensc-project.org/%{name}/%{name}-%{version}.tar.bz2
 BuildRoot:      /var/tmp/%{name}-%{version}-%{release}
+%if %{?with_doc:1}0
 BuildRequires:  doxygen
+%endif
 BuildRequires:  openssl-devel >= 0.9.7a
 Requires:       openssl >= 0.9.7a
 Provides:       %{name} = %{version}
@@ -37,7 +40,9 @@ pkcs11-helper development files.
 %build
 %configure -q \
         --disable-rpath \
+%if %{?with_doc}
         --enable-doc
+%endif
 
 #       --without-crypto-engine-openssl \
 #       --without-crypto-engine-gnutls \
@@ -70,12 +75,13 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %{_includedir}/*
 #%{_libdir}/pkgconfig/*
 %{_datadir}/aclocal/*
+%if %{?with_doc}
 %{_docdir}/%{name}-%{version}/api/*
-
+%endif
 
 %changelog
 * Mon Nov 27 2006 Eddy Nigg <eddy_nigg@startcom.org>
-- Fix documentation.
+- Fix documentation. Make doc build optional.
 
 * Sun Nov 26 2006 Eddy Nigg <eddy_nigg@startcom.org>
 - Initial build for StartCom Linux 5.0.x

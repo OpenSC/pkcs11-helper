@@ -38,5 +38,6 @@ libtool
 
 config-w32-vc.h
 pkcs11-helper.exports
+pkcs11-helper.spec
 libpkcs11-helper-1.pc
 

@@ -1,0 +1,81 @@
+%define         name    @PACKAGE@
+%define         version @VERSION@
+%define         release 2
+%define         prefix  /usr
+
+Summary:        pkcs11-helper is a helper library for the use with smart cards and the PKCS#11 API
+Name:           %{name}
+Version:        %{version}
+Release:        %{release}%{dist}
+License:        GPL/BSD
+Vendor:         opensc-project.org
+Packager:       Eddy Nigg <eddy_nigg@startcom.org>
+Group:          Applications/System
+Url:            http://www.opensc-project.org
+Source:         http://www.opensc-project.org/%{name}/%{name}-%{version}.tar.bz2
+BuildRoot:      /var/tmp/%{name}-%{version}-%{release}
+BuildRequires:  doxygen
+BuildRequires:  openssl-devel >= 0.9.7a
+Requires:       openssl >= 0.9.7a
+Provides:       %{name} = %{version}
+
+%description
+pkcs11-helper provides a simple API to access PKCS#11 tokens.
+
+%package        devel
+Summary:        pkcs11-helper development files
+Group:          Development/Libraries
+Requires:       %{name} >= %{version}
+Requires:       pkgconfig
+
+%description    devel
+pkcs11-helper development files.
+
+%prep
+%setup -q
+
+%build
+%configure -q \
+        --disable-rpath \
+        --enable-doc
+
+#       --without-crypto-engine-openssl \
+#       --without-crypto-engine-gnutls \
+#       --disable-dependency-tracking \
+%ifarch x86_64
+%{__perl} -pi -e "s:= /usr/lib64/pkgconfig:= \$(DESTDIR)/usr/lib64/pkgconfig:g" lib/Makefile
+%else
+%{__perl} -pi -e "s:= /usr/lib/pkgconfig:= \$(DESTDIR)/usr/lib/pkgconfig:g" lib/Makefile
+%endif
+
+make %{?_smp_mflags}
+
+%install
+if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
+
+%makeinstall
+
+%clean
+if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
+
+%files
+%defattr(-,root,root)
+%{_libdir}/libpkcs11-helper.*
+%{_mandir}/*
+%{_docdir}/%{name}-%{version}/COPYING.*
+%{_docdir}/%{name}-%{version}/README
+
+%files devel
+%defattr(-,root,root,-)
+%{_includedir}/*
+#%{_libdir}/pkgconfig/*
+%{_datadir}/aclocal/*
+%{_docdir}/%{name}-%{version}/api/*
+
+
+%changelog
+* Mon Nov 27 2006 Eddy Nigg <eddy_nigg@startcom.org>
+- Fix documentation.
+
+* Sun Nov 26 2006 Eddy Nigg <eddy_nigg@startcom.org>
+- Initial build for StartCom Linux 5.0.x

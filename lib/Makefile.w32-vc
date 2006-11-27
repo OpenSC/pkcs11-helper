@@ -49,30 +49,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Targets:
-#	static -- link statically with OpenSSL
-#	dynamic -- link dynamically with OpenSSL
 #
-
+# If you wish openssl interface
+#
 # Change these to point to your OpenSSL top-level
 # directories.
+# Uncomment OPENSS=
+#
+#OPENSSL=1
+!ifdef OPENSSL
+OPENSSL = ..\..\openssl-0.9.8a
+!endif
 
-OPENSSL = c:\Temp\openssl
-OPENSSL_STATIC = libeay32s.lib
+!ifdef OPENSSL
+OPENSSL_STATIC = libeay32.lib
 #OPENSSL_STATIC = libeay32sd.lib
 OPENSSL_DYNAMIC = libeay32.lib
 #OPENSSL_DYNAMIC = libeay32d.lib
 
-INCLUDE_DIRS = -I$(OPENSSL)/include -I../include
+OPENSSL_CFLAGS=-I$(OPENSSL)/inc32 -DENABLE_PKCS11H_OPENSSL
+OPENSSL_LIBS=-LIBPATH:$(OPENSSL)\out32 user32.lib advapi32.lib $(OPENSSL_STATIC)
+!endif
 
-LIBS = kernel32.lib gdi32.lib
+CFLAGS = -I../include $(OPENSSL_CFLAGS) -DWIN32 -DWIN32_LEAN_AND_MEAN -D_MBCS -D_CRT_SECURE_NO_DEPRECATE
+LIBS = kernel32.lib gdi32.lib $(OPENSSL_LIBS)
 
-LIB_DIRS = -LIBPATH:$(OPENSSL)\lib
-
-DLL = pkcs11-helper-1.dll
+DLL = libpkcs11-helper-1.dll
 
 CC=cl.exe
-CC_ARG_COMMON=/nologo /W3 /O2 -DWIN32 -DWIN32_LEAN_AND_MEAN -D_MBCS -D_CRT_SECURE_NO_DEPRECATE $(INCLUDE_DIRS) /FD /c
+CC_ARG_COMMON=/nologo /W3 /O2 $(CFLAGS) /FD /c
 # release:
 CC_PROJ=$(CC_ARG_COMMON) /MD -DNDEBUG
 # debug:
@@ -126,31 +131,29 @@ OBJS =  \
 	pkcs11h-token.obj \
 	pkcs11h-util.obj
 
-all:	dynamic
+all:	$(DLL)
 
-pkcs11-helper-1.def:
-	echo LIBRARY pkcs11-helper-1 > pkcs11-helper-1.def
-	echo EXPORTS >> pkcs11-helper-1.def
-	type core.exports >> pkcs11-helper-1.def
-	type certificate.exports >> pkcs11-helper-1.def
-	type data.exports >> pkcs11-helper-1.def
-	type locate.exports >> pkcs11-helper-1.def
-	type slotevent.exports >> pkcs11-helper-1.def
-	type standalone.exports >> pkcs11-helper-1.def
-	type token.exports >> pkcs11-helper-1.def
+pkcs11-helper-1.dll.def:
+	echo LIBRARY libpkcs11-helper-1 > pkcs11-helper-1.dll.def
+	echo EXPORTS >> pkcs11-helper-1.dll.def
+	type core.exports >> pkcs11-helper-1.dll.def
+	type certificate.exports >> pkcs11-helper-1.dll.def
+	type data.exports >> pkcs11-helper-1.dll.def
+	type locate.exports >> pkcs11-helper-1.dll.def
+	type slotevent.exports >> pkcs11-helper-1.dll.def
+	type standalone.exports >> pkcs11-helper-1.dll.def
+	type token.exports >> pkcs11-helper-1.dll.def
+!ifdef OPENSSL
+	type openssl.exports >> pkcs11-helper-1.dll.def
+!endif
 
-dynamic: pkcs11-helper-1.def $(OBJS)
+$(DLL): pkcs11-helper-1.dll.def $(OBJS)
 	$(LINK32) @<<
-	$(LINK32_FLAGS) $(LIB_DIRS) $(LIBS) $(OPENSSL_DYNAMIC) /def:pkcs11-helper-1.def  $(OBJS)
-<<
-
-static: pkcs11-helper-1.def $(OBJS)
-	$(LINK32) @<<
-	$(LINK32_FLAGS) $(LIB_DIRS) $(LIBS) $(OPENSSL_STATIC) /def:pkcs11-helper-1.def $(OBJS)
+	$(LINK32_FLAGS) $(LIBS) /def:pkcs11-helper-1.dll.def $(OBJS)
 <<
 
 clean:
-	del /Q $(OBJS) $(DLL) *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.def
+	del /Q $(OBJS) $(DLL) *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.dll.def
 
 .c.obj::
    $(CC) @<<

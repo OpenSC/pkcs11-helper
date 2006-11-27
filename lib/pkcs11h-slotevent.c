@@ -453,6 +453,14 @@ _pkcs11h_slotevent_notify (void) {
 }
 
 CK_RV
+_pkcs11h_slotevent_terminate_force (void) {
+	if (g_pkcs11h_data->slotevent.initialized) {
+		_pkcs11h_threading_condFree (&g_pkcs11h_data->slotevent.cond_event);
+		g_pkcs11h_data->slotevent.initialized = FALSE;
+	}
+}
+
+CK_RV
 _pkcs11h_slotevent_terminate (void) {
 	
 	PKCS11H_DEBUG (
@@ -469,8 +477,7 @@ _pkcs11h_slotevent_terminate (void) {
 			_pkcs11h_threading_threadJoin (&g_pkcs11h_data->slotevent.thread);
 		}
 
-		_pkcs11h_threading_condFree (&g_pkcs11h_data->slotevent.cond_event);
-		g_pkcs11h_data->slotevent.initialized = FALSE;
+		_pkcs11h_slotevent_terminate_force ();
 	}
 
 	PKCS11H_DEBUG (

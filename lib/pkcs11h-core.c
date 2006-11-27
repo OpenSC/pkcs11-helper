@@ -113,7 +113,9 @@ __pkcs11h_threading_atfork_child (void);
 #endif
 static
 CK_RV
-__pkcs11h_forkFixup (void);
+__pkcs11h_forkFixup (
+	IN const PKCS11H_BOOL activate_slotevent
+);
 #endif
 
 
@@ -480,6 +482,19 @@ pkcs11h_setLogLevel (
 	IN const unsigned flags
 ) {
 	g_pkcs11h_loglevel = flags;
+}
+
+CK_RV
+pkcs11h_setForkMode (
+	IN const PKCS11H_BOOL safe
+) {
+#if defined(ENABLE_PKCS11H_THREADING) && !defined(_WIN32)
+	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
+	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+
+	g_pkcs11h_data->safefork = safe;
+#endif
+	return CKR_OK;
 }
 
 unsigned
@@ -903,7 +918,7 @@ pkcs11h_forkFixup (void) {
 #if defined(ENABLE_PKCS11H_THREADING)
 	return CKR_OK;
 #else
-	return __pkcs11h_forkFixup ();
+	return __pkcs11h_forkFixup (TRUE);
 #endif
 #endif
 }
@@ -1098,25 +1113,43 @@ __pkcs11h_hooks_default_pin_prompt (
 static
 void
 __pkcs11h_threading_atfork_prepare  (void) {
-	_pkcs1h_threading_mutexLockAll ();
+	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
+		if (g_pkcs11h_data->safefork) {
+			_pkcs1h_threading_mutexLockAll ();
+		}
+	}
 }
 static
 void
 __pkcs11h_threading_atfork_parent (void) {
-	_pkcs1h_threading_mutexReleaseAll ();
+	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
+		if (g_pkcs11h_data->safefork) {
+			_pkcs1h_threading_mutexReleaseAll ();
+		}
+	}
 }
 static
 void
 __pkcs11h_threading_atfork_child (void) {
-	_pkcs1h_threading_mutexReleaseAll ();
-	__pkcs11h_forkFixup ();
+	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
+		_pkcs1h_threading_mutexReleaseAll ();
+		if (g_pkcs11h_data->safefork) {
+			__pkcs11h_forkFixup (TRUE);
+		}
+		else {
+			__pkcs11h_forkFixup (FALSE);
+			pkcs11h_terminate ();
+		}
+	}
 }
 
 #endif				/* ENABLE_PKCS11H_THREADING */
 
 static
 CK_RV
-__pkcs11h_forkFixup (void) {
+__pkcs11h_forkFixup (
+	IN const PKCS11H_BOOL activate_slotevent
+) {
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
@@ -1127,6 +1160,10 @@ __pkcs11h_forkFixup (void) {
 		"PKCS#11: pkcs11h_forkFixup entry pid=%d",
 		mypid
 	);
+
+#if !defined(ENABLE_PKCS11H_SLOTEVENT)
+	(void)activate_slotevent;
+#endif
 
 	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
 		pkcs11h_provider_t current;
@@ -1152,8 +1189,11 @@ __pkcs11h_forkFixup (void) {
 			 * So just initialized.
 			 */
 			if (g_pkcs11h_data->slotevent.initialized) {
-				g_pkcs11h_data->slotevent.initialized = FALSE;
-				_pkcs11h_slotevent_init ();
+				_pkcs11h_slotevent_terminate_force ();
+
+				if (activate_slotevent) {
+					_pkcs11h_slotevent_init ();
+				}
 			}
 #endif
 		}

@@ -12,6 +12,7 @@ pkcs11h_plugAndPlay
 pkcs11h_removeProvider
 pkcs11h_setLogHook
 pkcs11h_setLogLevel
+pkcs11h_setForkMode
 pkcs11h_setMaxLoginRetries
 pkcs11h_setPINCachePeriod
 pkcs11h_setPINPromptHook

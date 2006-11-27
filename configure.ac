@@ -388,6 +388,7 @@ AM_CONDITIONAL(ENABLE_PKCS11H_STANDALONE, test "${ENABLE_PKCS11H_STANDALONE}" = 
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h
+	pkcs11-helper.spec
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
 	include/pkcs11-helper-1.0/pkcs11-headers/Makefile

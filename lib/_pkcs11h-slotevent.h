@@ -65,6 +65,9 @@ CK_RV
 _pkcs11h_slotevent_notify (void);
 
 CK_RV
+_pkcs11h_slotevent_terminate_force (void);
+
+CK_RV
 _pkcs11h_slotevent_terminate (void);
 
 #endif				/* ENABLE_PKCS11H_SLOTEVENT */

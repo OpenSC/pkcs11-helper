@@ -388,6 +388,23 @@ unsigned
 pkcs11h_getLogLevel (void);
 
 /**
+ * @brief How does the foked process bahaves after POSIX fork()
+ * @param safe		Safe mode, default is false.
+ * @return CK_RV.
+ * @attention
+ * This function should be called after @ref pkcs11h_initialize()
+ * @note 
+ * This funciton is releavant if @ref PKCS11H_FEATURE_MASK_THREADING is set.
+ * If safe mode is on, the child process can use the loaded PKCS#11 providers
+ * but it cannot use fork(), while it is in one of the hooks functions, since
+ * locked mutexes cannot be released.
+ */
+CK_RV
+pkcs11h_setForkMode (
+	IN const PKCS11H_BOOL safe
+);
+
+/**
  * @brief Set a log callback.
  * @param hook		Callback.
  * @param global_data	Data to send to callback.
@@ -421,6 +438,8 @@ pkcs11h_setSlotEventHook (
  * @param hook		Callback.
  * @param global_data	Data to send to callback.
  * @return CK_RV.
+ * @attention
+ * If @ref pkcs11h_setForkMode() is true, you cannot fork while in hook.
  */
 CK_RV
 pkcs11h_setTokenPromptHook (
@@ -433,6 +452,8 @@ pkcs11h_setTokenPromptHook (
  * @param hook	Callback.
  * @param global_data	Data to send to callback.
  * @return CK_RV.
+ * @attention
+ * If @ref pkcs11h_setForkMode() is true, you cannot fork while in hook.
  */
 CK_RV
 pkcs11h_setPINPromptHook (
@@ -516,7 +537,8 @@ pkcs11h_removeProvider (
  * This function should be called after fork is called. This is required
  * due to a limitation of the PKCS#11 standard.
  * @note The helper library handles fork automatically if @ref PKCS11H_FEATURE_MASK_THREADING
- * is set on configuration file, by use of pthread_atfork.
+ * is set by use of pthread_atfork.
+ * When @ref PKCS11H_FEATURE_MASK_THREADING is enabled this function does nothing.
  */
 CK_RV
 pkcs11h_forkFixup (void);

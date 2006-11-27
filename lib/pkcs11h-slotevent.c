@@ -458,6 +458,8 @@ _pkcs11h_slotevent_terminate_force (void) {
 		_pkcs11h_threading_condFree (&g_pkcs11h_data->slotevent.cond_event);
 		g_pkcs11h_data->slotevent.initialized = FALSE;
 	}
+
+	return CKR_OK;
 }
 
 CK_RV

@@ -784,14 +784,15 @@ __pkcs11h_certificate_doPrivateOperation (
 	};
 
 	CK_BBOOL wrap_attrs_false = CK_FALSE;
-	CK_BBOOL wrap_attrs_true = CK_TRUE;
+	CK_OBJECT_CLASS class = CKO_SECRET_KEY;
+	CK_KEY_TYPE keytype = CKK_GENERIC_SECRET;
 	CK_ATTRIBUTE wrap_attrs[] = {
-		{CKA_VALUE, target, *p_target_size},
-		{CKA_ALWAYS_SENSITIVE, &wrap_attrs_false, sizeof (wrap_attrs_false)},
-		{CKA_NEVER_EXTRACTABLE, &wrap_attrs_false, sizeof (wrap_attrs_false)},
-		{CKA_EXTRACTABLE, &wrap_attrs_true, sizeof (wrap_attrs_true)},
-		{CKA_LOCAL, &wrap_attrs_false, sizeof (wrap_attrs_false)},
-		{CKA_TOKEN, &wrap_attrs_false, sizeof (wrap_attrs_false)}
+		{CKA_CLASS, &class, sizeof (class)}, 
+		{CKA_KEY_TYPE, &keytype, sizeof (keytype)}
+/* OpenSC fail!	{CKA_TOKEN, &wrap_attrs_false, sizeof (wrap_attrs_false)} */
+	};
+	CK_ATTRIBUTE wrap_value[] = {
+		{CKA_VALUE, target, 0}
 	};
 	CK_OBJECT_HANDLE wrap_key = PKCS11H_INVALID_OBJECT_HANDLE;
 	
@@ -915,11 +916,16 @@ __pkcs11h_certificate_doPrivateOperation (
 					);
 				break;
 				case _pkcs11h_private_op_unwrap:
-					size = wrap_attrs[0].ulValueLen;
-					rv = certificate->session->provider->f->C_DestroyObject (
+					wrap_value[0].ulValueLen = size;
+
+					rv = certificate->session->provider->f->C_GetAttributeValue (
 						certificate->session->session_handle,
-						wrap_key
+						wrap_key,
+						wrap_value,
+						sizeof (wrap_value) / sizeof (CK_ATTRIBUTE)
 					);
+
+					size = wrap_value[0].ulValueLen;
 				break;
 				default:
 					rv = CKR_ARGUMENTS_BAD;
@@ -935,6 +941,14 @@ __pkcs11h_certificate_doPrivateOperation (
 			);
 		}
 		
+		if (wrap_key != PKCS11H_INVALID_OBJECT_HANDLE) {
+			certificate->session->provider->f->C_DestroyObject (
+				certificate->session->session_handle,
+				wrap_key
+			);
+			wrap_key = PKCS11H_INVALID_OBJECT_HANDLE;
+		}
+
 		if (
 			target == NULL &&
 			(

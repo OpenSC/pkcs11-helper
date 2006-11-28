@@ -317,30 +317,6 @@ pkcs11h_getMessage (
 );
 
 /**
- * @brief Set system engine to be used.
- * @param engine	Engine to use.
- * @return CK_RV.
- * @note Must be called before pkcs11h_initialize.
- * @note Default engine is libc functions.
- */
-CK_RV
-pkcs11h_engine_setSystem (
-	IN const pkcs11h_engine_system_t * const engine
-);
-
-/**
- * @brief Set crypto engine to be used.
- * @param engine	Engine to use.
- * @return CK_RV.
- * @note Must be called before pkcs11h_initialize.
- * @note Default is provided at configuration time.
- */
-CK_RV
-pkcs11h_engine_setCrypto (
-	IN const pkcs11h_engine_crypto_t * const engine
-);
-
-/**
  * @brief Get version of library.
  * @return version identifier.
  */

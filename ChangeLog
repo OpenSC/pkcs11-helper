@@ -31,7 +31,7 @@ $Id$
 
 * Added win32 crypto engine.
 
-* Added decrypt option using C_UnwrapKey.
+* Added decrypt option using C_UnwrapKey, thanks for Christoph Neerfeld.
 
 2006-06-26 - Version 1.01
 

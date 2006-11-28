@@ -343,7 +343,7 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_gnutls_certificate_is_issuer
 };
 #elif defined(ENABLE_PKCS11H_ENGINE_WIN32)
-static struct __crypto_win32_data_s s_win32_data;
+static struct __crypto_win32_data_s s_win32_data = { NULL };
 pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	&s_win32_data,
 	__pkcs11h_crypto_win32_initialize,
@@ -917,7 +917,7 @@ __pkcs11h_crypto_win32_initialize (
 
 	PKCS11H_ASSERT (global_data!=NULL);
 
-	memset (data, 0, sizeof (struct __crypto_win32_data_s));
+	__pkcs11h_crypto_win32_uninitialize (data);
 
 	data->handle = LoadLibraryA ("crypt32.dll");
 	if (data->handle == NULL) {
@@ -952,8 +952,7 @@ __pkcs11h_crypto_win32_initialize (
 		data->p_CryptDecodeObject == NULL ||
 		data->p_CryptVerifyCertificateSignatureEx == NULL
 	) {
-		FreeLibrary (data->handle);
-		data->handle = NULL;
+		__pkcs11h_crypto_win32_uninitialize (data);
 		return 0;
 	}
 
@@ -973,6 +972,8 @@ __pkcs11h_crypto_win32_uninitialize (
 		FreeLibrary (data->handle);
 		data->handle = NULL;
 	}
+
+	memset (data, 0, sizeof (struct __crypto_win32_data_s));
 
 	return 1;
 }

@@ -19,9 +19,6 @@
 /* Use win32 crypto engine */
 #define ENABLE_PKCS11H_ENGINE_WIN32 1
 
-/* Enable locate interface */
-#define ENABLE_PKCS11H_LOCATE 1
-
 /* Enable openssl interface */
 /* #undef ENABLE_PKCS11H_OPENSSL */
 

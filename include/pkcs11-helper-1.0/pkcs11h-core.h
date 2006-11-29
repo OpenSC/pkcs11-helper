@@ -62,10 +62,9 @@
  * providers for end-user applications.
  * @par Features
  * pkcs11-helper allows using multiple PKCS#11 providers at the same time, enumerating 
- * available token certificates, or selecting a certificate directly by id, label or
- * subject, handling card removal and card insert events, handling card re-insert
- * to a different slot, supporting session expiration, serialization and much more
- * all using a simple API.
+ * available token certificates, or selecting a certificate directly by serialized id,
+ * handling card removal and card insert events, handling card re-insert to a different
+ * slot, supporting session expiration and much more all using a simple API.
  * @par
  * pkcs11-helper is not designed to manage card content, since object attributes
  * are usually vendor specific, and 99% of application need to access
@@ -84,7 +83,6 @@
  * - @ref pkcs11h-token.h "Token" - Handle tokens.
  * - @ref pkcs11h-certificate.h "Certificate" - Handle certificate objects.
  * - @ref pkcs11h-data.h "Data" - Handle data objects.
- * - @ref pkcs11h-locate.h "Locate" - Simplified object locate interface.
  * - @ref pkcs11h-openssl.h "OpenSSL" - OpenSSL engine support.
  * @page License
  * @par pkcs11-helper License
@@ -133,12 +131,10 @@ extern "C" {
 #define PKCS11H_FEATURE_MASK_DATA		(1<< 5)
 /** Certificate interface is enabled, */
 #define PKCS11H_FEATURE_MASK_CERTIFICATE	(1<< 6)
-/** Locate interface is enabled. */
-#define PKCS11H_FEATURE_MASK_LOCATE		(1<< 7)
 /** Slotevent interface is enabled. */
-#define PKCS11H_FEATURE_MASK_SLOTEVENT		(1<< 8)
+#define PKCS11H_FEATURE_MASK_SLOTEVENT		(1<< 7)
 /** OpenSSL interface is enabled. */
-#define PKCS11H_FEATURE_MASK_OPENSSL		(1<< 9)
+#define PKCS11H_FEATURE_MASK_OPENSSL		(1<< 8)
 /** @} */
 
 /**

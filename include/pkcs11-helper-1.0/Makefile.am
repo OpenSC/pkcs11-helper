@@ -71,11 +71,6 @@ myinc_HEADERS+=pkcs11h-data.h
 else
 noinst_HEADERS+=pkcs11h-data.h
 endif
-if ENABLE_PKCS11H_LOCATE
-myinc_HEADERS+=pkcs11h-locate.h
-else
-noinst_HEADERS+=pkcs11h-locate.h
-endif
 if ENABLE_PKCS11H_OPENSSL
 myinc_HEADERS+=pkcs11h-openssl.h
 else

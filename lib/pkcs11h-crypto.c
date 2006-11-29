@@ -66,9 +66,6 @@
 
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 #include <wincrypt.h>
-#if !defined(X509_MULTI_BYTE_INTEGER)
-#define X509_MULTI_BYTE_INTEGER	((LPCSTR)28)
-#endif
 #if !defined(CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT)
 #define CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT	0x02
 #endif
@@ -148,16 +145,6 @@ __pkcs11h_crypto_openssl_certificate_get_dn (
 
 static
 int
-__pkcs11h_crypto_openssl_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-);
-
-static
-int
 __pkcs11h_crypto_openssl_certificate_is_issuer (
 	IN void * const global_data,
 	IN const unsigned char * const signer_blob,
@@ -203,16 +190,6 @@ __pkcs11h_crypto_gnutls_certificate_get_dn (
 
 static
 int
-__pkcs11h_crypto_gnutls_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-);
-
-static
-int
 __pkcs11h_crypto_gnutls_certificate_is_issuer (
 	IN void * const global_data,
 	IN const unsigned char * const signer_blob,
@@ -240,15 +217,6 @@ typedef DWORD (WINAPI *CertNameToStrW_t) (
 	LPWSTR psz,
 	DWORD csz
 );
-typedef BOOL (WINAPI *CryptDecodeObject_t) (
-	DWORD dwCertEncodingType,
-	LPCSTR lpszStructType,
-	const BYTE* pbEncoded,
-	DWORD cbEncoded,
-	DWORD dwFlags,
-	void* pvStructInfo,
-	DWORD* pcbStructInfo
-);
 typedef BOOL (WINAPI *CryptVerifyCertificateSignatureEx_t) (
 	void *hCryptProv,
 	DWORD dwCertEncodingType,
@@ -265,7 +233,6 @@ typedef struct __crypto_win32_data_s {
 	CertCreateCertificateContext_t p_CertCreateCertificateContext;
 	CertFreeCertificateContext_t p_CertFreeCertificateContext;
 	CertNameToStrW_t p_CertNameToStrW;
-	CryptDecodeObject_t p_CryptDecodeObject;
 	CryptVerifyCertificateSignatureEx_t p_CryptVerifyCertificateSignatureEx;
 } *__crypto_win32_data_t;
 
@@ -302,16 +269,6 @@ __pkcs11h_crypto_win32_certificate_get_dn (
 
 static
 int
-__pkcs11h_crypto_win32_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-);
-
-static
-int
 __pkcs11h_crypto_win32_certificate_is_issuer (
 	IN void * const global_data,
 	IN const unsigned char * const signer_blob,
@@ -329,7 +286,6 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_openssl_uninitialize,
 	__pkcs11h_crypto_openssl_certificate_get_expiration,
 	__pkcs11h_crypto_openssl_certificate_get_dn,
-	__pkcs11h_crypto_openssl_certificate_get_serial,
 	__pkcs11h_crypto_openssl_certificate_is_issuer
 };
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
@@ -339,7 +295,6 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_gnutls_uninitialize,
 	__pkcs11h_crypto_gnutls_certificate_get_expiration,
 	__pkcs11h_crypto_gnutls_certificate_get_dn,
-	__pkcs11h_crypto_gnutls_certificate_get_serial,
 	__pkcs11h_crypto_gnutls_certificate_is_issuer
 };
 #elif defined(ENABLE_PKCS11H_ENGINE_WIN32)
@@ -350,7 +305,6 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_win32_uninitialize,
 	__pkcs11h_crypto_win32_certificate_get_expiration,
 	__pkcs11h_crypto_win32_certificate_get_dn,
-	__pkcs11h_crypto_win32_certificate_get_serial,
 	__pkcs11h_crypto_win32_certificate_is_issuer
 };
 #else
@@ -498,54 +452,6 @@ __pkcs11h_crypto_openssl_certificate_get_dn (
 	}
 
 	return dn[0] != '\x0';
-}
-
-static
-int
-__pkcs11h_crypto_openssl_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-) {
-	X509 *x509 = NULL;
-	BIO *bioSerial = NULL;
-
-	(void)global_data;
-
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (serial!=NULL);
-	PKCS11H_ASSERT (serial_max>0);
-
-	serial[0] = '\x0';
-
-	if ((x509 = X509_new ()) != NULL) {
-		pkcs11_openssl_d2i_t d2i1 = (pkcs11_openssl_d2i_t)blob;
-		if (d2i_X509 (&x509, &d2i1, blob_size)) {
-			if ((bioSerial = BIO_new (BIO_s_mem ())) != NULL) {
-				int n;
-
-				i2a_ASN1_INTEGER(bioSerial, X509_get_serialNumber (x509));
-				n = BIO_read (bioSerial, serial, serial_max-1);
-				if (n<0) {
-					serial[0] = '\0';
-				}
-				else {
-					serial[n] = '\0';
-				}
-
-				BIO_free_all (bioSerial);
-				bioSerial = NULL;
-			}
-		}
-
-		X509_free (x509);
-		x509 = NULL;
-	}
-
-	return serial[0] != '\x0';
 }
 
 static
@@ -777,47 +683,6 @@ __pkcs11h_crypto_gnutls_certificate_get_dn (
 
 static
 int
-__pkcs11h_crypto_gnutls_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-) {
-	gnutls_x509_crt_t cert = NULL;
-
-	(void)global_data;
-
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (serial!=NULL);
-	PKCS11H_ASSERT (serial_max>0);
-
-	serial[0] = '\x0';
-
-	if (gnutls_x509_crt_init (&cert) == GNUTLS_E_SUCCESS) {
-		gnutls_datum_t datum = {(unsigned char *)blob, blob_size};
-
-		if (gnutls_x509_crt_import (cert, &datum, GNUTLS_X509_FMT_DER) == GNUTLS_E_SUCCESS) {
-			unsigned char ser[1024];
-			size_t ser_size = sizeof (ser);
-			if (gnutls_x509_crt_get_serial (cert, ser, &ser_size) == GNUTLS_E_SUCCESS) {
-				_pkcs11h_util_binaryToHex (
-					serial,
-					serial_max,
-					ser,
-					ser_size
-				);
-			}
-		}
-		gnutls_x509_crt_deinit (cert);
-	}
-
-	return serial[0] != '\x0';
-}
-
-static
-int
 __pkcs11h_crypto_gnutls_certificate_is_issuer (
 	IN void * const global_data,
 	IN const unsigned char * const issuer_blob,
@@ -936,10 +801,6 @@ __pkcs11h_crypto_win32_initialize (
 		data->handle,
 		"CertNameToStrW"
 	);
-	data->p_CryptDecodeObject = (CryptDecodeObject_t)GetProcAddress (
-		data->handle,
-		"CryptDecodeObject"
-	);
 	data->p_CryptVerifyCertificateSignatureEx = (CryptVerifyCertificateSignatureEx_t)GetProcAddress (
 		data->handle,
 		"CryptVerifyCertificateSignatureEx"
@@ -949,7 +810,6 @@ __pkcs11h_crypto_win32_initialize (
 		data->p_CertCreateCertificateContext == NULL ||
 		data->p_CertFreeCertificateContext == NULL ||
 		data->p_CertNameToStrW == NULL ||
-		data->p_CryptDecodeObject == NULL ||
 		data->p_CryptVerifyCertificateSignatureEx == NULL
 	) {
 		__pkcs11h_crypto_win32_uninitialize (data);
@@ -1128,75 +988,6 @@ __pkcs11h_crypto_win32_certificate_get_dn (
 	if (wstr != NULL) {
 		g_pkcs11h_sys_engine.free (wstr);
 		wstr = NULL;
-	}
-
-	if (cert != NULL) {
-		data->p_CertFreeCertificateContext (cert);
-		cert = NULL;
-	}
-
-	return ok != FALSE;
-}
-
-static
-int
-__pkcs11h_crypto_win32_certificate_get_serial (
-	IN void * const global_data,
-	IN const unsigned char * const blob,
-	IN const size_t blob_size,
-	OUT char * const serial,
-	IN const size_t serial_max
-) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
-	PCCERT_CONTEXT cert = NULL;
-	PKCS11H_BOOL ok = TRUE;
-	PBYTE bin_serial = NULL;
-	size_t i;
-
-	PKCS11H_ASSERT (global_data!=NULL);
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (serial!=NULL);
-	PKCS11H_ASSERT (serial_max>0);
-
-	serial[0] = '\x0';
-
-	if (
-		ok &&
-		(cert = data->p_CertCreateCertificateContext (
-			PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
-			blob,
-			blob_size
-		)) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
-		(bin_serial = (PBYTE)g_pkcs11h_sys_engine.malloc (cert->pCertInfo->SerialNumber.cbData)) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	for (i=0;ok && i<cert->pCertInfo->SerialNumber.cbData;i++) {
-		bin_serial[cert->pCertInfo->SerialNumber.cbData-1-i] = cert->pCertInfo->SerialNumber.pbData[i];
-	}
-
-	if (
-		ok &&
-		_pkcs11h_util_binaryToHex (
-			serial,
-			serial_max,
-			bin_serial,
-			cert->pCertInfo->SerialNumber.cbData
-		) != CKR_OK
-	) {
-		ok = FALSE;
-	}
-
-	if (bin_serial != NULL) {
-		g_pkcs11h_sys_engine.free (bin_serial);
-		bin_serial = NULL;
 	}
 
 	if (cert != NULL) {

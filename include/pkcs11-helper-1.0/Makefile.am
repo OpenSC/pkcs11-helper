@@ -81,11 +81,6 @@ myinc_HEADERS+=pkcs11h-openssl.h
 else
 noinst_HEADERS+=pkcs11h-openssl.h
 endif
-if ENABLE_PKCS11H_STANDALONE
-myinc_HEADERS+=pkcs11h-standalone.h
-else
-noinst_HEADERS+=pkcs11h-standalone.h
-endif
 if ENABLE_PKCS11H_TOKEN
 myinc_HEADERS+=pkcs11h-token.h
 else

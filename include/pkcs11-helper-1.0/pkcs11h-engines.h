@@ -166,23 +166,6 @@ typedef struct pkcs11h_crypto_engine_s {
 	);
 
 	/**
-	 * @brief Get certificate serial number.
-	 * @param global_data	Engine data.
-	 * @param blob		Certificate blob.
-	 * @param blob_size	Certificate blob size.
-	 * @param serial	serial buffer.
-	 * @param serial_max	serial buffer size.
-	 * @return None zero - Sucess.
-	 */
-	int (*certificate_get_serial) (
-		IN void * const global_data,
-		IN const unsigned char * const blob,
-		IN const size_t blob_size,
-		OUT char * const serial,
-		IN const size_t serial_max
-	);
-
-	/**
 	 * @brief Determine if one certificate is an issuer of another.
 	 * @param global_data		Engine data.
 	 * @param issuer_blob		Issuer's certificate blob.

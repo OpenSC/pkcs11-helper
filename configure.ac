@@ -147,12 +147,6 @@ AC_ARG_ENABLE(openssl,
 	[ENABLE_PKCS11H_OPENSSL="yes"]
 )
 
-AC_ARG_ENABLE(standalone,
-	[  --disable-standalone              Disable standalone interface],
-	[ENABLE_PKCS11H_STANDALONE="${enableval}"],
-	[ENABLE_PKCS11H_STANDALONE="yes"]
-)
-
 AC_ARG_ENABLE(pedantic,
 	[  --enable-pedantic                 Enable pedantic compiler warnings, will not generate a working executable (debugging option)],
 	[PEDANTIC="${enableval}"],
@@ -359,10 +353,6 @@ if test "${ENABLE_PKCS11H_OPENSSL}" = "yes"; then
 	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], 1, [Enable openssl interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
 fi
-if test "${ENABLE_PKCS11H_STANDALONE}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_STANDALONE], 1, [Enable standalone interface])
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} standalone"
-fi
 if test \
 	"${WITH_CRYPTO_ENGINE_OPENSSL}" = "yes" -o \
 	"${WITH_CRYPTO_ENGINE_GNUTLS}" = "yes" -o \
@@ -384,7 +374,6 @@ AM_CONDITIONAL(ENABLE_PKCS11H_CERTIFICATE, test "${ENABLE_PKCS11H_CERTIFICATE}" 
 AM_CONDITIONAL(ENABLE_PKCS11H_LOCATE, test "${ENABLE_PKCS11H_LOCATE}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_SLOTEVENT, test "${ENABLE_PKCS11H_SLOTEVENT}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_OPENSSL, test "${ENABLE_PKCS11H_OPENSSL}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_STANDALONE, test "${ENABLE_PKCS11H_STANDALONE}" = "yes")
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h

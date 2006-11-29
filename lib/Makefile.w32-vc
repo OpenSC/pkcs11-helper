@@ -111,7 +111,6 @@ HEADERS = \
 	../include/pkcs11-helper-1.0/pkcs11h-engines.h \
 	../include/pkcs11-helper-1.0/pkcs11h-locate.h \
 	../include/pkcs11-helper-1.0/pkcs11h-openssl.h \
-	../include/pkcs11-helper-1.0/pkcs11h-standalone.h \
 	../include/pkcs11-helper-1.0/pkcs11h-token.h
 
 OBJS =  \
@@ -125,7 +124,6 @@ OBJS =  \
 	pkcs11h-serialization.obj \
 	pkcs11h-session.obj \
 	pkcs11h-slotevent.obj \
-	pkcs11h-standalone.obj \
 	pkcs11h-sys.obj \
 	pkcs11h-threading.obj \
 	pkcs11h-token.obj \
@@ -141,7 +139,6 @@ pkcs11-helper-1.dll.def:
 	type data.exports >> pkcs11-helper-1.dll.def
 	type locate.exports >> pkcs11-helper-1.dll.def
 	type slotevent.exports >> pkcs11-helper-1.dll.def
-	type standalone.exports >> pkcs11-helper-1.dll.def
 	type token.exports >> pkcs11-helper-1.dll.def
 !ifdef OPENSSL
 	type openssl.exports >> pkcs11-helper-1.dll.def

@@ -28,9 +28,6 @@
 /* Enable slotevent interface */
 #define ENABLE_PKCS11H_SLOTEVENT 1
 
-/* Enable standalone interface */
-#define ENABLE_PKCS11H_STANDALONE 1
-
 /* Enable threading */
 #define ENABLE_PKCS11H_THREADING 1
 

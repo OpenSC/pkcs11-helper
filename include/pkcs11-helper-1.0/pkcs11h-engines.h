@@ -96,7 +96,7 @@ typedef struct pkcs11h_sys_engine_s {
 	 * @brief usleep provider.
 	 * @param usec	Microseconds.
 	 */
-	void (*usleep) (const unsigned long usec);
+	void (*usleep) (unsigned long usec);
 
 	/**
 	 * @brief gettimeofday provider (unix).

@@ -79,10 +79,10 @@ case "${host}" in
 	;;
 	*-cygwin*)
 		AC_MSG_CHECKING([cygwin mode to use])
+		CYGWIN="yes"
 		if test "${CYGWIN_NATIVE}" = "yes"; then
 			AC_MSG_RESULT([Using native win32])
 			CFLAGS="${CFLAGS} -mno-cygwin"
-			CYGWIN="yes"
 			WIN32="yes"
 		else
 			AC_MSG_RESULT([Using cygwin])

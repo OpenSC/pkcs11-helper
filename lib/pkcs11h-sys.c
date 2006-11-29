@@ -67,7 +67,7 @@ __mytime (void) {
 
 static
 void
-__mysleep (const unsigned long usec) {
+__mysleep (unsigned long usec) {
 #if defined(_WIN32)
 	Sleep (usec/1000);
 #else

@@ -784,11 +784,13 @@ __pkcs11h_certificate_doPrivateOperation (
 	};
 
 	CK_BBOOL wrap_attrs_false = CK_FALSE;
+	CK_BBOOL wrap_attrs_true = CK_TRUE;
 	CK_OBJECT_CLASS class = CKO_SECRET_KEY;
 	CK_KEY_TYPE keytype = CKK_GENERIC_SECRET;
 	CK_ATTRIBUTE wrap_attrs[] = {
 		{CKA_CLASS, &class, sizeof (class)}, 
-		{CKA_KEY_TYPE, &keytype, sizeof (keytype)}
+		{CKA_KEY_TYPE, &keytype, sizeof (keytype)},
+		{CKA_EXTRACTABLE, &wrap_attrs_true, sizeof (wrap_attrs_true)}
 /* OpenSC fail!	{CKA_TOKEN, &wrap_attrs_false, sizeof (wrap_attrs_false)} */
 	};
 	CK_ATTRIBUTE wrap_value[] = {
@@ -884,6 +886,11 @@ __pkcs11h_certificate_doPrivateOperation (
 			);
 		}
 
+		/*
+		 * Assume one call operation
+		 */
+		certificate->operation_active = FALSE;
+
 		if (rv == CKR_OK) {
 			CK_ULONG size = *p_target_size;
 
@@ -956,11 +963,10 @@ __pkcs11h_certificate_doPrivateOperation (
 				rv == CKR_OK
 			)
 		) {
-			certificate->operation_active = TRUE;
+			if (op != _pkcs11h_private_op_unwrap) {
+				certificate->operation_active = TRUE;
+			}
 			rv = CKR_OK;
-		}
-		else {
-			certificate->operation_active = FALSE;
 		}
 
 		if (rv == CKR_OK) {

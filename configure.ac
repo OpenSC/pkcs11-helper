@@ -129,12 +129,6 @@ AC_ARG_ENABLE(certificate,
 	[ENABLE_PKCS11H_CERTIFICATE="yes"]
 )
 
-AC_ARG_ENABLE(locate,
-	[  --disable-locate                  Disable locate support],
-	[ENABLE_PKCS11H_LOCATE="${enableval}"],
-	[ENABLE_PKCS11H_LOCATE="yes"]
-)
-
 AC_ARG_ENABLE(slotevent,
 	[  --disable-slotevent               Disable slotevent support],
 	[ENABLE_PKCS11H_SLOTEVENT="${enableval}"],
@@ -341,10 +335,6 @@ if test "${ENABLE_PKCS11H_CERTIFICATE}" = "yes"; then
 	AC_DEFINE([ENABLE_PKCS11H_CERTIFICATE], 1, [Enable certificate interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} certificate"
 fi
-if test "${ENABLE_PKCS11H_LOCATE}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_LOCATE], 1, [Enable locate interface])
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} locate"
-fi
 if test "${ENABLE_PKCS11H_SLOTEVENT}" = "yes"; then
 	AC_DEFINE([ENABLE_PKCS11H_SLOTEVENT], 1, [Enable slotevent interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} slotevent"
@@ -371,7 +361,6 @@ AM_CONDITIONAL(CYGWIN, test "${CYGWIN}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_TOKEN, test "${ENABLE_PKCS11H_TOKEN}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_DATA, test "${ENABLE_PKCS11H_DATA}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_CERTIFICATE, test "${ENABLE_PKCS11H_CERTIFICATE}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_LOCATE, test "${ENABLE_PKCS11H_LOCATE}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_SLOTEVENT, test "${ENABLE_PKCS11H_SLOTEVENT}" = "yes")
 AM_CONDITIONAL(ENABLE_PKCS11H_OPENSSL, test "${ENABLE_PKCS11H_OPENSSL}" = "yes")
 AC_CONFIG_FILES([

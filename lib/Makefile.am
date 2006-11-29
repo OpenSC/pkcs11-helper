@@ -62,7 +62,6 @@ EXTRA_DIST= \
 	certificate.exports \
 	core.exports \
 	data.exports \
-	locate.exports \
 	openssl.exports \
 	slotevent.exports \
 	token.exports
@@ -78,7 +77,6 @@ nodist_libpkcs11_helper_la_SOURCES= \
 	../pkcs11-helper-1.0/pkcs11h-token.h \
 	../pkcs11-helper-1.0/pkcs11h-certificate.h \
 	../pkcs11-helper-1.0/pkcs11h-data.h \
-	../pkcs11-helper-1.0/pkcs11h-locate.h \
 	../pkcs11-helper-1.0/pkcs11h-openssl.h \
 	$(PKCS11_INCLUDES) \
 	pkcs11-helper.exports
@@ -94,7 +92,6 @@ libpkcs11_helper_la_SOURCES= \
 	_pkcs11h-certificate.h pkcs11h-certificate.c \
 	_pkcs11h-slotevent.h pkcs11h-slotevent.c \
 	_pkcs11h-core.h pkcs11h-core.c \
-	pkcs11h-locate.c \
 	pkcs11h-data.c \
 	pkcs11h-serialization.c \
 	pkcs11h-openssl.c
@@ -109,7 +106,6 @@ pkcs11-helper.exports: \
 		certificate.exports \
 		core.exports \
 		data.exports \
-		locate.exports \
 		openssl.exports \
 		slotevent.exports \
 		token.exports
@@ -119,9 +115,6 @@ if ENABLE_PKCS11H_CERTIFICATE
 endif
 if ENABLE_PKCS11H_DATA
 	cat data.exports >> pkcs11-helper.exports
-endif
-if ENABLE_PKCS11H_LOCATE
-	cat locate.exports >> pkcs11-helper.exports
 endif
 if ENABLE_PKCS11H_OPENSSL
 	cat openssl.exports >> pkcs11-helper.exports

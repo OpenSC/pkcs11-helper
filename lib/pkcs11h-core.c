@@ -263,9 +263,6 @@ pkcs11h_getFeatures (void) {
 #if defined(ENABLE_PKCS11H_OPENSSL)
 		PKCS11H_FEATURE_MASK_OPENSSL |
 #endif
-#if defined(ENABLE_PKCS11H_STANDALONE)
-		PKCS11H_FEATURE_MASK_STANDALONE |
-#endif
 		0
 	);
 	return features;

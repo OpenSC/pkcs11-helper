@@ -86,7 +86,6 @@
  * - @ref pkcs11h-data.h "Data" - Handle data objects.
  * - @ref pkcs11h-locate.h "Locate" - Simplified object locate interface.
  * - @ref pkcs11h-openssl.h "OpenSSL" - OpenSSL engine support.
- * - @ref pkcs11h-standalone.h "Standalone Debugging" - Token structure debugging interface.
  * @page License
  * @par pkcs11-helper License
  * @include COPYING
@@ -140,8 +139,6 @@ extern "C" {
 #define PKCS11H_FEATURE_MASK_SLOTEVENT		(1<< 8)
 /** OpenSSL interface is enabled. */
 #define PKCS11H_FEATURE_MASK_OPENSSL		(1<< 9)
-/** Standalone interface is enabled. */
-#define PKCS11H_FEATURE_MASK_STANDALONE		(1<<10)
 /** @} */
 
 /**

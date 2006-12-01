@@ -189,6 +189,11 @@ _pkcs11h_openssl_dec (
 	IN int padding
 ) {
 #endif
+	pkcs11h_certificate_t certificate = _pkcs11h_openssl_get_pkcs11h_certificate (rsa);
+	PKCS11H_BOOL session_locked = FALSE;
+	CK_MECHANISM_TYPE mech = CKM_RSA_PKCS;
+	CK_RV rv = CKR_OK;
+
 	PKCS11H_ASSERT (from!=NULL);
 	PKCS11H_ASSERT (to!=NULL);
 	PKCS11H_ASSERT (rsa!=NULL);
@@ -203,17 +208,63 @@ _pkcs11h_openssl_dec (
 		padding
 	);
 
-	PKCS11H_LOG (
-		PKCS11H_LOG_ERROR,
-		"PKCS#11: Private key decryption is not supported"
-	);
+	switch (padding) {
+		case RSA_PKCS1_PADDING:
+			mech = CKM_RSA_PKCS;
+		break;
+		case RSA_PKCS1_OAEP_PADDING:
+			mech = CKM_RSA_PKCS_OAEP;
+		break;
+		case RSA_SSLV23_PADDING:
+			rv = CKR_MECHANISM_INVALID;
+		break;
+		case RSA_NO_PADDING:
+			rv = CKR_MECHANISM_INVALID;
+		break;
+	}
+
+	if (
+		rv == CKR_OK &&
+		(rv = pkcs11h_certificate_lockSession (certificate)) == CKR_OK
+	) {
+		session_locked = TRUE;
+	}
+
+	if (rv == CKR_OK) {
+		size_t tlen = (size_t)flen;
+
+		PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Performing decryption"
+		);
+
+		if (
+			(rv = pkcs11h_certificate_decryptAny (
+				certificate,
+				mech,
+				from,
+				flen,
+				to,
+				&tlen
+			)) != CKR_OK
+		) {
+			PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform decryption %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		}
+	}
+
+	if (session_locked) {
+		pkcs11h_certificate_releaseSession (certificate);
+		session_locked = FALSE;
+	}
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_openssl_dec return"
+		"PKCS#11: _pkcs11h_openssl_dec - return rv=%ld-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
 	);
 
-	return -1;
+	return rv == CKR_OK ? 1 : -1; 
 }
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
@@ -265,7 +316,7 @@ _pkcs11h_openssl_sign (
 	);
 
 	if (rv == CKR_OK) {
-		myrsa_size=RSA_size(rsa);
+		myrsa_size=RSA_size (rsa);
 	}
 
 	if (type == NID_md5_sha1) {

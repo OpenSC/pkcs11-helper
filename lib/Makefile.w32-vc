@@ -54,7 +54,7 @@
 #
 # Change these to point to your OpenSSL top-level
 # directories.
-# Uncomment OPENSS=
+# Provide OPENSS=1 as nmake argument.
 #
 #OPENSSL=1
 !ifdef OPENSSL

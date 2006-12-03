@@ -783,7 +783,7 @@ __pkcs11h_certificate_doPrivateOperation (
 		mech_type, NULL, 0
 	};
 
-	CK_BBOOL wrap_attrs_false = CK_FALSE;
+/*	CK_BBOOL wrap_attrs_false = CK_FALSE; */
 	CK_BBOOL wrap_attrs_true = CK_TRUE;
 	CK_OBJECT_CLASS class = CKO_SECRET_KEY;
 	CK_KEY_TYPE keytype = CKK_GENERIC_SECRET;

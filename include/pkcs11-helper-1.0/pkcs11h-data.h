@@ -91,7 +91,7 @@ struct pkcs11h_data_id_list_s {
  * @param application		Object application attribute.
  * @param label			Object label attribute.
  * @param user_data		Optional user data, to be passed to hooks.
- * @param mask_prompt		Allow prompt.
+ * @param mask_prompt		Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @param blob			Blob, set to NULL to get size.
  * @param p_blob_size		Blob size.
  * @return CK_RV.
@@ -116,7 +116,7 @@ pkcs11h_data_get (
  * @param application		Object application attribute.
  * @param label			Object label attribute.
  * @param user_data		Optional user data, to be passed to hooks.
- * @param mask_prompt		Allow prompt.
+ * @param mask_prompt		Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @param blob			Blob, set to NULL to get size.
  * @param blob_size		Blob size.
  * @return CK_RV.
@@ -140,7 +140,7 @@ pkcs11h_data_put (
  * @param application		Object application attribute.
  * @param label			Object label attribute.
  * @param user_data		Optional user data, to be passed to hooks.
- * @param mask_prompt		Allow prompt.
+ * @param mask_prompt		Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @return CK_RV.
  */
 CK_RV
@@ -168,7 +168,7 @@ pkcs11h_data_freeDataIdList (
  * @param token_id		Token id object.
  * @param is_public		Get a list of public objects.
  * @param user_data		Optional user data, to be passed to hooks.
- * @param mask_prompt		Allow prompt.
+ * @param mask_prompt		Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @param p_data_id_list	List location.
  * @see pkcs11h_data_freeDataIdList().
  * @return CK_RV.

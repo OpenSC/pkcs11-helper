@@ -168,7 +168,7 @@ pkcs11h_certificate_freeCertificate (
  * @brief Create a certificate object out of certificate_id.
  * @param certificate_id	Certificate id object to be based on.
  * @param user_data		Optional user data, to be passed to hooks.
- * @param mask_prompt		Allow prompt.
+ * @param mask_prompt		Allow prompt @ref PKCS11H_PROMPT_MASK.
  * @param pin_cache_period	Session specific cache period.
  * @param p_certificate		Receives certificate object.
  * @note Caller must free result.

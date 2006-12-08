@@ -29,7 +29,15 @@ Cross-MinGW32
 
 	Build:
 		w32root=/tmp/w32root
-		./configure --prefix=/ --host=mingw32 --disable-openssl
+
+		Without openssl engine:
+			./configure --prefix=/ --host=mingw32 --disable-openssl
+		With openssl engine:
+			./configure --prefix=/ --host=mingw32 \
+				PKG_CONFIG=true \
+				OPENSSL_CFLAGS="-I${w32root}/include" \
+				OPENSSL_LIBS="-L${w32root}/lib -lcrypto"
+											
 		[[Add --with-cygwin-native if you use cygwin for native win32]]
 		make
 		make install DESTDIR=${w32root}

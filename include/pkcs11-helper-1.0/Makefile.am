@@ -51,11 +51,8 @@
 
 myincdir=$(includedir)/pkcs11-helper-1.0
 
-SUBDIRS=pkcs11-headers
-
 myinc_HEADERS= \
-	cryptoki.h \
-	cryptoki-win32.h \
+	pkcs11.h \
 	pkcs11h-def.h \
 	pkcs11h-engines.h \
 	pkcs11h-core.h

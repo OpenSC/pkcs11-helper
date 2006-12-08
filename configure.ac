@@ -238,6 +238,11 @@ fi
 if test "${WIN32}" = "yes" -a "${WITH_CRYPTO_ENGINE_WIN32}" = "yes"; then
 	AC_MSG_RESULT([Using win32])
 	AC_DEFINE(ENABLE_PKCS11H_ENGINE_WIN32, 1, [Use win32 crypto engine])
+
+	if test "${ENABLE_PKCS11H_OPENSSL}" = "yes"; then
+		CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
+		LIBS="${LIBS} ${OPENSSL_LIBS}"
+	fi
 elif test "${WITH_CRYPTO_ENGINE_OPENSSL}" = "yes"; then
 	AC_MSG_RESULT([Using OpenSSL])
 	AC_DEFINE(ENABLE_PKCS11H_ENGINE_OPENSSL, 1, [Use OpenSSL crypto engine])
@@ -369,7 +374,6 @@ AC_CONFIG_FILES([
 	pkcs11-helper.spec
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
-	include/pkcs11-helper-1.0/pkcs11-headers/Makefile
 	man/Makefile
 	doc/Makefile
 	doc/api/Makefile

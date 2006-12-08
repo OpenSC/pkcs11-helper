@@ -74,11 +74,10 @@ extern "C" {
 #define OUT
 #endif
 
-#if defined(_WIN32) || defined(PKCS11H_USE_CYGWIN)
-#include <pkcs11-helper-1.0/cryptoki-win32.h>
-#else
-#include <pkcs11-helper-1.0/cryptoki.h>
+#if defined(PKCS11H_USE_CYGWIN)
+#define CRYPTOKI_FORCE_WIN32
 #endif
+#include <pkcs11-helper-1.0/pkcs11.h>
 
 typedef int PKCS11H_BOOL;
 

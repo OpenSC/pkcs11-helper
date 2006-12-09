@@ -201,7 +201,7 @@ _pkcs11h_certificate_newCertificateId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_certificate_newCertificateId return rv=%ld-'%s', *p_certificate_id=%p",
+		"PKCS#11: _pkcs11h_certificate_newCertificateId return rv=%lu-'%s', *p_certificate_id=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_certificate_id
@@ -308,7 +308,7 @@ __pkcs11h_certificate_loadCertificate (
 		if (rv != CKR_OK) {
 			PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%ld-'%s'",
+				"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%lu-'%s'",
 				certificate->session->provider->manufacturerID,
 				objects[i],
 				rv,
@@ -353,7 +353,7 @@ __pkcs11h_certificate_loadCertificate (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_loadCertificate return rv=%ld-'%s'",
+		"PKCS#11: __pkcs11h_certificate_loadCertificate return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -559,7 +559,7 @@ __pkcs11h_certificate_getKeyAttributes (
 	
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_getKeyAttributes return rv=%ld-'%s'",
+		"PKCS#11: __pkcs11h_certificate_getKeyAttributes return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -602,7 +602,7 @@ _pkcs11h_certificate_validateSession (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_certificate_validateSession return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_certificate_validateSession return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -757,7 +757,7 @@ _pkcs11h_certificate_resetSession (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_certificate_resetSession return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_certificate_resetSession return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -989,7 +989,7 @@ __pkcs11h_certificate_doPrivateOperation (
 			if (!login_retry) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Private key operation failed rv=%ld-'%s'",
+					"PKCS#11: Private key operation failed rv=%lu-'%s'",
 					rv,
 					pkcs11h_getMessage (rv)
 				);
@@ -1013,7 +1013,7 @@ __pkcs11h_certificate_doPrivateOperation (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_doPrivateOperation return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: __pkcs11h_certificate_doPrivateOperation return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1115,7 +1115,7 @@ pkcs11h_certificate_duplicateCertificateId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_duplicateCertificateId return rv=%ld-'%s', *to=%p",
+		"PKCS#11: pkcs11h_certificate_duplicateCertificateId return rv=%lu-'%s', *to=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*to
@@ -1158,7 +1158,7 @@ pkcs11h_certificate_setCertificateIdCertificateBlob (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_setCertificateIdCertificateBlob return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_setCertificateIdCertificateBlob return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -1294,7 +1294,7 @@ pkcs11h_certificate_sign (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_sign return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_sign return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1350,7 +1350,7 @@ pkcs11h_certificate_signRecover (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signRecover return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signRecover return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1406,7 +1406,7 @@ pkcs11h_certificate_decrypt (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_decrypt return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_decrypt return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1462,7 +1462,7 @@ pkcs11h_certificate_unwrap (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_unwrap return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_unwrap return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1572,7 +1572,7 @@ pkcs11h_certificate_signAny (
 	
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signAny return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signAny return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1682,7 +1682,7 @@ pkcs11h_certificate_decryptAny (
 	
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%ld-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%lu-'%s', *p_target_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1753,7 +1753,7 @@ pkcs11h_certificate_create (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_create return rv=%ld-'%s' *p_certificate=%p",
+		"PKCS#11: pkcs11h_certificate_create return rv=%lu-'%s' *p_certificate=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_certificate
@@ -1828,7 +1828,7 @@ pkcs11h_certificate_getCertificateId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_getCertificateId return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_getCertificateId return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -1945,7 +1945,7 @@ pkcs11h_certificate_getCertificateBlob (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_getCertificateBlob return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_getCertificateBlob return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2021,7 +2021,7 @@ pkcs11h_certificate_ensureCertificateAccess (
 		if (rv != CKR_OK) {
 			PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot access existing object rv=%ld-'%s'",
+				"PKCS#11: Cannot access existing object rv=%lu-'%s'",
 				rv,
 				pkcs11h_getMessage (rv)
 			);
@@ -2054,7 +2054,7 @@ pkcs11h_certificate_ensureCertificateAccess (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_ensureCertificateAccess return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_ensureCertificateAccess return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2129,7 +2129,7 @@ pkcs11h_certificate_ensureKeyAccess (
 		if (rv != CKR_OK) {
 			PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot access existing object rv=%ld-'%s'",
+				"PKCS#11: Cannot access existing object rv=%lu-'%s'",
 				rv,
 				pkcs11h_getMessage (rv)
 			);
@@ -2163,7 +2163,7 @@ pkcs11h_certificate_ensureKeyAccess (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_ensureKeyAccess return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_ensureKeyAccess return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2314,7 +2314,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 			if (rv != CKR_OK) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%ld-'%s'",
+					"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%lu-'%s'",
 					session->provider->manufacturerID,
 					objects[i],
 					rv,
@@ -2366,7 +2366,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_certificate_enumSessionCertificates return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_certificate_enumSessionCertificates return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2542,7 +2542,7 @@ __pkcs11h_certificate_splitCertificateIdList (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_splitCertificateIdList return rv=%ld-'%s'",
+		"PKCS#11: __pkcs11h_certificate_splitCertificateIdList return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2587,7 +2587,7 @@ pkcs11h_certificate_freeCertificateIdList (
 CK_RV
 pkcs11h_certificate_enumTokenCertificateIds (
 	IN const pkcs11h_token_id_t token_id,
-	IN const int method,
+	IN const unsigned method,
 	IN void * const user_data,
 	IN const unsigned mask_prompt,
 	OUT pkcs11h_certificate_id_list_t * const p_cert_id_issuers_list,
@@ -2608,7 +2608,7 @@ pkcs11h_certificate_enumTokenCertificateIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds entry token_id=%p, method=%d, user_data=%p, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
+		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds entry token_id=%p, method=%u, user_data=%p, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
 		(void *)token_id,
 		method,
 		user_data,
@@ -2669,7 +2669,7 @@ pkcs11h_certificate_enumTokenCertificateIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -2679,7 +2679,7 @@ pkcs11h_certificate_enumTokenCertificateIds (
 
 CK_RV
 pkcs11h_certificate_enumCertificateIds (
-	IN const int method,
+	IN const unsigned method,
 	IN void * const user_data,
 	IN const unsigned mask_prompt,
 	OUT pkcs11h_certificate_id_list_t * const p_cert_id_issuers_list,
@@ -2701,7 +2701,7 @@ pkcs11h_certificate_enumCertificateIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_enumCertificateIds entry method=%d, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
+		"PKCS#11: pkcs11h_certificate_enumCertificateIds entry method=%u, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
 		method,
 		mask_prompt,
 		(void *)p_cert_id_issuers_list,
@@ -2799,7 +2799,7 @@ pkcs11h_certificate_enumCertificateIds (
 			if (rv != CKR_OK) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Cannot get token information for provider '%s' slot %ld rv=%ld-'%s'",
+					"PKCS#11: Cannot get token information for provider '%s' slot %ld rv=%lu-'%s'",
 					current_provider->manufacturerID,
 					slots[slot_index],
 					rv,
@@ -2826,7 +2826,7 @@ pkcs11h_certificate_enumCertificateIds (
 		if (rv != CKR_OK) {
 			PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot get slot list for provider '%s' rv=%ld-'%s'",
+				"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
 				current_provider->manufacturerID,
 				rv,
 				pkcs11h_getMessage (rv)
@@ -2922,7 +2922,7 @@ pkcs11h_certificate_enumCertificateIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_enumCertificateIds return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_enumCertificateIds return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

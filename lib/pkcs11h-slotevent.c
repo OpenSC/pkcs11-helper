@@ -423,7 +423,7 @@ _pkcs11h_slotevent_init (void) {
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_slotevent_init return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_slotevent_init return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

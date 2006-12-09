@@ -121,7 +121,7 @@ _pkcs11h_data_getObject (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_data_getObject return rv=%ld-'%s', *p_handle=%08lx",
+		"PKCS#11: _pkcs11h_data_getObject return rv=%lu-'%s', *p_handle=%08lx",
 		rv,
 		pkcs11h_getMessage (rv),
 		(unsigned long)*p_handle
@@ -228,7 +228,7 @@ pkcs11h_data_get (
 			if (!login_retry) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Read data object failed rv=%ld-'%s'",
+					"PKCS#11: Read data object failed rv=%lu-'%s'",
 					rv,
 					pkcs11h_getMessage (rv)
 				);
@@ -278,7 +278,7 @@ pkcs11h_data_get (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_get return rv=%ld-'%s', *p_blob_size=%u",
+		"PKCS#11: pkcs11h_data_get return rv=%lu-'%s', *p_blob_size=%u",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_blob_size
@@ -379,7 +379,7 @@ pkcs11h_data_put (
 			if (!login_retry) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Write data object failed rv=%ld-'%s'",
+					"PKCS#11: Write data object failed rv=%lu-'%s'",
 					rv,
 					pkcs11h_getMessage (rv)
 				);
@@ -409,7 +409,7 @@ pkcs11h_data_put (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_put return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_data_put return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -497,7 +497,7 @@ pkcs11h_data_del (
 			if (!login_retry) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Remove data object failed rv=%ld-'%s'",
+					"PKCS#11: Remove data object failed rv=%lu-'%s'",
 					rv,
 					pkcs11h_getMessage (rv)
 				);
@@ -527,7 +527,7 @@ pkcs11h_data_del (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_del return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_data_del return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -726,7 +726,7 @@ pkcs11h_data_enumDataObjects (
 			if (!login_retry) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Enumerate data objects failed rv=%ld-'%s'",
+					"PKCS#11: Enumerate data objects failed rv=%lu-'%s'",
 					rv,
 					pkcs11h_getMessage (rv)
 				);
@@ -766,7 +766,7 @@ pkcs11h_data_enumDataObjects (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_enumDataObjects return rv=%ld-'%s', *p_data_id_list=%p",
+		"PKCS#11: pkcs11h_data_enumDataObjects return rv=%lu-'%s', *p_data_id_list=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_data_id_list

@@ -259,7 +259,7 @@ _pkcs11h_openssl_dec (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_openssl_dec - return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_openssl_dec - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -435,7 +435,7 @@ _pkcs11h_openssl_sign (
 	
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_openssl_sign - return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_openssl_sign - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

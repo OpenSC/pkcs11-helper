@@ -482,8 +482,8 @@ pkcs11h_addProvider (
 	IN const char * const provider_location,
 	IN const PKCS11H_BOOL allow_protected_auth,
 	IN const unsigned mask_private_mode,
-	IN const int slot_event_method,
-	IN const int slot_poll_interval,
+	IN const unsigned slot_event_method,
+	IN const unsigned slot_poll_interval,
 	IN const PKCS11H_BOOL cert_is_private
 );
 

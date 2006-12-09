@@ -121,8 +121,8 @@ struct pkcs11h_provider_s {
 	PKCS11H_BOOL cert_is_private;
 	unsigned mask_private_mode;
 	unsigned mask_decrypt_mode;
-	int slot_event_method;
-	int slot_poll_interval;
+	unsigned slot_event_method;
+	unsigned slot_poll_interval;
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	pkcs11h_thread_t slotevent_thread;

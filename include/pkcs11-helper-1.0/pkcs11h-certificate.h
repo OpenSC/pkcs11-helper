@@ -502,7 +502,7 @@ pkcs11h_certificate_freeCertificateIdList (
 CK_RV
 pkcs11h_certificate_enumTokenCertificateIds (
 	IN const pkcs11h_token_id_t token_id,
-	IN const int method,
+	IN const unsigned method,
 	IN void * const user_data,
 	IN const unsigned mask_prompt,
 	OUT pkcs11h_certificate_id_list_t * const p_cert_id_issuers_list,
@@ -523,7 +523,7 @@ pkcs11h_certificate_enumTokenCertificateIds (
  */
 CK_RV
 pkcs11h_certificate_enumCertificateIds (
-	IN const int method,
+	IN const unsigned method,
 	IN void * const user_data,
 	IN const unsigned mask_prompt,
 	OUT pkcs11h_certificate_id_list_t * const p_cert_id_issuers_list,

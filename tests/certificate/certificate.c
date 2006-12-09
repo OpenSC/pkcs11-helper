@@ -17,7 +17,7 @@ int main () {
 static
 void
 fatal (const char * const m, CK_RV rv) {
-	fprintf (stderr, "%s - %08lx - %s\n", m, rv, pkcs11h_getMessage (rv));
+	fprintf (stderr, "%s - %lu - %s\n", m, rv, pkcs11h_getMessage (rv));
 	exit (1);
 }
 

@@ -470,7 +470,7 @@ pkcs11h_setMaxLoginRetries (
  * @param allow_protected_auth	Allow this provider to use protected authentication.
  * @param mask_private_mode	Provider private mode @ref PKCS11H_PRIVATEMODE_MASK override.
  * @param slot_event_method	Provider slot event @ref PKCS11H_SLOTEVENT_METHOD method.
- * @param slot_poll_interval	Slot event poll interval (If in polling mode).
+ * @param slot_poll_interval	Slot event poll interval (If in polling mode), specify 0 for default.
  * @param cert_is_private	Provider's certificate access should be done after login.
  * @return CK_RV.
  * @attention This function must be called from the main thread.

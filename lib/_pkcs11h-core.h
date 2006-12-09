@@ -58,6 +58,10 @@
 #include <pkcs11-helper-1.0/pkcs11h-certificate.h>
 #include "_pkcs11h-threading.h"
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #define PKCS11H_INVALID_SLOT_ID		((CK_SLOT_ID)-1)
 #define PKCS11H_INVALID_SESSION_HANDLE	((CK_SESSION_HANDLE)-1)
 #define PKCS11H_INVALID_OBJECT_HANDLE	((CK_OBJECT_HANDLE)-1)

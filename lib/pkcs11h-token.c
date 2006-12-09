@@ -113,7 +113,7 @@ pkcs11h_token_duplicateTokenId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_duplicateTokenId return rv=%ld-'%s', *to=%p",
+		"PKCS#11: pkcs11h_token_duplicateTokenId return rv=%lu-'%s', *to=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*to
@@ -199,7 +199,7 @@ _pkcs11h_token_getTokenId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_token_getTokenId return rv=%ld-'%s', *p_token_id=%p",
+		"PKCS#11: _pkcs11h_token_getTokenId return rv=%lu-'%s', *p_token_id=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_token_id
@@ -232,7 +232,7 @@ _pkcs11h_token_newTokenId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_token_newTokenId return rv=%ld-'%s', *p_token_id=%p",
+		"PKCS#11: _pkcs11h_token_newTokenId return rv=%lu-'%s', *p_token_id=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_token_id
@@ -339,7 +339,7 @@ pkcs11h_token_login (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_login return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_token_login return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -415,7 +415,7 @@ pkcs11h_token_ensureAccess (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_ensureAccess return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_token_ensureAccess return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -459,7 +459,7 @@ pkcs11h_token_freeTokenIdList (
 
 CK_RV
 pkcs11h_token_enumTokenIds (
-	IN const int method,
+	IN const unsigned method,
 	OUT pkcs11h_token_id_list_t * const p_token_id_list
 ) {
 #if defined(ENABLE_PKCS11H_THREADING)
@@ -476,7 +476,8 @@ pkcs11h_token_enumTokenIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_enumTokenIds entry p_token_id_list=%p",
+		"PKCS#11: pkcs11h_token_enumTokenIds entry method=%u, p_token_id_list=%p",
+		method,
 		(void *)p_token_id_list
 	);
 
@@ -560,7 +561,7 @@ pkcs11h_token_enumTokenIds (
 		if (rv != CKR_OK) {
 			PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot get slot list for provider '%s' rv=%ld-'%s'",
+				"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
 				current_provider->manufacturerID,
 				rv,
 				pkcs11h_getMessage (rv)
@@ -656,7 +657,7 @@ pkcs11h_token_enumTokenIds (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_enumTokenIds return rv=%ld-'%s', *p_token_id_list=%p",
+		"PKCS#11: pkcs11h_token_enumTokenIds return rv=%lu-'%s', *p_token_id_list=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)p_token_id_list

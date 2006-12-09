@@ -119,7 +119,7 @@ pkcs11h_token_serializeTokenId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_serializeTokenId return rv=%ld-'%s', *max=%u, sz='%s'",
+		"PKCS#11: pkcs11h_token_serializeTokenId return rv=%lu-'%s', *max=%u, sz='%s'",
 		rv,
 		pkcs11h_getMessage (rv),
 		*max,
@@ -321,7 +321,7 @@ pkcs11h_certificate_serializeCertificateId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_serializeCertificateId return rv=%ld-'%s', *max=%u, sz='%s'",
+		"PKCS#11: pkcs11h_certificate_serializeCertificateId return rv=%lu-'%s', *max=%u, sz='%s'",
 		rv,
 		pkcs11h_getMessage (rv),
 		*max,
@@ -421,7 +421,7 @@ pkcs11h_certificate_deserializeCertificateId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_deserializeCertificateId return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_certificate_deserializeCertificateId return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

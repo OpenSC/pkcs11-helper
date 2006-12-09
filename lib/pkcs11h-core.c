@@ -352,7 +352,7 @@ pkcs11h_initialize (void) {
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_initialize return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_initialize return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -607,8 +607,8 @@ pkcs11h_addProvider (
 	IN const char * const provider_location,
 	IN const PKCS11H_BOOL allow_protected_auth,
 	IN const unsigned mask_private_mode,
-	IN const int slot_event_method,
-	IN const int slot_poll_interval,
+	IN const unsigned slot_event_method,
+	IN const unsigned slot_poll_interval,
 	IN const PKCS11H_BOOL cert_is_private
 ) {
 #if defined(ENABLE_PKCS11H_THREADING)
@@ -778,7 +778,7 @@ pkcs11h_addProvider (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
-		"PKCS#11: Provider '%s' added rv=%ld-'%s'",
+		"PKCS#11: Provider '%s' added rv=%lu-'%s'",
 		reference,
 		rv,
 		pkcs11h_getMessage (rv)
@@ -786,7 +786,7 @@ pkcs11h_addProvider (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_addProvider return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_addProvider return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -896,7 +896,7 @@ pkcs11h_removeProvider (
 	
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_removeProvider return rv=%ld-'%s'",
+		"PKCS#11: pkcs11h_removeProvider return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

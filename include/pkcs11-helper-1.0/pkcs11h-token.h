@@ -164,7 +164,7 @@ pkcs11h_token_freeTokenIdList (
  */
 CK_RV
 pkcs11h_token_enumTokenIds (
-	IN const int method,
+	IN const unsigned method,
 	OUT pkcs11h_token_id_list_t * const p_token_id_list
 );
 

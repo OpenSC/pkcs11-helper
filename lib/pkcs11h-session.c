@@ -77,7 +77,7 @@ _pkcs11h_session_getSlotList (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_session_getSlotList entry provider=%p, token_present=%d, pSlotList=%p, pulCount=%p",
 		(void *)provider,
-		token_present,
+		token_present ? 1 : 0,
 		(void *)pSlotList,
 		(void *)pulCount
 	);
@@ -124,7 +124,7 @@ _pkcs11h_session_getSlotList (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_getSlotList return rv=%ld-'%s' *pulCount=%ld",
+		"PKCS#11: _pkcs11h_session_getSlotList return rv=%lu-'%s' *pulCount=%ld",
 		rv,
 		pkcs11h_getMessage (rv),
 		*pulCount
@@ -195,7 +195,7 @@ _pkcs11h_session_getObjectAttributes (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_getObjectAttributes return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_session_getObjectAttributes return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -230,7 +230,7 @@ _pkcs11h_session_freeObjectAttributes (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_freeObjectAttributes return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_session_freeObjectAttributes return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -375,7 +375,7 @@ _pkcs11h_session_findObjects (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_findObjects return rv=%ld-'%s', *p_objects_found=%ld",
+		"PKCS#11: _pkcs11h_session_findObjects return rv=%lu-'%s', *p_objects_found=%ld",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_objects_found
@@ -505,7 +505,7 @@ _pkcs11h_session_getSessionByTokenId (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_getSessionByTokenId return rv=%ld-'%s', *p_session=%p",
+		"PKCS#11: _pkcs11h_session_getSessionByTokenId return rv=%lu-'%s', *p_session=%p",
 		rv,
 		pkcs11h_getMessage (rv),
 		(void *)*p_session
@@ -559,7 +559,7 @@ _pkcs11h_session_release (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_release return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_session_release return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -675,7 +675,7 @@ _pkcs11h_session_reset (
 				if (rv != CKR_OK) {
 					PKCS11H_DEBUG (
 						PKCS11H_LOG_DEBUG1,
-						"PKCS#11: Cannot get token information for provider '%s' slot %ld rv=%ld-'%s'",
+						"PKCS#11: Cannot get token information for provider '%s' slot %ld rv=%lu-'%s'",
 						current_provider->manufacturerID,
 						slots[slot_index],
 						rv,
@@ -696,7 +696,7 @@ _pkcs11h_session_reset (
 			if (rv != CKR_OK) {
 				PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Cannot get slot list for provider '%s' rv=%ld-'%s'",
+					"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
 					current_provider->manufacturerID,
 					rv,
 					pkcs11h_getMessage (rv)
@@ -749,7 +749,7 @@ _pkcs11h_session_reset (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_reset return rv=%ld-'%s', *p_slot=%ld",
+		"PKCS#11: _pkcs11h_session_reset return rv=%lu-'%s', *p_slot=%ld",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_slot
@@ -825,7 +825,7 @@ _pkcs11h_session_getObjectById (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_getObjectById return rv=%ld-'%s', *p_handle=%08lx",
+		"PKCS#11: _pkcs11h_session_getObjectById return rv=%lu-'%s', *p_handle=%08lx",
 		rv,
 		pkcs11h_getMessage (rv),
 		(unsigned long)*p_handle
@@ -881,7 +881,7 @@ _pkcs11h_session_validate (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_validate return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_session_validate return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -1077,7 +1077,7 @@ _pkcs11h_session_login (
 
 	PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_login return rv=%ld-'%s'",
+		"PKCS#11: _pkcs11h_session_login return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

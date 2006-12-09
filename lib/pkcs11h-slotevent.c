@@ -180,7 +180,7 @@ __pkcs11h_slotevent_provider (
 		}
 	}
 	else {
-		unsigned long ulLastChecksum = 0;
+		unsigned long last_checksum = 0;
 		PKCS11H_BOOL is_first_time = TRUE;
 
 		while (
@@ -188,7 +188,7 @@ __pkcs11h_slotevent_provider (
 			provider->enabled &&
 			rv == CKR_OK
 		) {
-			unsigned long ulCurrentChecksum = 0;
+			unsigned long current_checksum = 0;
 
 			CK_SLOT_ID_PTR slots = NULL;
 			CK_ULONG slotnum;
@@ -214,7 +214,7 @@ __pkcs11h_slotevent_provider (
 					CK_TOKEN_INFO info;
 
 					if (provider->f->C_GetTokenInfo (slots[i], &info) == CKR_OK) {
-						ulCurrentChecksum += (
+						current_checksum += (
 							__pkcs11h_slotevent_checksum (
 								info.label,
 								sizeof (info.label)
@@ -241,7 +241,7 @@ __pkcs11h_slotevent_provider (
 					is_first_time = FALSE;
 				}
 				else {
-					if (ulLastChecksum != ulCurrentChecksum) {
+					if (last_checksum != current_checksum) {
 						PKCS11H_DEBUG (
 							PKCS11H_LOG_DEBUG1,
 							"PKCS#11: Slotevent provider='%s' event",
@@ -251,7 +251,7 @@ __pkcs11h_slotevent_provider (
 						_pkcs11h_threading_condSignal (&g_pkcs11h_data->slotevent.cond_event);
 					}
 				}
-				ulLastChecksum = ulCurrentChecksum;
+				last_checksum = current_checksum;
 			}
 
 			if (slots != NULL) {

@@ -66,7 +66,7 @@ EXTRA_DIST= \
 	slotevent.exports \
 	token.exports
 
-pkgconfig_DATA = libpkcs11-helper-1.pc
+pkgconfig_DATA=libpkcs11-helper-1.pc
 
 lib_LTLIBRARIES=libpkcs11-helper.la
 BUILT_SOURCES=pkcs11-helper.exports

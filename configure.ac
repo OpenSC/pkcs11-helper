@@ -277,7 +277,7 @@ AC_CHECK_HEADERS([[ \
 	assert.h \
 	time.h \
 ]])
-if test -z "${WIN32}"; then
+if test "${WIN32}" != "yes"; then
 	AC_CHECK_HEADERS([ \
 		signal.h \
 		dlfcn.h \

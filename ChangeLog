@@ -5,6 +5,8 @@ $Id$
 
 2006-??-?? - Version 1.02
 
+* Switch to free implementation of PKCS#11 headers.
+
 * First standalone version.
 
 * Fix invalid certificate max size handling (Zeljko Vrba).
@@ -35,7 +37,7 @@ $Id$
 
 2006-06-26 - Version 1.01
 
-* Fix handling mutiple providers.
+* Fix handling multiple providers.
 
 2006-05-14 - Version 1.00
 

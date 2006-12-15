@@ -57,6 +57,10 @@ m4 Macros License
 
 	pkg.m4
 		Copyright © 2004 Scott James Remnant <scott@netsplit.com>.
+	
+	AX_CPP_VARARG*
+		Copyright (c) James Yonan <jim@yonan.net>
+		Copyright (c) Matthias Andree <matthias.andree@web.de>
 
 OpenSSL License (Optional component, parsing certificates, engine)
 

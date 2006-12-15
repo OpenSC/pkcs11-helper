@@ -1321,7 +1321,7 @@ typedef struct ck_c_initialize_args *CK_C_INITIALIZE_ARGS_PTR;
 
 
 /* System dependencies.  */
-#ifdef __WIN32
+#if defined(_WIN32) || defined(CRYPTOKI_FORCE_WIN32)
 #pragma pack(pop, cryptoki)
 #endif
 

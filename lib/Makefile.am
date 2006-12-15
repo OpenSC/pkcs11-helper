@@ -52,11 +52,6 @@
 INCLUDES= \
 	-I$(top_srcdir)/include
 
-PKCS11_INCLUDES= \
-	../pkcs11-helper-1.0/pkcs11-headers/*.h \
-	../pkcs11-helper-1.0/cryptoki.h \
-	../pkcs11-helper-1.0/cryptoki-win32.h
-
 EXTRA_DIST= \
 	Makefile.w32-vc \
 	certificate.exports \
@@ -71,6 +66,7 @@ pkgconfig_DATA=libpkcs11-helper-1.pc
 lib_LTLIBRARIES=libpkcs11-helper.la
 BUILT_SOURCES=pkcs11-helper.exports
 nodist_libpkcs11_helper_la_SOURCES= \
+	../pkcs11-helper-1.0/pkcs11.h \
 	../pkcs11-helper-1.0/pkcs11h-def.h \
 	../pkcs11-helper-1.0/pkcs11h-engines.h \
 	../pkcs11-helper-1.0/pkcs11h-core.h \
@@ -78,7 +74,6 @@ nodist_libpkcs11_helper_la_SOURCES= \
 	../pkcs11-helper-1.0/pkcs11h-certificate.h \
 	../pkcs11-helper-1.0/pkcs11h-data.h \
 	../pkcs11-helper-1.0/pkcs11h-openssl.h \
-	$(PKCS11_INCLUDES) \
 	pkcs11-helper.exports
 libpkcs11_helper_la_SOURCES= \
 	common.h \

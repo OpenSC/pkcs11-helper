@@ -57,12 +57,12 @@
 # debug threading token data certificate locate slotevent openssl standalone engine_crypto
 #
 AC_DEFUN([PKCS11_HELPER_1_CHECK_FEATURES], [
+	AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 	AC_ARG_VAR([PKCS11_HELPER_FEATURES], [pkcs11-helperer feartures overriding pkg-config])
 	AC_MSG_CHECKING([pkcs11-helper features])
 	_PKG_CONFIG([PKCS11_HELPER_FEATURES], [variable features], [libpkcs11-helper-1])
-	PKCS11_HELPER_FEATURES=$pkg_cv_PKCS11_HELPER_FEATURES
 	for pkcs11h_feature in $1; do
-		echo " ${PKCS11_HELPER_FEATURES} " | grep " ${pkcs11h_feature} " > /dev/null 2>&1 || \
+		echo " ${pkg_cv_PKCS11_HELPER_FEATURES} " | grep " ${pkcs11h_feature} " > /dev/null 2>&1 || \
 			AC_MSG_ERROR([pkcs11-helper ${pkcs11h_feature} feature must be enabled.])
 	done
 	AC_MSG_RESULT([ok])

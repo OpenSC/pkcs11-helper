@@ -234,9 +234,9 @@ _pkcs11h_log (
 	IN ...
 )
 #ifdef __GNUC__
-    __attribute__ ((format (printf, 2, 3)))
+	__attribute__ ((format (printf, 2, 3)))
 #endif
-    ;
+	;
 
 extern pkcs11h_data_t g_pkcs11h_data;
 extern unsigned int g_pkcs11h_loglevel;

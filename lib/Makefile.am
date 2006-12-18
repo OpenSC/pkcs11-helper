@@ -66,14 +66,6 @@ pkgconfig_DATA=libpkcs11-helper-1.pc
 lib_LTLIBRARIES=libpkcs11-helper.la
 BUILT_SOURCES=pkcs11-helper.exports
 nodist_libpkcs11_helper_la_SOURCES= \
-	../pkcs11-helper-1.0/pkcs11.h \
-	../pkcs11-helper-1.0/pkcs11h-def.h \
-	../pkcs11-helper-1.0/pkcs11h-engines.h \
-	../pkcs11-helper-1.0/pkcs11h-core.h \
-	../pkcs11-helper-1.0/pkcs11h-token.h \
-	../pkcs11-helper-1.0/pkcs11h-certificate.h \
-	../pkcs11-helper-1.0/pkcs11h-data.h \
-	../pkcs11-helper-1.0/pkcs11h-openssl.h \
 	pkcs11-helper.exports
 libpkcs11_helper_la_SOURCES= \
 	common.h \

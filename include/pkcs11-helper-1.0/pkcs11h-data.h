@@ -50,9 +50,18 @@
  */
 
 /**
+ * @addtogroup pkcs11h_data Data object interface
+ *
+ * Data object manipulation.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-data.h
  * @brief pkcs11-helper data object support.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_data.
  */
 
 #ifndef __PKCS11H_DATA_H
@@ -185,5 +194,7 @@ pkcs11h_data_enumDataObjects (
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_DATA_H */

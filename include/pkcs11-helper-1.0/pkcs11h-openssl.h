@@ -50,9 +50,18 @@
  */
 
 /**
+ * @addtogroup pkcs11h_openssl OpenSSL interface
+ *
+ * OpenSSL engine to be used by OpenSSL enabled applications.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-openssl.h
  * @brief pkcs11-helper OpenSSL interface.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_openssl.
  */
 
 #ifndef __PKCS11H_HELPER_H
@@ -157,5 +166,7 @@ pkcs11h_openssl_session_getX509 (
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_OPENSSL_H */

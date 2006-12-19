@@ -50,9 +50,18 @@
  */
 
 /**
+ * @addtogroup pkcs11h_engines Engines interface
+ *
+ * External dependencies.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-engines.h
  * @brief pkcs11-helper engines definitions.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_engines.
  */
 
 #ifndef __PKCS11H_ENGINES_H
@@ -210,5 +219,7 @@ pkcs11h_engine_setCrypto (
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_ENGINES_H */

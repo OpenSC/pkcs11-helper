@@ -50,9 +50,18 @@
  */
 
 /**
+ * @addtogroup pkcs11h_certificate Certificate interface
+ *
+ * X.509 certificate interface, provides signature and decryption.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-certificate.h
  * @brief pkcs11-helper certificate functions.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_certificate.
  */
 
 #ifndef __PKCS11H_CERTIFICATE_H
@@ -533,5 +542,7 @@ pkcs11h_certificate_enumCertificateIds (
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_CERTIFICATE_H */

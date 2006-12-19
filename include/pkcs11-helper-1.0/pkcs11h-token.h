@@ -50,9 +50,18 @@
  */
 
 /**
+ * @addtogroup pkcs11h_token Token interface
+ *
+ * Token related functions.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-token.h
  * @brief pkcs11-helper token interface.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_token.
  */
 
 #ifndef __PKCS11H_TOKEN_H
@@ -200,5 +209,7 @@ pkcs11h_token_deserializeTokenId (
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_TOKEN_H */

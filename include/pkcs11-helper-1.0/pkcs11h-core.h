@@ -79,20 +79,29 @@
  * @par License
  * @ref License is dual BSD or GPL.
  * @par Modules
- * - @ref pkcs11h-core.h "Core" - Initialize library, adding providers, hooks.
- * - @ref pkcs11h-token.h "Token" - Handle tokens.
- * - @ref pkcs11h-certificate.h "Certificate" - Handle certificate objects.
- * - @ref pkcs11h-data.h "Data" - Handle data objects.
- * - @ref pkcs11h-openssl.h "OpenSSL" - OpenSSL engine support.
+ * - @ref pkcs11h_core - Initialize library, adding providers, hooks.
+ * - @ref pkcs11h_token - Handle tokens.
+ * - @ref pkcs11h_certificate - Handle certificate objects.
+ * - @ref pkcs11h_data - Handle data objects.
+ * - @ref pkcs11h_openssl - OpenSSL engine support.
  * @page License
  * @par pkcs11-helper License
  * @include COPYING
  */
 
 /**
+ * @addtogroup pkcs11h_core pkcs11-helper core interface
+ *
+ * Core functionality.
+ *
+ * @{
+ */
+
+/**
  * @file pkcs11h-core.h
  * @brief pkcs11-helper core.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
+ * @see pkcs11h_core.
  */
 
 #ifndef __PKCS11H_BASE_H
@@ -529,5 +538,7 @@ pkcs11h_plugAndPlay (void);
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif				/* __PKCS11H_BASE_H */

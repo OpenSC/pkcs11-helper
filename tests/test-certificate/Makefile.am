@@ -58,4 +58,4 @@ LDADD= \
 
 TESTS=test-certificate
 noinst_PROGRAMS=test-certificate
-test_certificate_SOURCES=certificate.c
+test_certificate_SOURCES=test-certificate.c

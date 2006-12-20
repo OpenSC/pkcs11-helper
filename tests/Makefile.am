@@ -49,4 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIRS=basic certificate slotevent
+SUBDIRS= \
+	test-basic \
+	test-certificate \
+	test-slotevent

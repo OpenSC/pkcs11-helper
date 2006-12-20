@@ -64,6 +64,12 @@
  * @see pkcs11h_certificate.
  */
 
+/**
+ * @example test-certificate.c
+ * 
+ * The following example shows some basic usage of the certificate interface.
+ */
+
 #ifndef __PKCS11H_CERTIFICATE_H
 #define __PKCS11H_CERTIFICATE_H
 

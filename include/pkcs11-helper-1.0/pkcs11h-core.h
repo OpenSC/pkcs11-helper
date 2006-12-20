@@ -104,6 +104,18 @@
  * @see pkcs11h_core.
  */
 
+/**
+ * @example test-basic.c
+ * 
+ * The following example shows some basic usage of the library.
+ */
+
+/**
+ * @example test-slotevent.c
+ * 
+ * The following example shows how to use the slot event interface.
+ */
+
 #ifndef __PKCS11H_BASE_H
 #define __PKCS11H_BASE_H
 

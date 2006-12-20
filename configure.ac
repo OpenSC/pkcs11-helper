@@ -383,9 +383,9 @@ AC_CONFIG_FILES([
 	lib/libpkcs11-helper-1.pc
 	m4dir/Makefile
 	tests/Makefile
-	tests/basic/Makefile
-	tests/certificate/Makefile
-	tests/slotevent/Makefile
+	tests/test-basic/Makefile
+	tests/test-certificate/Makefile
+	tests/test-slotevent/Makefile
 ])
 AC_OUTPUT
 

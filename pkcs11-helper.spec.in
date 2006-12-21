@@ -73,7 +73,7 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %files devel
 %defattr(-,root,root,-)
 %{_includedir}/*
-#%{_libdir}/pkgconfig/*
+%{_libdir}/pkgconfig/*
 %{_datadir}/aclocal/*
 %if %{?with_doc}
 %{_docdir}/%{name}-%{version}/api/*

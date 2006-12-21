@@ -51,7 +51,8 @@
 
 /**
  * @mainpage pkcs11-helper-1.0
- * @par About
+ * @section about About
+ * @par
  * <a href="http://www.rsasecurity.com/rsalabs/pkcs/pkcs-11">PKCS#11</a> 
  * is
  * <a href="http://www.rsasecurity.com">RSA Security</a>
@@ -60,7 +61,8 @@
  * @par
  * pkcs11-helper is a library that simplifies the interaction with PKCS#11
  * providers for end-user applications.
- * @par Features
+ * @section features Features
+ * @par
  * pkcs11-helper allows using multiple PKCS#11 providers at the same time, enumerating 
  * available token certificates, or selecting a certificate directly by serialized id,
  * handling card removal and card insert events, handling card re-insert to a different
@@ -69,24 +71,25 @@
  * pkcs11-helper is not designed to manage card content, since object attributes
  * are usually vendor specific, and 99% of application need to access
  * existing objects in order to perform signature and decryption.
- * @par Compatibility
+ * @section compatibility Compatibility
  * - The pkcs11-helper library is available in POSIX and WIN32 compliant systems.
  * - The pkcs11-helper library should work with almost any PKCS#11 provider, since it
  *   uses the minimum required features of the PKCS#11 standard.
- * @par Support
+ * @section support Support
+ * @par
  * pkcs11-helper support is available via the
  * <a href="http://www.opensc-project.org">OpenSC Project</a>.
- * @par License
+ * @section license License
+ * @par
  * @ref License is dual BSD or GPL.
- * @par Modules
+ * @section modules Modules
  * - @ref pkcs11h_core - Initialize library, adding providers, hooks.
  * - @ref pkcs11h_token - Handle tokens.
  * - @ref pkcs11h_certificate - Handle certificate objects.
  * - @ref pkcs11h_data - Handle data objects.
  * - @ref pkcs11h_openssl - OpenSSL engine support.
- * @page License
- * @par pkcs11-helper License
- * @include COPYING
+ * @page License pkcs11-helper license
+ * @verbinclude COPYING
  */
 
 /**

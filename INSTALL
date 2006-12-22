@@ -69,6 +69,10 @@ Visual Studio
 		None.
 
 	Build:
-		cd lib
-		nmake -f Makefile.w32-vc
+		Without openssl engine:
+			cd lib
+			nmake -f Makefile.w32-vc
+		With openssl engine:
+			cd lib
+			nmake -f Makefile.w32-vc OPENSSL=1 OPENSSL_HOME=<location of openssl>
 

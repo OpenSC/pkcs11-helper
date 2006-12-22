@@ -51,14 +51,13 @@
 
 #
 # If you wish openssl interface
-#
-# Change these to point to your OpenSSL top-level
-# directories.
-# Provide OPENSS=1 as nmake argument.
+# Provide OPENSS=1 OPENSSL_HOME=<location> as nmake argument.
 #
 #OPENSSL=1
 !ifdef OPENSSL
-OPENSSL = ..\..\openssl-0.9.8a
+!ifndef OPENSSL_HOME
+OPENSSL_HOME = ..\..\openssl-0.9.8a
+!endif
 !endif
 
 !ifdef OPENSSL
@@ -67,8 +66,8 @@ OPENSSL_STATIC = libeay32.lib
 OPENSSL_DYNAMIC = libeay32.lib
 #OPENSSL_DYNAMIC = libeay32d.lib
 
-OPENSSL_CFLAGS=-I$(OPENSSL)/inc32 -DENABLE_PKCS11H_OPENSSL
-OPENSSL_LIBS=-LIBPATH:$(OPENSSL)\out32 user32.lib advapi32.lib $(OPENSSL_STATIC)
+OPENSSL_CFLAGS=-I$(OPENSSL_HOME)/inc32 -DENABLE_PKCS11H_OPENSSL
+OPENSSL_LIBS=-LIBPATH:$(OPENSSL_HOME)\out32 user32.lib advapi32.lib $(OPENSSL_STATIC)
 !endif
 
 CFLAGS = -I../include $(OPENSSL_CFLAGS) -DWIN32 -DWIN32_LEAN_AND_MEAN -D_MBCS -D_CRT_SECURE_NO_DEPRECATE

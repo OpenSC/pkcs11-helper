@@ -314,19 +314,31 @@ __pkcs11h_certificate_loadCertificate (
 					_pkcs11h_mem_free ((void *)&certificate->id->certificate_blob);
 				}
 
-				rv = _pkcs11h_mem_duplicate (
-					(void*)&certificate->id->certificate_blob,
-					&certificate->id->certificate_blob_size,
-					attrs[0].pValue,
-					attrs[0].ulValueLen
-				);
+				if (
+					(rv = _pkcs11h_mem_duplicate (
+						(void*)&certificate->id->certificate_blob,
+						&certificate->id->certificate_blob_size,
+						attrs[0].pValue,
+						attrs[0].ulValueLen
+					)) != CKR_OK
+				) {
+					goto retry1;
+				}
 			}
 		}
+
+		rv = CKR_OK;
+
+	retry1:
 
 		_pkcs11h_session_freeObjectAttributes (
 			attrs,
 			sizeof (attrs) / sizeof (CK_ATTRIBUTE)
 		);
+
+		if (rv != CKR_OK) {
+			goto cleanup;
+		}
 	}
 
 	if (certificate->id->certificate_blob == NULL) {
@@ -760,10 +772,10 @@ _pkcs11h_certificate_resetSession (
 		) {
 			goto cleanup;
 		}
+	}
 
-		if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
-			goto cleanup;
-		}
+	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
+		goto cleanup;
 	}
 
 	if (!public_only && certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE) {

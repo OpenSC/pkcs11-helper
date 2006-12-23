@@ -309,7 +309,34 @@ int main () {
 
 	sign_test (cert);
 
+	printf ("Perforing signature #4 (you should NOT be prompt for anything)\n");
+
+	if ((rv = pkcs11h_certificate_freeCertificate (cert)) != CKR_OK) {
+		fatal ("pkcs11h_certificate_free failed", rv);
+	}
+
+	if (
+		(rv = pkcs11h_certificate_create (
+			certs->certificate_id,
+			NULL,
+			PKCS11H_PROMPT_MASK_ALLOW_ALL,
+			PKCS11H_PIN_CACHE_INFINITE,
+			&cert
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_certificate_create failed", rv);
+	}
+
+	sign_test (cert);
+
 	printf ("Terminating pkcs11-helper\n");
+
+	if ((rv = pkcs11h_certificate_freeCertificate (cert)) != CKR_OK) {
+		fatal ("pkcs11h_certificate_free failed", rv);
+	}
+
+	pkcs11h_certificate_freeCertificateIdList (issuers);
+	pkcs11h_certificate_freeCertificateIdList (certs);
 
 	if ((rv = pkcs11h_terminate ()) != CKR_OK) {
 		fatal ("pkcs11h_terminate failed", rv);

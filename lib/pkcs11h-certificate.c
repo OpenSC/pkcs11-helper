@@ -644,7 +644,8 @@ _pkcs11h_certificate_resetSession (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	PKCS11H_BOOL is_key_valid = FALSE;
+	PKCS11H_BOOL session_valid = FALSE;
+	CK_OBJECT_HANDLE cert_handle;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (certificate!=NULL);
@@ -721,7 +722,23 @@ _pkcs11h_certificate_resetSession (
 					&certificate->key_handle
 				)) == CKR_OK
 			) {
-				is_key_valid = TRUE;
+				session_valid = TRUE;
+			}
+			else {
+				certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+			}
+		}
+		else {
+			if (
+				(rv = _pkcs11h_session_getObjectById (
+					certificate->session,
+					CKO_CERTIFICATE,
+					certificate->id->attrCKA_ID,
+					certificate->id->attrCKA_ID_size,
+					&cert_handle
+				)) == CKR_OK
+			) {
+				session_valid = TRUE;
 			}
 			else {
 				certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
@@ -729,7 +746,9 @@ _pkcs11h_certificate_resetSession (
 		}
 	}
 
-	if (!is_key_valid) {
+	if (!session_valid) {
+		certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+
 		if (
 			(rv = _pkcs11h_session_login (
 				certificate->session,
@@ -747,10 +766,7 @@ _pkcs11h_certificate_resetSession (
 		}
 	}
 
-	if (
-		!is_key_valid &&
-		!public_only
-	) {
+	if (!public_only && certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE) {
 		if (
 			(rv = _pkcs11h_session_getObjectById (
 				certificate->session,
@@ -758,18 +774,10 @@ _pkcs11h_certificate_resetSession (
 				certificate->id->attrCKA_ID,
 				certificate->id->attrCKA_ID_size,
 				&certificate->key_handle
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
-			is_key_valid = TRUE;
+			goto cleanup;
 		}
-	}
-
-	if (
-		!public_only &&
-		!is_key_valid
-	) {
-		rv = CKR_FUNCTION_REJECTED;
-		goto cleanup;
 	}
 
 	rv = CKR_OK;

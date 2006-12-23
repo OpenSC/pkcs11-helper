@@ -62,18 +62,18 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
-enum _pkcs11h_private_op_e {
-	_pkcs11h_private_op_sign=0,
-	_pkcs11h_private_op_sign_recover,
-	_pkcs11h_private_op_decrypt,
-	_pkcs11h_private_op_unwrap
+enum __pkcs11h_private_op_e {
+	__pkcs11h_private_op_sign=0,
+	__pkcs11h_private_op_sign_recover,
+	__pkcs11h_private_op_decrypt,
+	__pkcs11h_private_op_unwrap
 };
 
 static
 CK_RV
 __pkcs11h_certificate_doPrivateOperation (
 	IN const pkcs11h_certificate_t certificate,
-	IN const enum _pkcs11h_private_op_e op,
+	IN const enum __pkcs11h_private_op_e op,
 	IN const CK_MECHANISM_TYPE mech_type,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
@@ -116,10 +116,10 @@ _pkcs11h_certificate_isBetterCertificate (
 ) {
 	PKCS11H_BOOL is_better = FALSE;
 
-	/*PKCS11H_ASSERT (current!=NULL); NOT NEEDED */
-	PKCS11H_ASSERT (newone!=NULL);
+	/*_PKCS11H_ASSERT (current!=NULL); NOT NEEDED */
+	_PKCS11H_ASSERT (newone!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_isBetterCertificate entry current=%p, current_size=%u, newone=%p, newone_size=%u",
 		current,
@@ -139,8 +139,8 @@ _pkcs11h_certificate_isBetterCertificate (
 		time_t notAfterCurrent, notAfterNew;
 
 		if (
-			!g_pkcs11h_crypto_engine.certificate_get_expiration (
-				g_pkcs11h_crypto_engine.global_data,
+			!_g_pkcs11h_crypto_engine.certificate_get_expiration (
+				_g_pkcs11h_crypto_engine.global_data,
 				current,
 				current_size,
 				&notAfterCurrent
@@ -150,8 +150,8 @@ _pkcs11h_certificate_isBetterCertificate (
 		}
 
 		if (
-			!g_pkcs11h_crypto_engine.certificate_get_expiration (
-				g_pkcs11h_crypto_engine.global_data,
+			!_g_pkcs11h_crypto_engine.certificate_get_expiration (
+				_g_pkcs11h_crypto_engine.global_data,
 				newone,
 				newone_size,
 				&notAfterNew
@@ -160,7 +160,7 @@ _pkcs11h_certificate_isBetterCertificate (
 			notAfterCurrent = (time_t)0;
 		}
 
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG2,
 			"PKCS#11: _pkcs11h_certificate_isBetterCertificate notAfterCurrent='%s', notAfterNew='%s'",
 			asctime (localtime (&notAfterCurrent)),
@@ -170,7 +170,7 @@ _pkcs11h_certificate_isBetterCertificate (
 		is_better = notAfterNew > notAfterCurrent;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_isBetterCertificate return is_better=%d",
 		is_better ? 1 : 0
@@ -183,11 +183,11 @@ CK_RV
 _pkcs11h_certificate_newCertificateId (
 	OUT pkcs11h_certificate_id_t * const p_certificate_id
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (p_certificate_id!=NULL);
+	_PKCS11H_ASSERT (p_certificate_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_newCertificateId entry p_certificate_id=%p",
 		(void *)p_certificate_id
@@ -195,11 +195,20 @@ _pkcs11h_certificate_newCertificateId (
 
 	*p_certificate_id = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_malloc ((void *)p_certificate_id, sizeof (struct pkcs11h_certificate_id_s));
+	if (
+		(rv = _pkcs11h_mem_malloc (
+			(void *)p_certificate_id,
+			sizeof (struct pkcs11h_certificate_id_s)
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_newCertificateId return rv=%lu-'%s', *p_certificate_id=%p",
 		rv,
@@ -230,60 +239,69 @@ __pkcs11h_certificate_loadCertificate (
 
 	CK_OBJECT_HANDLE *objects = NULL;
 	CK_ULONG objects_found = 0;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	CK_ULONG i;
 
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (certificate->id!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate->id!=NULL);
 	
 	/* Must be after assert */
 	cert_filter[1].pValue = certificate->id->attrCKA_ID;
 	cert_filter[1].ulValueLen = certificate->id->attrCKA_ID_size;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_loadCertificate entry certificate=%p",
 		(void *)certificate
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_validate (certificate->session);
+	if ((rv = _pkcs11h_session_validate (certificate->session)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_findObjects (
+	if (
+		(rv = _pkcs11h_session_findObjects (
 			certificate->session,
 			cert_filter,
 			sizeof (cert_filter) / sizeof (CK_ATTRIBUTE),
 			&objects,
 			&objects_found
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	for (i=0;rv == CKR_OK && i < objects_found;i++) {
+	for (i=0;i < objects_found;i++) {
 		CK_ATTRIBUTE attrs[] = {
 			{CKA_VALUE, NULL, 0}
 		};
 
 		if (
-			rv == CKR_OK &&
 			(rv = _pkcs11h_session_getObjectAttributes (
 				certificate->session,
 				objects[i],
 				attrs,
 				sizeof (attrs) / sizeof (CK_ATTRIBUTE)
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%lu-'%s'",
+				certificate->session->provider->manufacturerID,
+				objects[i],
+				rv,
+				pkcs11h_getMessage (rv)
+			);
+		}
+		else {
 			if (
 				_pkcs11h_certificate_isBetterCertificate (
 					certificate->id->certificate_blob,
@@ -305,27 +323,20 @@ __pkcs11h_certificate_loadCertificate (
 			}
 		}
 
-		if (rv != CKR_OK) {
-			PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%lu-'%s'",
-				certificate->session->provider->manufacturerID,
-				objects[i],
-				rv,
-				pkcs11h_getMessage (rv)
-			);
-
-			/*
-			 * Ignore error
-			 */
-			rv = CKR_OK;
-		}
-
 		_pkcs11h_session_freeObjectAttributes (
 			attrs,
 			sizeof (attrs) / sizeof (CK_ATTRIBUTE)
 		);
 	}
+
+	if (certificate->id->certificate_blob == NULL) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+	}
+
+	rv = CKR_OK;
+
+cleanup:
 	
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -333,13 +344,6 @@ __pkcs11h_certificate_loadCertificate (
 		mutex_locked = FALSE;
 	}
 #endif
-
-	if (
-		rv == CKR_OK &&
-		certificate->id->certificate_blob == NULL
-	) {
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-	}
 
 	if (objects != NULL) {
 		_pkcs11h_mem_free ((void *)&objects);
@@ -351,7 +355,7 @@ __pkcs11h_certificate_loadCertificate (
 	 * should be free by caller.
 	 */
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_loadCertificate return rv=%lu-'%s'",
 		rv,
@@ -369,9 +373,9 @@ __pkcs11h_certificate_updateCertificateIdDescription (
 	static const char * separator = " on ";
 	static const char * unknown = "UNKNOWN";
 
-	PKCS11H_ASSERT (certificate_id!=NULL);
+	_PKCS11H_ASSERT (certificate_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_updateCertificateIdDescription entry certificate_id=%p",
 		(void *)certificate_id
@@ -379,8 +383,8 @@ __pkcs11h_certificate_updateCertificateIdDescription (
 
 	if (
 		certificate_id->certificate_blob_size != 0 &&
-		!g_pkcs11h_crypto_engine.certificate_get_dn (
-			g_pkcs11h_crypto_engine.global_data,
+		!_g_pkcs11h_crypto_engine.certificate_get_dn (
+			_g_pkcs11h_crypto_engine.global_data,
 			certificate_id->certificate_blob,
 			certificate_id->certificate_blob_size,
 			certificate_id->displayName,
@@ -414,7 +418,7 @@ __pkcs11h_certificate_updateCertificateIdDescription (
 	);
 	certificate_id->displayName[sizeof (certificate_id->displayName) - 1] = '\0';
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_updateCertificateIdDescription return displayName='%s'",
 		certificate_id->displayName
@@ -431,31 +435,28 @@ __pkcs11h_certificate_getKeyAttributes (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
 
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_getKeyAttributes entry certificate=%p",
 		(void *)certificate
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
 	certificate->mask_private_mode = 0;
-
-	while (rv == CKR_OK && !op_succeed) {
+	while (!op_succeed) {
 		CK_ATTRIBUTE key_attrs[] = {
 			{CKA_SIGN, NULL, 0},
 			{CKA_SIGN_RECOVER, NULL, 0},
@@ -466,39 +467,42 @@ __pkcs11h_certificate_getKeyAttributes (
 		/*
 		 * Don't try invalid object
 		 */
-		if (
-			rv == CKR_OK &&
-			certificate->key_handle == PKCS11H_INVALID_OBJECT_HANDLE
-		) {
+		if (certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE) {
 			rv = CKR_OBJECT_HANDLE_INVALID;
+			goto retry;
 		}
 
-		if (rv == CKR_OK) {
-			if (certificate->session->provider->mask_private_mode != 0) {
-				certificate->mask_private_mode = certificate->session->provider->mask_private_mode;
-				op_succeed = TRUE;
-				PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Key attributes enforced by provider (%08x)",
-					certificate->mask_private_mode
-				);
-			}
-		}
-
-		if (rv == CKR_OK && !op_succeed) {
-			rv = _pkcs11h_session_getObjectAttributes (
-				certificate->session,
-				certificate->key_handle,
-				key_attrs,
-				sizeof (key_attrs) / sizeof (CK_ATTRIBUTE)
+		if (certificate->session->provider->mask_private_mode != 0) {
+			certificate->mask_private_mode = certificate->session->provider->mask_private_mode;
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Key attributes enforced by provider (%08x)",
+				certificate->mask_private_mode
 			);
-		}
 
-		if (rv == CKR_OK && !op_succeed) {
-			CK_BBOOL *key_attrs_sign = (CK_BBOOL *)key_attrs[0].pValue;
-			CK_BBOOL *key_attrs_sign_recover = (CK_BBOOL *)key_attrs[1].pValue;
-			CK_BBOOL *key_attrs_decrypt = (CK_BBOOL *)key_attrs[2].pValue;
-			CK_BBOOL *key_attrs_unwrap = (CK_BBOOL *)key_attrs[3].pValue;
+			op_succeed = TRUE;
+		}
+		else {
+			CK_BBOOL *key_attrs_sign;
+			CK_BBOOL *key_attrs_sign_recover;
+			CK_BBOOL *key_attrs_decrypt;
+			CK_BBOOL *key_attrs_unwrap;
+
+			if (
+				(rv = _pkcs11h_session_getObjectAttributes (
+					certificate->session,
+					certificate->key_handle,
+					key_attrs,
+					sizeof (key_attrs) / sizeof (CK_ATTRIBUTE)
+				)) != CKR_OK
+			) {
+				goto retry;
+			}
+
+			key_attrs_sign = (CK_BBOOL *)key_attrs[0].pValue;
+			key_attrs_sign_recover = (CK_BBOOL *)key_attrs[1].pValue;
+			key_attrs_decrypt = (CK_BBOOL *)key_attrs[2].pValue;
+			key_attrs_unwrap = (CK_BBOOL *)key_attrs[3].pValue;
 
 			if (key_attrs_sign != NULL && *key_attrs_sign != CK_FALSE) {
 				certificate->mask_private_mode |= PKCS11H_PRIVATEMODE_MASK_SIGN;
@@ -514,25 +518,30 @@ __pkcs11h_certificate_getKeyAttributes (
 			}
 			if (certificate->mask_private_mode == 0) {
 				rv = CKR_KEY_TYPE_INCONSISTENT;
+				goto retry;
 			}
-			PKCS11H_DEBUG (
+
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Key attributes loaded (%08x)",
 				certificate->mask_private_mode
 			);
+
+			op_succeed = TRUE;
 		}
+
+		rv = CKR_OK;
+
+	retry:
 
 		_pkcs11h_session_freeObjectAttributes (
 			key_attrs,
 			sizeof (key_attrs) / sizeof (CK_ATTRIBUTE)
 		);
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Get private key attributes failed: %ld:'%s'",
 					rv,
@@ -547,8 +556,16 @@ __pkcs11h_certificate_getKeyAttributes (
 
 				login_retry = TRUE;
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -557,7 +574,7 @@ __pkcs11h_certificate_getKeyAttributes (
 	}
 #endif
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_getKeyAttributes return rv=%lu-'%s'",
 		rv,
@@ -576,11 +593,11 @@ _pkcs11h_certificate_validateSession (
 	 * certificate->mutex must be locked
 	 * certificate->session->mutex must be locked
 	 */
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_validateSession entry certificate=%p",
 		(void *)certificate
@@ -588,19 +605,23 @@ _pkcs11h_certificate_validateSession (
 
 	if (certificate->session == NULL) {
 		rv = CKR_SESSION_HANDLE_INVALID;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_validate (certificate->session);
+	if ((rv = _pkcs11h_session_validate (certificate->session)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		if (certificate->key_handle == PKCS11H_INVALID_OBJECT_HANDLE) {
-			rv = CKR_OBJECT_HANDLE_INVALID;
-		}
+	if (certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE) {
+		rv = CKR_OBJECT_HANDLE_INVALID;
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_validateSession return rv=%lu-'%s'",
 		rv,
@@ -624,11 +645,11 @@ _pkcs11h_certificate_resetSession (
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
 	PKCS11H_BOOL is_key_valid = FALSE;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_resetSession entry certificate=%p, public_only=%d, session_mutex_locked=%d",
 		(void *)certificate,
@@ -636,24 +657,27 @@ _pkcs11h_certificate_resetSession (
 		session_mutex_locked ? 1 : 0
 	);
 
-	if (rv == CKR_OK && certificate->session == NULL) {
-		rv = _pkcs11h_session_getSessionByTokenId (certificate->id->token_id, &certificate->session);
+	if (certificate->session == NULL) {
+		if (
+			(rv = _pkcs11h_session_getSessionByTokenId (
+				certificate->id->token_id,
+				&certificate->session
+			)) != CKR_OK
+		) {
+			goto cleanup;
+		}
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		!session_mutex_locked &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) == CKR_OK
-	) {
+	if (!session_mutex_locked) {
+		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+			goto cleanup;
+		}
 		mutex_locked = TRUE;
 	}
 #endif
 
-	if (
-		rv == CKR_OK &&
-		!certificate->pin_cache_populated_to_session
-	) {
+	if (!certificate->pin_cache_populated_to_session) {
 		certificate->pin_cache_populated_to_session = TRUE;
 
 		if (certificate->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
@@ -669,7 +693,7 @@ _pkcs11h_certificate_resetSession (
 			}
 			else {
 				certificate->session->pin_expire_time = (
-					g_pkcs11h_sys_engine.time () +
+					_g_pkcs11h_sys_engine.time () +
 					(time_t)certificate->pin_cache_period
 				);
 				certificate->session->pin_cache_period = certificate->pin_cache_period;
@@ -683,70 +707,74 @@ _pkcs11h_certificate_resetSession (
 	 * try to fetch key handle,
 	 * maybe the token is already logged in
 	 */
-	if (rv == CKR_OK) {
-		if (
-			certificate->session->session_handle != PKCS11H_INVALID_SESSION_HANDLE &&
-			certificate->key_handle == PKCS11H_INVALID_OBJECT_HANDLE
-		) {
-			if (!public_only || certificate->session->provider->cert_is_private) {
-				if (
-					(rv = _pkcs11h_session_getObjectById (
-						certificate->session,
-						CKO_PRIVATE_KEY,
-						certificate->id->attrCKA_ID,
-						certificate->id->attrCKA_ID_size,
-						&certificate->key_handle
-					)) == CKR_OK
-				) {
-					is_key_valid = TRUE;
-				}
-				else {
-					/*
-					 * Ignore error
-					 */
-					rv = CKR_OK;
-					certificate->key_handle = PKCS11H_INVALID_OBJECT_HANDLE;
-				}
+	if (
+		certificate->session->session_handle != _PKCS11H_INVALID_SESSION_HANDLE &&
+		certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE
+	) {
+		if (!public_only || certificate->session->provider->cert_is_private) {
+			if (
+				(rv = _pkcs11h_session_getObjectById (
+					certificate->session,
+					CKO_PRIVATE_KEY,
+					certificate->id->attrCKA_ID,
+					certificate->id->attrCKA_ID_size,
+					&certificate->key_handle
+				)) == CKR_OK
+			) {
+				is_key_valid = TRUE;
 			}
+			else {
+				certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+			}
+		}
+	}
+
+	if (!is_key_valid) {
+		if (
+			(rv = _pkcs11h_session_login (
+				certificate->session,
+				public_only,
+				TRUE,
+				certificate->user_data,
+				certificate->mask_prompt
+			)) != CKR_OK
+		) {
+			goto cleanup;
+		}
+
+		if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
+			goto cleanup;
 		}
 	}
 
 	if (
 		!is_key_valid &&
-		rv == CKR_OK &&
-		(rv = _pkcs11h_session_login (
-			certificate->session,
-			public_only,
-			TRUE,
-			certificate->user_data,
-			certificate->mask_prompt
-		)) == CKR_OK
+		!public_only
 	) {
-		rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id);
+		if (
+			(rv = _pkcs11h_session_getObjectById (
+				certificate->session,
+				CKO_PRIVATE_KEY,
+				certificate->id->attrCKA_ID,
+				certificate->id->attrCKA_ID_size,
+				&certificate->key_handle
+			)) == CKR_OK
+		) {
+			is_key_valid = TRUE;
+		}
 	}
 
 	if (
-		!is_key_valid &&
-		rv == CKR_OK &&
-		!public_only &&
-		(rv = _pkcs11h_session_getObjectById (
-			certificate->session,
-			CKO_PRIVATE_KEY,
-			certificate->id->attrCKA_ID,
-			certificate->id->attrCKA_ID_size,
-			&certificate->key_handle
-		)) == CKR_OK
-	) {
-		is_key_valid = TRUE;
-	}
-
-	if (
-		rv == CKR_OK &&
 		!public_only &&
 		!is_key_valid
 	) {
 		rv = CKR_FUNCTION_REJECTED;
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -755,7 +783,7 @@ _pkcs11h_certificate_resetSession (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_resetSession return rv=%lu-'%s'",
 		rv,
@@ -769,7 +797,7 @@ static
 CK_RV
 __pkcs11h_certificate_doPrivateOperation (
 	IN const pkcs11h_certificate_t certificate,
-	IN const enum _pkcs11h_private_op_e op,
+	IN const enum __pkcs11h_private_op_e op,
 	IN const CK_MECHANISM_TYPE mech_type,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
@@ -796,20 +824,20 @@ __pkcs11h_certificate_doPrivateOperation (
 	CK_ATTRIBUTE wrap_value[] = {
 		{CKA_VALUE, target, 0}
 	};
-	CK_OBJECT_HANDLE wrap_key = PKCS11H_INVALID_OBJECT_HANDLE;
+	CK_OBJECT_HANDLE wrap_key = _PKCS11H_INVALID_OBJECT_HANDLE;
 	
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL login_retry = FALSE;
 	PKCS11H_BOOL op_succeed = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_doPrivateOperation entry certificate=%p, op=%d, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -826,43 +854,43 @@ __pkcs11h_certificate_doPrivateOperation (
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
-		if (rv == CKR_OK && !certificate->operation_active) {
-			rv = _pkcs11h_certificate_validateSession (certificate);
-		}
+	while (!op_succeed) {
+		CK_ULONG size;
 
-		if (rv == CKR_OK && !certificate->operation_active) {
+		if (!certificate->operation_active) {
+			if ((rv = _pkcs11h_certificate_validateSession (certificate)) != CKR_OK) {
+				goto retry;
+			}
+
 			switch (op) {
-				case _pkcs11h_private_op_sign:
+				case __pkcs11h_private_op_sign:
 					rv = certificate->session->provider->f->C_SignInit (
 						certificate->session->session_handle,
 						&mech,
 						certificate->key_handle
 					);
 				break;
-				case _pkcs11h_private_op_sign_recover:
+				case __pkcs11h_private_op_sign_recover:
 					rv = certificate->session->provider->f->C_SignRecoverInit (
 						certificate->session->session_handle,
 						&mech,
 						certificate->key_handle
 					);
 				break;
-				case _pkcs11h_private_op_decrypt:
+				case __pkcs11h_private_op_decrypt:
 					rv = certificate->session->provider->f->C_DecryptInit (
 						certificate->session->session_handle,
 						&mech,
 						certificate->key_handle
 					);
 				break;
-				case _pkcs11h_private_op_unwrap:
+				case __pkcs11h_private_op_unwrap:
 					rv = certificate->session->provider->f->C_UnwrapKey (
 						certificate->session->session_handle,
 						&mech,
@@ -879,11 +907,15 @@ __pkcs11h_certificate_doPrivateOperation (
 				break;
 			}
 
-			PKCS11H_DEBUG (
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG2,
 				"PKCS#11: __pkcs11h_certificate_doPrivateOperation init rv=%ld",
 				rv
 			);
+
+			if (rv != CKR_OK) {
+				goto retry;
+			}
 		}
 
 		/*
@@ -891,88 +923,97 @@ __pkcs11h_certificate_doPrivateOperation (
 		 */
 		certificate->operation_active = FALSE;
 
-		if (rv == CKR_OK) {
-			CK_ULONG size = *p_target_size;
+		size = *p_target_size;
 
-			switch (op) {
-				case _pkcs11h_private_op_sign:
-					rv = certificate->session->provider->f->C_Sign (
-						certificate->session->session_handle,
-						(CK_BYTE_PTR)source,
-						source_size,
-						(CK_BYTE_PTR)target,
-						&size
-					);
-				break;
-				case _pkcs11h_private_op_sign_recover:
-					rv = certificate->session->provider->f->C_SignRecover (
-						certificate->session->session_handle,
-						(CK_BYTE_PTR)source,
-						source_size,
-						(CK_BYTE_PTR)target,
-						&size
-					);
-				break;
-				case _pkcs11h_private_op_decrypt:
-					rv = certificate->session->provider->f->C_Decrypt (
-						certificate->session->session_handle,
-						(CK_BYTE_PTR)source,
-						source_size,
-						(CK_BYTE_PTR)target,
-						&size
-					);
-				break;
-				case _pkcs11h_private_op_unwrap:
-					wrap_value[0].ulValueLen = size;
+		switch (op) {
+			case __pkcs11h_private_op_sign:
+				rv = certificate->session->provider->f->C_Sign (
+					certificate->session->session_handle,
+					(CK_BYTE_PTR)source,
+					source_size,
+					(CK_BYTE_PTR)target,
+					&size
+				);
+			break;
+			case __pkcs11h_private_op_sign_recover:
+				rv = certificate->session->provider->f->C_SignRecover (
+					certificate->session->session_handle,
+					(CK_BYTE_PTR)source,
+					source_size,
+					(CK_BYTE_PTR)target,
+					&size
+				);
+			break;
+			case __pkcs11h_private_op_decrypt:
+				rv = certificate->session->provider->f->C_Decrypt (
+					certificate->session->session_handle,
+					(CK_BYTE_PTR)source,
+					source_size,
+					(CK_BYTE_PTR)target,
+					&size
+				);
+			break;
+			case __pkcs11h_private_op_unwrap:
+				wrap_value[0].ulValueLen = size;
 
-					rv = certificate->session->provider->f->C_GetAttributeValue (
-						certificate->session->session_handle,
-						wrap_key,
-						wrap_value,
-						sizeof (wrap_value) / sizeof (CK_ATTRIBUTE)
-					);
+				rv = certificate->session->provider->f->C_GetAttributeValue (
+					certificate->session->session_handle,
+					wrap_key,
+					wrap_value,
+					sizeof (wrap_value) / sizeof (CK_ATTRIBUTE)
+				);
 
-					size = wrap_value[0].ulValueLen;
-				break;
-				default:
-					rv = CKR_ARGUMENTS_BAD;
-				break;
-			}
-
-			*p_target_size = size;
-
-			PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG2,
-				"PKCS#11: __pkcs11h_certificate_doPrivateOperation op rv=%ld",
-				rv
-			);
+				size = wrap_value[0].ulValueLen;
+			break;
+			default:
+				rv = CKR_ARGUMENTS_BAD;
+			break;
 		}
-		
-		if (wrap_key != PKCS11H_INVALID_OBJECT_HANDLE) {
+
+		/*
+		 * Must be before checking for rv.
+		 */
+		*p_target_size = size;
+
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG2,
+			"PKCS#11: __pkcs11h_certificate_doPrivateOperation op rv=%ld",
+			rv
+		);
+
+		if (target != NULL) {
+			if (rv != CKR_OK) {
+				goto retry;
+			}
+		}
+		else {
+			if (
+				rv == CKR_OK ||
+				rv == CKR_BUFFER_TOO_SMALL
+			) {
+				if (op != __pkcs11h_private_op_unwrap) {
+					certificate->operation_active = TRUE;
+				}
+			}
+			else {
+				goto retry;
+			}
+		}
+
+		op_succeed = TRUE;
+		rv = CKR_OK;
+
+	retry:
+
+		if (wrap_key != _PKCS11H_INVALID_OBJECT_HANDLE) {
 			certificate->session->provider->f->C_DestroyObject (
 				certificate->session->session_handle,
 				wrap_key
 			);
-			wrap_key = PKCS11H_INVALID_OBJECT_HANDLE;
+			wrap_key = _PKCS11H_INVALID_OBJECT_HANDLE;
 		}
 
-		if (
-			target == NULL &&
-			(
-				rv == CKR_BUFFER_TOO_SMALL ||
-				rv == CKR_OK
-			)
-		) {
-			if (op != _pkcs11h_private_op_unwrap) {
-				certificate->operation_active = TRUE;
-			}
-			rv = CKR_OK;
-		}
-
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		if (!op_succeed) {
 			/*
 			 * OpenSC workaround
 			 * It still allows C_FindObjectsInit when
@@ -985,9 +1026,10 @@ __pkcs11h_certificate_doPrivateOperation (
 				login_retry = FALSE;
 				_pkcs11h_session_logout (certificate->session);
 			}
+			/* End OpenSC workaround */
 
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Private key operation failed rv=%lu-'%s'",
 					rv,
@@ -1000,9 +1042,14 @@ __pkcs11h_certificate_doPrivateOperation (
 					TRUE
 				);
 			}
-		}
 
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
+		}
 	}
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -1011,7 +1058,7 @@ __pkcs11h_certificate_doPrivateOperation (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_doPrivateOperation return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1026,11 +1073,11 @@ CK_RV
 pkcs11h_certificate_freeCertificateId (
 	IN pkcs11h_certificate_id_t certificate_id
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate_id!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificateId entry certificate_id=%p",
 		(void *)certificate_id
@@ -1048,7 +1095,7 @@ pkcs11h_certificate_freeCertificateId (
 	}
 	_pkcs11h_mem_free ((void *)&certificate_id);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificateId return"
 	);
@@ -1061,14 +1108,14 @@ pkcs11h_certificate_duplicateCertificateId (
 	OUT pkcs11h_certificate_id_t * const to,
 	IN const pkcs11h_certificate_id_t from
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (to!=NULL);
-	PKCS11H_ASSERT (from!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (to!=NULL);
+	_PKCS11H_ASSERT (from!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_duplicateCertificateId entry to=%p form=%p",
 		(void *)to,
@@ -1077,43 +1124,40 @@ pkcs11h_certificate_duplicateCertificateId (
 
 	*to = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+	if (
+		(rv = _pkcs11h_mem_duplicate (
 			(void*)to,
 			NULL,
 			from,
 			sizeof (struct pkcs11h_certificate_id_s)
-		);
-	}
-
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+		)) != CKR_OK ||
+		(rv = _pkcs11h_mem_duplicate (
 			(void*)&(*to)->token_id,
 			NULL,
 			from->token_id,
 			sizeof (struct pkcs11h_token_id_s)
-		);
-	}
-
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+		)) != CKR_OK ||
+		(rv = _pkcs11h_mem_duplicate (
 			(void*)&(*to)->attrCKA_ID,
 			&(*to)->attrCKA_ID_size,
 			from->attrCKA_ID,
 			from->attrCKA_ID_size
-		);
-	}
-
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+		)) ||
+		(rv = _pkcs11h_mem_duplicate (
 			(void*)&(*to)->certificate_blob,
 			&(*to)->certificate_blob_size,
 			from->certificate_blob,
 			from->certificate_blob_size
-		);
+		))
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_duplicateCertificateId return rv=%lu-'%s', *to=%p",
 		rv,
@@ -1130,33 +1174,41 @@ pkcs11h_certificate_setCertificateIdCertificateBlob (
 	IN const unsigned char * const blob,
 	IN const size_t blob_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate_id!=NULL);
-	PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate_id!=NULL);
+	_PKCS11H_ASSERT (blob!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_setCertificateIdCertificateBlob entry certificate_id=%p",
 		(void *)certificate_id
 	);
 
-	if (rv == CKR_OK && certificate_id->certificate_blob != NULL) {
-		rv = _pkcs11h_mem_free ((void *)&certificate_id->certificate_blob);
+	if (certificate_id->certificate_blob != NULL) {
+		if ((rv = _pkcs11h_mem_free ((void *)&certificate_id->certificate_blob)) != CKR_OK) {
+			goto cleanup;
+		}
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+	if (
+		(rv = _pkcs11h_mem_duplicate (
 			(void *)&certificate_id->certificate_blob,
 			&certificate_id->certificate_blob_size,
 			blob,
 			blob_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_setCertificateIdCertificateBlob return rv=%lu-'%s'",
 		rv,
@@ -1170,10 +1222,10 @@ CK_RV
 pkcs11h_certificate_freeCertificate (
 	IN pkcs11h_certificate_t certificate
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificate entry certificate=%p",
 		(void *)certificate
@@ -1193,7 +1245,7 @@ pkcs11h_certificate_freeCertificate (
 		_pkcs11h_mem_free ((void *)&certificate);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificate return"
 	);
@@ -1206,19 +1258,30 @@ pkcs11h_certificate_lockSession (
 	IN const pkcs11h_certificate_t certificate
 ) {
 #if defined(ENABLE_PKCS11H_THREADING)
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
-	if (rv == CKR_OK && certificate->session == NULL) {
-		rv = _pkcs11h_session_getSessionByTokenId (certificate->id->token_id, &certificate->session);
+	if (certificate->session == NULL) {
+		if (
+			(rv = _pkcs11h_session_getSessionByTokenId (
+				certificate->id->token_id,
+				&certificate->session
+			)) != CKR_OK
+		) {
+			goto cleanup;
+		}
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex);
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 	return rv;
 #else
@@ -1231,15 +1294,21 @@ pkcs11h_certificate_releaseSession (
 	IN const pkcs11h_certificate_t certificate
 ) {
 #if defined(ENABLE_PKCS11H_THREADING)
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
 	if (certificate->session != NULL) {
-		rv = _pkcs11h_threading_mutexRelease (&certificate->session->mutex);
+		if ((rv = _pkcs11h_threading_mutexRelease (&certificate->session->mutex)) != CKR_OK) {
+			goto cleanup;
+		}
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 	return rv;
 #else
@@ -1256,16 +1325,16 @@ pkcs11h_certificate_sign (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_sign entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1280,19 +1349,25 @@ pkcs11h_certificate_sign (
 		*p_target_size = 0;
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_doPrivateOperation (
+	if (
+		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
-			_pkcs11h_private_op_sign,
+			__pkcs11h_private_op_sign,
 			mech_type,
 			source,
 			source_size,
 			target,
 			p_target_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_sign return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1312,16 +1387,16 @@ pkcs11h_certificate_signRecover (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_signRecover entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1336,19 +1411,25 @@ pkcs11h_certificate_signRecover (
 		*p_target_size = 0;
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_doPrivateOperation (
+	if (
+		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
-			_pkcs11h_private_op_sign_recover,
+			__pkcs11h_private_op_sign_recover,
 			mech_type,
 			source,
 			source_size,
 			target,
 			p_target_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_signRecover return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1368,16 +1449,16 @@ pkcs11h_certificate_decrypt (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_decrypt entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1392,19 +1473,25 @@ pkcs11h_certificate_decrypt (
 		*p_target_size = 0;
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_doPrivateOperation (
+	if (
+		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
-			_pkcs11h_private_op_decrypt,
+			__pkcs11h_private_op_decrypt,
 			mech_type,
 			source,
 			source_size,
 			target,
 			p_target_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_decrypt return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1424,16 +1511,16 @@ pkcs11h_certificate_unwrap (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_unwrap entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1448,19 +1535,25 @@ pkcs11h_certificate_unwrap (
 		*p_target_size = 0;
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_doPrivateOperation (
+	if (
+		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
-			_pkcs11h_private_op_unwrap,
+			__pkcs11h_private_op_unwrap,
 			mech_type,
 			source,
 			source_size,
 			target,
 			p_target_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_unwrap return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1480,17 +1573,17 @@ pkcs11h_certificate_signAny (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL acked = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_signAny entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1501,76 +1594,81 @@ pkcs11h_certificate_signAny (
 		target != NULL ? *p_target_size : 0
 	);
 
-	if (
-		rv == CKR_OK &&
-		certificate->mask_private_mode == 0
-	) {
-		PKCS11H_DEBUG (
+	if (certificate->mask_private_mode == 0) {
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Getting key attributes"
 		);
-		rv = __pkcs11h_certificate_getKeyAttributes (certificate);
+
+		if ((rv = __pkcs11h_certificate_getKeyAttributes (certificate)) != CKR_OK) {
+			goto cleanup;
+		}
 	}
 
 	if (
-		rv == CKR_OK &&
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_SIGN) != 0
 	) {
-		rv = pkcs11h_certificate_sign (
-			certificate,
-			mech_type,
-			source,
-			source_size,
-			target,
-			p_target_size
-		);
-
-		if (rv == CKR_OK) {
-			acked = TRUE;
-		}
-		else if (
-			rv == CKR_FUNCTION_NOT_SUPPORTED ||
-			rv == CKR_KEY_FUNCTION_NOT_PERMITTED ||
-			rv == CKR_KEY_TYPE_INCONSISTENT
+		switch (
+			pkcs11h_certificate_sign (
+				certificate,
+				mech_type,
+				source,
+				source_size,
+				target,
+				p_target_size
+			)
 		) {
-			certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_SIGN;
-			rv = CKR_OK;
+			case CKR_OK:
+				acked = TRUE;
+			break;
+			case CKR_FUNCTION_NOT_SUPPORTED:
+			case CKR_KEY_FUNCTION_NOT_PERMITTED:
+			case CKR_KEY_TYPE_INCONSISTENT:
+				certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_SIGN;
+			break;
+			default:
+				goto cleanup;
 		}
 	}
 	
 	if (
-		rv == CKR_OK &&
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_RECOVER) != 0
 	) {
-		rv = pkcs11h_certificate_signRecover (
-			certificate,
-			mech_type,
-			source,
-			source_size,
-			target,
-			p_target_size
-		);
-
-		if (rv == CKR_OK) {
-			acked = TRUE;
-		}
-		else if (
-			rv == CKR_FUNCTION_NOT_SUPPORTED ||
-			rv == CKR_KEY_FUNCTION_NOT_PERMITTED ||
-			rv == CKR_KEY_TYPE_INCONSISTENT
+		switch (
+			pkcs11h_certificate_signRecover (
+				certificate,
+				mech_type,
+				source,
+				source_size,
+				target,
+				p_target_size
+			)
 		) {
-			certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_RECOVER;
-			rv = CKR_OK;
+			case CKR_OK:
+				acked = TRUE;
+			break;
+			case CKR_FUNCTION_NOT_SUPPORTED:
+			case CKR_KEY_FUNCTION_NOT_PERMITTED:
+			case CKR_KEY_TYPE_INCONSISTENT:
+				certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_RECOVER;
+			break;
+			default:
+				goto cleanup;
 		}
 	}
 
-	if (rv == CKR_OK && !acked) {
+	if (!acked) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_signAny return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1590,17 +1688,17 @@ pkcs11h_certificate_decryptAny (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL acked = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
-	/*PKCS11H_ASSERT (target); NOT NEEDED*/
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_decryptAny entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
 		(void *)certificate,
@@ -1611,76 +1709,80 @@ pkcs11h_certificate_decryptAny (
 		target != NULL ? *p_target_size : 0
 	);
 
-	if (
-		rv == CKR_OK &&
-		certificate->mask_private_mode == 0
-	) {
-		PKCS11H_DEBUG (
+	if (certificate->mask_private_mode == 0) {
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Getting key attributes"
 		);
-		rv = __pkcs11h_certificate_getKeyAttributes (certificate);
+		if ((rv = __pkcs11h_certificate_getKeyAttributes (certificate)) != CKR_OK) {
+			goto cleanup;
+		}
 	}
 
 	if (
-		rv == CKR_OK &&
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_DECRYPT) != 0
 	) {
-		rv = pkcs11h_certificate_decrypt (
-			certificate,
-			mech_type,
-			source,
-			source_size,
-			target,
-			p_target_size
-		);
-
-		if (rv == CKR_OK) {
-			acked = TRUE;
-		}
-		else if (
-			rv == CKR_FUNCTION_NOT_SUPPORTED ||
-			rv == CKR_KEY_FUNCTION_NOT_PERMITTED ||
-			rv == CKR_KEY_TYPE_INCONSISTENT
+		switch (
+			pkcs11h_certificate_decrypt (
+				certificate,
+				mech_type,
+				source,
+				source_size,
+				target,
+				p_target_size
+			)
 		) {
-			certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_DECRYPT;
-			rv = CKR_OK;
+			case CKR_OK:
+				acked = TRUE;
+			break;
+			case CKR_FUNCTION_NOT_SUPPORTED:
+			case CKR_KEY_FUNCTION_NOT_PERMITTED:
+			case CKR_KEY_TYPE_INCONSISTENT:
+				certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_DECRYPT;
+			break;
+			default:
+				goto cleanup;
 		}
 	}
 	
 	if (
-		rv == CKR_OK &&
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_UNWRAP) != 0
 	) {
-		rv = pkcs11h_certificate_unwrap (
-			certificate,
-			mech_type,
-			source,
-			source_size,
-			target,
-			p_target_size
-		);
-
-		if (rv == CKR_OK) {
-			acked = TRUE;
-		}
-		else if (
-			rv == CKR_FUNCTION_NOT_SUPPORTED ||
-			rv == CKR_KEY_FUNCTION_NOT_PERMITTED ||
-			rv == CKR_KEY_TYPE_INCONSISTENT
+		switch (
+			pkcs11h_certificate_unwrap (
+				certificate,
+				mech_type,
+				source,
+				source_size,
+				target,
+				p_target_size
+			)
 		) {
-			certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_UNWRAP;
-			rv = CKR_OK;
+			case CKR_OK:
+				acked = TRUE;
+			break;
+			case CKR_FUNCTION_NOT_SUPPORTED:
+			case CKR_KEY_FUNCTION_NOT_PERMITTED:
+			case CKR_KEY_TYPE_INCONSISTENT:
+				certificate->mask_private_mode &= ~PKCS11H_PRIVATEMODE_MASK_UNWRAP;
+			break;
+			default:
+				goto cleanup;
 		}
 	}
 
-	if (rv == CKR_OK && !acked) {
+	if (!acked) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%lu-'%s', *p_target_size=%u",
 		rv,
@@ -1700,14 +1802,14 @@ pkcs11h_certificate_create (
 	OUT pkcs11h_certificate_t * const p_certificate
 ) {
 	pkcs11h_certificate_t certificate = NULL;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	/*PKCS11H_ASSERT (user_data!=NULL); NOT NEEDED */
-	PKCS11H_ASSERT (p_certificate!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	/*_PKCS11H_ASSERT (user_data!=NULL); NOT NEEDED */
+	_PKCS11H_ASSERT (p_certificate!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_create entry certificate_id=%p, user_data=%p, mask_prompt=%08x, pin_cache_period=%d, p_certificate=%p",
 		(void *)certificate_id,
@@ -1719,30 +1821,30 @@ pkcs11h_certificate_create (
 
 	*p_certificate = NULL;
 
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_mem_malloc ((void*)&certificate, sizeof (struct pkcs11h_certificate_s))) == CKR_OK
-	) {
-		certificate->user_data = user_data;
-		certificate->mask_prompt = mask_prompt;
-		certificate->key_handle = PKCS11H_INVALID_OBJECT_HANDLE;
-		certificate->pin_cache_period = pin_cache_period;
+	if ((rv = _pkcs11h_mem_malloc ((void*)&certificate, sizeof (struct pkcs11h_certificate_s))) != CKR_OK) {
+		goto cleanup;
 	}
 
+	certificate->user_data = user_data;
+	certificate->mask_prompt = mask_prompt;
+	certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+	certificate->pin_cache_period = pin_cache_period;
+
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_threading_mutexInit (&certificate->mutex);
+	if ((rv = _pkcs11h_threading_mutexInit (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
 #endif
 
-	if (rv == CKR_OK) {
-		rv = pkcs11h_certificate_duplicateCertificateId (&certificate->id, certificate_id);
+	if ((rv = pkcs11h_certificate_duplicateCertificateId (&certificate->id, certificate_id)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		*p_certificate = certificate;
-		certificate = NULL;
-	}
+	*p_certificate = certificate;
+	certificate = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 	if (certificate != NULL) {
 #if defined(ENABLE_PKCS11H_THREADING)
@@ -1751,7 +1853,7 @@ pkcs11h_certificate_create (
 		_pkcs11h_mem_free ((void *)&certificate);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_create return rv=%lu-'%s' *p_certificate=%p",
 		rv,
@@ -1766,7 +1868,7 @@ unsigned
 pkcs11h_certificate_getPromptMask (
 	IN const pkcs11h_certificate_t certificate
 ) {
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
 	return certificate->mask_prompt;
 }
@@ -1776,7 +1878,7 @@ pkcs11h_certificate_setPromptMask (
 	IN const pkcs11h_certificate_t certificate,
 	IN const unsigned mask_prompt
 ) {
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
 	certificate->mask_prompt = mask_prompt;
 }
@@ -1785,7 +1887,7 @@ void *
 pkcs11h_certificate_getUserData (
 	IN const pkcs11h_certificate_t certificate
 ) {
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
 	return certificate->user_data;
 }
@@ -1795,7 +1897,7 @@ pkcs11h_certificate_setUserData (
 	IN const pkcs11h_certificate_t certificate,
 	IN void * const user_data
 ) {
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
 	certificate->user_data = user_data;
 }
@@ -1805,28 +1907,34 @@ pkcs11h_certificate_getCertificateId (
 	IN const pkcs11h_certificate_t certificate,
 	OUT pkcs11h_certificate_id_t * const p_certificate_id
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	PKCS11H_ASSERT (p_certificate_id!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (p_certificate_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_getCertificateId entry certificate=%p, certificate_id=%p",
 		(void *)certificate,
 		(void *)p_certificate_id
 	);
 
-	if (rv == CKR_OK) {
-		rv = pkcs11h_certificate_duplicateCertificateId (
+	if (
+		(rv = pkcs11h_certificate_duplicateCertificateId (
 			p_certificate_id,
 			certificate->id
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_getCertificateId return rv=%lu-'%s'",
 		rv,
@@ -1845,16 +1953,16 @@ pkcs11h_certificate_getCertificateBlob (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t certifiate_blob_size_max = 0;
 	
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
-	/*PKCS11H_ASSERT (certificate_blob!=NULL); NOT NEEDED */
-	PKCS11H_ASSERT (p_certificate_blob_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
+	/*_PKCS11H_ASSERT (certificate_blob!=NULL); NOT NEEDED */
+	_PKCS11H_ASSERT (p_certificate_blob_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_getCertificateBlob entry certificate=%p, certificate_blob=%p, *p_certificate_blob_size=%u",
 		(void *)certificate,
@@ -1868,30 +1976,31 @@ pkcs11h_certificate_getCertificateBlob (
 	*p_certificate_blob_size = 0;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	if (rv == CKR_OK && certificate->id->certificate_blob == NULL) {
+	if (certificate->id->certificate_blob == NULL) {
 		PKCS11H_BOOL op_succeed = FALSE;
 		PKCS11H_BOOL login_retry = FALSE;
-		while (rv == CKR_OK && !op_succeed) {
+
+		while (!op_succeed) {
 			if (certificate->session == NULL) {
 				rv = CKR_SESSION_HANDLE_INVALID;
+				goto retry;
 			}
 
-			if (rv == CKR_OK) {
-				rv = __pkcs11h_certificate_loadCertificate (certificate);
+			if ((rv = __pkcs11h_certificate_loadCertificate (certificate)) != CKR_OK) {
+				goto retry;
 			}
 
-			if (rv == CKR_OK) {
-				op_succeed = TRUE;
-			}
-			else {
+			op_succeed = TRUE;
+			rv = CKR_OK;
+
+		retry:
+			if (!op_succeed) {
 				if (!login_retry) {
 					login_retry = TRUE;
 					rv = _pkcs11h_certificate_resetSession (
@@ -1900,41 +2009,41 @@ pkcs11h_certificate_getCertificateBlob (
 						FALSE
 					);
 				}
+
+				if (rv != CKR_OK) {
+					goto cleanup;
+				}
 			}
 		}
 	}
-	
-	if (
-		rv == CKR_OK &&
-		certificate->id->certificate_blob == NULL
-	) {
+
+	if (certificate->id->certificate_blob == NULL) {
 		rv = CKR_FUNCTION_REJECTED;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		__pkcs11h_certificate_updateCertificateIdDescription (certificate->id);
+	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		*p_certificate_blob_size = certificate->id->certificate_blob_size;
-	}
+	*p_certificate_blob_size = certificate->id->certificate_blob_size;
 
 	if (certificate_blob != NULL) {
-		if (
-			rv == CKR_OK &&
-			certificate->id->certificate_blob_size > certifiate_blob_size_max
-		) {
+		if (certificate->id->certificate_blob_size > certifiate_blob_size_max) {
 			rv = CKR_BUFFER_TOO_SMALL;
+			goto cleanup;
 		}
 	
-		if (rv == CKR_OK) {
-			memmove (
-				certificate_blob,
-				certificate->id->certificate_blob,
-				*p_certificate_blob_size
-			);
-		}
+		memmove (
+			certificate_blob,
+			certificate->id->certificate_blob,
+			*p_certificate_blob_size
+		);
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -1943,7 +2052,7 @@ pkcs11h_certificate_getCertificateBlob (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_getCertificateBlob return rv=%lu-'%s'",
 		rv,
@@ -1962,41 +2071,38 @@ pkcs11h_certificate_ensureCertificateAccess (
 	PKCS11H_BOOL mutex_locked_sess = FALSE;
 #endif
 	PKCS11H_BOOL validCert = FALSE;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_ensureCertificateAccess entry certificate=%p",
 		(void *)certificate
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) == CKR_OK
-	) {
-		mutex_locked_cert = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked_cert = TRUE;
 #endif
 
-	if (!validCert && rv == CKR_OK) {
-		CK_OBJECT_HANDLE h = PKCS11H_INVALID_OBJECT_HANDLE;
+	if (!validCert) {
+		CK_OBJECT_HANDLE h = _PKCS11H_INVALID_OBJECT_HANDLE;
 
 		if (certificate->session == NULL) {
 			rv = CKR_SESSION_HANDLE_INVALID;
+			goto retry1;
 		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		if (
-			rv == CKR_OK &&
-			(rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) == CKR_OK
-		) {
-			mutex_locked_sess = TRUE;
+		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+			goto retry1;
 		}
+		mutex_locked_sess = TRUE;
 #endif
 
 		if (
@@ -2006,10 +2112,14 @@ pkcs11h_certificate_ensureCertificateAccess (
 				certificate->id->attrCKA_ID,
 				certificate->id->attrCKA_ID_size,
 				&h
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
-			validCert = TRUE;
+			goto retry1;
 		}
+
+		validCert = TRUE;
+
+	retry1:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 		if (mutex_locked_sess) {
@@ -2018,32 +2128,35 @@ pkcs11h_certificate_ensureCertificateAccess (
 		}
 #endif
 
-		if (rv != CKR_OK) {
-			PKCS11H_DEBUG (
+		if (!validCert) {
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Cannot access existing object rv=%lu-'%s'",
 				rv,
 				pkcs11h_getMessage (rv)
 			);
-
-			/*
-			 * Ignore error
-			 */
-			rv = CKR_OK;
 		}
 	}
 
-	if (!validCert && rv == CKR_OK) {
+	if (!validCert) {
 		if (
 			(rv = _pkcs11h_certificate_resetSession (
 				certificate,
 				TRUE,
 				FALSE
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
-			validCert = TRUE;
+			goto cleanup;
 		}
+	
+		validCert = TRUE;
 	}
+
+	if (validCert) {
+		rv = CKR_OK;
+	}
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked_cert) {
@@ -2052,7 +2165,7 @@ pkcs11h_certificate_ensureCertificateAccess (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_ensureCertificateAccess return rv=%lu-'%s'",
 		rv,
@@ -2070,41 +2183,38 @@ pkcs11h_certificate_ensureKeyAccess (
 	PKCS11H_BOOL mutex_locked_cert = FALSE;
 	PKCS11H_BOOL mutex_locked_sess = FALSE;
 #endif
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL valid_key = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (certificate!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_ensureKeyAccess entry certificate=%p",
 		(void *)certificate
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) == CKR_OK
-	) {
-		mutex_locked_cert = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked_cert = TRUE;
 #endif
 
-	if (!valid_key && rv == CKR_OK) {
+	if (!valid_key) {
 
 		if (certificate->session == NULL) {
 			rv = CKR_SESSION_HANDLE_INVALID;
+			goto retry1;
 		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		if (
-			rv == CKR_OK &&
-			(rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) == CKR_OK
-		) {
-			mutex_locked_sess = TRUE;
+		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+			goto retry1;
 		}
+		mutex_locked_sess = TRUE;
 #endif
 
 		if (
@@ -2114,10 +2224,14 @@ pkcs11h_certificate_ensureKeyAccess (
 				certificate->id->attrCKA_ID,
 				certificate->id->attrCKA_ID_size,
 				&certificate->key_handle
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
-			valid_key = TRUE;
+			goto retry1;
 		}
+
+		valid_key = TRUE;
+
+	retry1:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 		if (mutex_locked_sess) {
@@ -2126,33 +2240,36 @@ pkcs11h_certificate_ensureKeyAccess (
 		}
 #endif
 
-		if (rv != CKR_OK) {
-			PKCS11H_DEBUG (
+		if (!valid_key) {
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Cannot access existing object rv=%lu-'%s'",
 				rv,
 				pkcs11h_getMessage (rv)
 			);
-
-			/*
-			 * Ignore error
-			 */
-			rv = CKR_OK;
-			certificate->key_handle = PKCS11H_INVALID_OBJECT_HANDLE;
+			certificate->key_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
 		}
 	}
 
-	if (!valid_key && rv == CKR_OK) {
+	if (!valid_key) {
 		if (
 			(rv = _pkcs11h_certificate_resetSession (
 				certificate,
 				FALSE,
 				FALSE
-			)) == CKR_OK
+			)) != CKR_OK
 		) {
-			valid_key = TRUE;
+			goto cleanup;
 		}
+
+		valid_key = TRUE;
 	}
+
+	if (valid_key) {
+		rv = CKR_OK;
+	}
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked_cert) {
@@ -2161,7 +2278,7 @@ pkcs11h_certificate_ensureKeyAccess (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_ensureKeyAccess return rv=%lu-'%s'",
 		rv,
@@ -2173,7 +2290,7 @@ pkcs11h_certificate_ensureKeyAccess (
 
 CK_RV
 _pkcs11h_certificate_enumSessionCertificates (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN void * const user_data,
 	IN const unsigned mask_prompt
 ) {
@@ -2183,12 +2300,12 @@ _pkcs11h_certificate_enumSessionCertificates (
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
 
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (session!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
+	_PKCS11H_ASSERT (session!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_enumSessionCertificates entry session=%p, user_data=%p, mask_prompt=%08x",
 		(void *)session,
@@ -2198,15 +2315,13 @@ _pkcs11h_certificate_enumSessionCertificates (
 	
 	/* THREADS: NO NEED TO LOCK, GLOBAL CACHE IS LOCKED */
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
+	while (!op_succeed) {
 		CK_OBJECT_CLASS cert_filter_class = CKO_CERTIFICATE;
 		CK_ATTRIBUTE cert_filter[] = {
 			{CKA_CLASS, &cert_filter_class, sizeof (cert_filter_class)}
@@ -2217,21 +2332,23 @@ _pkcs11h_certificate_enumSessionCertificates (
 
 		CK_ULONG i;
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_validate (session);
+		if ((rv = _pkcs11h_session_validate (session)) != CKR_OK) {
+			goto retry;
 		}
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_findObjects (
+		if (
+			(rv = _pkcs11h_session_findObjects (
 				session,
 				cert_filter,
 				sizeof (cert_filter) / sizeof (CK_ATTRIBUTE),
 				&objects,
 				&objects_found
-			);
+			)) != CKR_OK
+		) {
+			goto retry;
 		}
 			
-		for (i=0;rv == CKR_OK && i < objects_found;i++) {
+		for (i=0;i < objects_found;i++) {
 			pkcs11h_certificate_id_t certificate_id = NULL;
 			pkcs11h_certificate_id_list_t new_element = NULL;
 			
@@ -2240,61 +2357,50 @@ _pkcs11h_certificate_enumSessionCertificates (
 				{CKA_VALUE, NULL, 0}
 			};
 
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_session_getObjectAttributes (
+			if (
+				(rv = _pkcs11h_session_getObjectAttributes (
 					session,
 					objects[i],
 					attrs,
 					sizeof (attrs) / sizeof (CK_ATTRIBUTE)
-				);
-			}
-
-			if (
-				rv == CKR_OK &&
-				(rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) == CKR_OK
-			) {
-				rv = pkcs11h_token_duplicateTokenId (
+				)) != CKR_OK ||
+				(rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK ||
+				(rv = pkcs11h_token_duplicateTokenId (
 					&certificate_id->token_id,
 					session->token_id
-				);
-			}
-
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_duplicate (
+				)) != CKR_OK ||
+				(rv = _pkcs11h_mem_duplicate (
 					(void*)&certificate_id->attrCKA_ID,
 					&certificate_id->attrCKA_ID_size,
 					attrs[0].pValue,
 					attrs[0].ulValueLen
-				);
-			}
-
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_duplicate (
+				)) != CKR_OK ||
+				(rv = _pkcs11h_mem_duplicate (
 					(void*)&certificate_id->certificate_blob,
 					&certificate_id->certificate_blob_size,
 					attrs[1].pValue,
 					attrs[1].ulValueLen
-				);
-			}
-
-			if (rv == CKR_OK) {
-				rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate_id);
-			}
-
-			if (
-				rv == CKR_OK &&
+				)) != CKR_OK ||
+				(rv = __pkcs11h_certificate_updateCertificateIdDescription (
+					certificate_id
+				)) != CKR_OK ||
 				(rv = _pkcs11h_mem_malloc (
 					(void *)&new_element,
 					sizeof (struct pkcs11h_certificate_id_list_s)
-				)) == CKR_OK
+				)) != CKR_OK
 			) {
-				new_element->next = session->cached_certs;
-				new_element->certificate_id = certificate_id;
-				certificate_id = NULL;
-
-				session->cached_certs = new_element;
-				new_element = NULL;
+				goto retry1;
 			}
+
+			new_element->next = session->cached_certs;
+			new_element->certificate_id = certificate_id;
+			certificate_id = NULL;
+
+			session->cached_certs = new_element;
+			new_element = NULL;
+			rv = CKR_OK;
+
+		retry1:
 
 			if (certificate_id != NULL) {
 				pkcs11h_certificate_freeCertificateId (certificate_id);
@@ -2312,7 +2418,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 			);
 
 			if (rv != CKR_OK) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Cannot get object attribute for provider '%s' object %ld rv=%lu-'%s'",
 					session->provider->manufacturerID,
@@ -2320,24 +2426,21 @@ _pkcs11h_certificate_enumSessionCertificates (
 					rv,
 					pkcs11h_getMessage (rv)
 				);
-
-				/*
-				 * Ignore error
-				 */
-				rv = CKR_OK;
 			}
 		}
+
+		op_succeed = TRUE;
+		rv = CKR_OK;
+	
+	retry:
 
 		if (objects != NULL) {
 			_pkcs11h_mem_free ((void *)&objects);
 		}
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Get certificate attributes failed: %ld:'%s'",
 					rv,
@@ -2354,8 +2457,14 @@ _pkcs11h_certificate_enumSessionCertificates (
 
 				login_retry = TRUE;
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -2364,7 +2473,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_enumSessionCertificates return rv=%lu-'%s'",
 		rv,
@@ -2389,17 +2498,18 @@ __pkcs11h_certificate_splitCertificateIdList (
 
 	pkcs11h_certificate_id_list_t cert_id_issuers_list = NULL;
 	pkcs11h_certificate_id_list_t cert_id_end_list = NULL;
+	pkcs11h_certificate_id_list_t entry = NULL;
 
 	info_t head = NULL;
 	info_t info = NULL;
 
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	/*PKCS11H_ASSERT (cert_id_all!=NULL); NOT NEEDED */
-	/*PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
+	/*_PKCS11H_ASSERT (cert_id_all!=NULL); NOT NEEDED */
+	/*_PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_splitCertificateIdList entry cert_id_all=%p, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
 		(void *)cert_id_all,
@@ -2412,124 +2522,110 @@ __pkcs11h_certificate_splitCertificateIdList (
 	}
 	*p_cert_id_end_list = NULL;
 
-	if (rv == CKR_OK) {
-		pkcs11h_certificate_id_list_t entry = NULL;
+	for (
+		entry = cert_id_all;
+		entry != NULL;
+		entry = entry->next
+	) {
+		info_t new_info = NULL;
 
-		for (
-			entry = cert_id_all;
-			entry != NULL && rv == CKR_OK;
-			entry = entry->next
-		) {
-			info_t new_info = NULL;
-
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_malloc ((void *)&new_info, sizeof (struct info_s));
-			}
-
-			if (rv == CKR_OK) {
-				new_info->next = head;
-				new_info->e = entry->certificate_id;
-				head = new_info;
-				new_info = NULL;
-			}
+		if ((rv = _pkcs11h_mem_malloc ((void *)&new_info, sizeof (struct info_s))) != CKR_OK) {
+			goto cleanup;
 		}
 
+		new_info->next = head;
+		new_info->e = entry->certificate_id;
+		head = new_info;
+		new_info = NULL;
 	}
 
-	if (rv == CKR_OK) {
+	for (
+		info = head;
+		info != NULL;
+		info = info->next
+	) {
+		info_t info2 = NULL;
+
 		for (
-			info = head;
-			info != NULL;
-			info = info->next
+			info2 = head;
+			info2 != NULL && !info->is_issuer;
+			info2 = info2->next
 		) {
-			info_t info2 = NULL;
-
-			for (
-				info2 = head;
-				info2 != NULL && !info->is_issuer;
-				info2 = info2->next
-			) {
-				if (info != info2) {
-					info->is_issuer = g_pkcs11h_crypto_engine.certificate_is_issuer (
-						g_pkcs11h_crypto_engine.global_data,
-						info->e->certificate_blob,
-						info->e->certificate_blob_size,
-						info2->e->certificate_blob,
-						info2->e->certificate_blob_size
-					);
-				}
-
-			}
-		}
-	}
-
-	if (rv == CKR_OK) {
-		for (
-			info = head;
-			info != NULL && rv == CKR_OK;
-			info = info->next
-		) {
-			pkcs11h_certificate_id_list_t new_entry = NULL;
-
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_malloc (
-					(void *)&new_entry,
-					sizeof (struct pkcs11h_certificate_id_list_s)
+			if (info != info2) {
+				info->is_issuer = _g_pkcs11h_crypto_engine.certificate_is_issuer (
+					_g_pkcs11h_crypto_engine.global_data,
+					info->e->certificate_blob,
+					info->e->certificate_blob_size,
+					info2->e->certificate_blob,
+					info2->e->certificate_blob_size
 				);
 			}
 
-			if (
-				rv == CKR_OK &&
-				(rv = pkcs11h_certificate_duplicateCertificateId (
-					&new_entry->certificate_id,
-					info->e
-				)) == CKR_OK
-			) {
-				/*
-				 * Should not free base list
-				 */
-				info->e = NULL;
-			}
+		}
+	}
 
-			if (rv == CKR_OK) {
-				if (info->is_issuer) {
-					new_entry->next = cert_id_issuers_list;
-					cert_id_issuers_list = new_entry;
-					new_entry = NULL;
-				}
-				else {
-					new_entry->next = cert_id_end_list;
-					cert_id_end_list = new_entry;
-					new_entry = NULL;
-				}
-			}
+	rv = CKR_OK;
+	for (
+		info = head;
+		info != NULL;
+		info = info->next
+	) {
+		pkcs11h_certificate_id_list_t new_entry = NULL;
 
+		if (
+			(rv = _pkcs11h_mem_malloc (
+				(void *)&new_entry,
+				sizeof (struct pkcs11h_certificate_id_list_s)
+			)) != CKR_OK ||
+			(rv = pkcs11h_certificate_duplicateCertificateId (
+				&new_entry->certificate_id,
+				info->e
+			)) != CKR_OK
+		) {
 			if (new_entry != NULL) {
 				if (new_entry->certificate_id != NULL) {
 					pkcs11h_certificate_freeCertificateId (new_entry->certificate_id);
 				}
 				_pkcs11h_mem_free ((void *)&new_entry);
 			}
+			goto cleanup;
+		}
+
+		/*
+		 * Should not free base list
+		 */
+		info->e = NULL;
+
+		if (info->is_issuer) {
+			new_entry->next = cert_id_issuers_list;
+			cert_id_issuers_list = new_entry;
+			new_entry = NULL;
+		}
+		else {
+			new_entry->next = cert_id_end_list;
+			cert_id_end_list = new_entry;
+			new_entry = NULL;
 		}
 	}
 
-	if (rv == CKR_OK) {
-		while (head != NULL) {
-			info_t entry = head;
-			head = head->next;
 
-			_pkcs11h_mem_free ((void *)&entry);
-		}
-	}
-
-	if (rv == CKR_OK && p_cert_id_issuers_list != NULL ) {
+	if (p_cert_id_issuers_list != NULL ) {
 		*p_cert_id_issuers_list = cert_id_issuers_list;
 		cert_id_issuers_list = NULL;
 	}
 
-	if (rv == CKR_OK) {
-		*p_cert_id_end_list = cert_id_end_list;
-		cert_id_end_list = NULL;
+	*p_cert_id_end_list = cert_id_end_list;
+	cert_id_end_list = NULL;
+
+	rv = CKR_OK;
+
+cleanup:
+
+	while (head != NULL) {
+		info_t entry = head;
+		head = head->next;
+
+		_pkcs11h_mem_free ((void *)&entry);
 	}
 
 	if (cert_id_issuers_list != NULL) {
@@ -2540,7 +2636,7 @@ __pkcs11h_certificate_splitCertificateIdList (
 		pkcs11h_certificate_freeCertificateIdList (cert_id_end_list);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_splitCertificateIdList return rv=%lu-'%s'",
 		rv,
@@ -2556,11 +2652,11 @@ pkcs11h_certificate_freeCertificateIdList (
 ) {
 	pkcs11h_certificate_id_list_t _id = cert_id_list;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	/*PKCS11H_ASSERT (cert_id_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	/*_PKCS11H_ASSERT (cert_id_list!=NULL); NOT NEEDED*/
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificateIdList entry cert_id_list=%p",
 		(void *)cert_id_list
@@ -2576,7 +2672,7 @@ pkcs11h_certificate_freeCertificateIdList (
 		_pkcs11h_mem_free ((void *)&x);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_freeCertificateIdList return"
 	);
@@ -2596,17 +2692,17 @@ pkcs11h_certificate_enumTokenCertificateIds (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
-	CK_RV rv = CKR_OK;
+	_pkcs11h_session_t session = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
-	/*PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+	/*_PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds entry token_id=%p, method=%u, user_data=%p, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
 		(void *)token_id,
@@ -2623,38 +2719,43 @@ pkcs11h_certificate_enumTokenCertificateIds (
 	*p_cert_id_end_list = NULL;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.cache)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
 	if (
-		rv == CKR_OK &&
 		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		)) == CKR_OK
+		)) != CKR_OK
 	) {
-		if (method == PKCS11H_ENUM_METHOD_RELOAD) {
-			pkcs11h_certificate_freeCertificateIdList (session->cached_certs);
-			session->cached_certs = NULL;
-		}
-
-		if (session->cached_certs == NULL) {
-			rv = _pkcs11h_certificate_enumSessionCertificates (session, user_data, mask_prompt);
-		}
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_splitCertificateIdList (
+	if (method == PKCS11H_ENUM_METHOD_RELOAD) {
+		pkcs11h_certificate_freeCertificateIdList (session->cached_certs);
+		session->cached_certs = NULL;
+	}
+
+	if (session->cached_certs == NULL) {
+		rv = _pkcs11h_certificate_enumSessionCertificates (session, user_data, mask_prompt);
+	}
+
+	if (
+		(rv = __pkcs11h_certificate_splitCertificateIdList (
 			session->cached_certs,
 			p_cert_id_issuers_list,
 			p_cert_id_end_list
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 	if (session != NULL) {
 		_pkcs11h_session_release (session);
@@ -2662,12 +2763,12 @@ pkcs11h_certificate_enumTokenCertificateIds (
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.cache);
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.cache);
 		mutex_locked = FALSE;
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_enumTokenCertificateIds return rv=%lu-'%s'",
 		rv,
@@ -2689,17 +2790,17 @@ pkcs11h_certificate_enumCertificateIds (
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
 	pkcs11h_certificate_id_list_t cert_id_list = NULL;
-	pkcs11h_provider_t current_provider;
-	pkcs11h_session_t current_session;
-	CK_RV rv = CKR_OK;
+	_pkcs11h_provider_t current_provider;
+	_pkcs11h_session_t current_session;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	/*PKCS11H_ASSERT (user_data!=NULL); NOT NEEDED*/
-	/*PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	/*_PKCS11H_ASSERT (user_data!=NULL); NOT NEEDED*/
+	/*_PKCS11H_ASSERT (p_cert_id_issuers_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_cert_id_end_list!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_enumCertificateIds entry method=%u, mask_prompt=%08x, p_cert_id_issuers_list=%p, p_cert_id_end_list=%p",
 		method,
@@ -2714,16 +2815,14 @@ pkcs11h_certificate_enumCertificateIds (
 	*p_cert_id_end_list = NULL;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.cache)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
 	for (
-		current_session = g_pkcs11h_data->sessions;
+		current_session = _g_pkcs11h_data->sessions;
 		current_session != NULL;
 		current_session = current_session->next
 	) {
@@ -2735,11 +2834,8 @@ pkcs11h_certificate_enumCertificateIds (
 	}
 
 	for (
-		current_provider = g_pkcs11h_data->providers;
-		(
-			current_provider != NULL &&
-			rv == CKR_OK
-		);
+		current_provider = _g_pkcs11h_data->providers;
+		current_provider != NULL;
 		current_provider = current_provider->next
 	) {
 		CK_SLOT_ID_PTR slots = NULL;
@@ -2747,57 +2843,66 @@ pkcs11h_certificate_enumCertificateIds (
 		CK_SLOT_ID slot_index;
 
 		if (!current_provider->enabled) {
-			rv = CKR_CRYPTOKI_NOT_INITIALIZED;
+			continue;
 		}
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_getSlotList (
+		if (
+			(rv = _pkcs11h_session_getSlotList (
 				current_provider,
 				CK_TRUE,
 				&slots,
 				&slotnum
-			);
+			)) != CKR_OK
+		) {
+			goto retry1;
 		}
 
 		for (
 			slot_index=0;
-			(
-				slot_index < slotnum &&
-				rv == CKR_OK
-			);
+			slot_index < slotnum;
 			slot_index++
 		) {
-			pkcs11h_session_t session = NULL;
+			_pkcs11h_session_t session = NULL;
 			pkcs11h_token_id_t token_id = NULL;
 			CK_TOKEN_INFO info;
 
-			if (rv == CKR_OK) {
-				rv = current_provider->f->C_GetTokenInfo (
+			if (
+				(rv = current_provider->f->C_GetTokenInfo (
 					slots[slot_index],
 					&info
-				);
-			}
-
-			if (
-				rv == CKR_OK &&
+				)) != CKR_OK ||
 				(rv = _pkcs11h_token_getTokenId (
 					&info,
 					&token_id
-				)) == CKR_OK &&
+				)) != CKR_OK ||
 				(rv = _pkcs11h_session_getSessionByTokenId (
 					token_id,
 					&session
-				)) == CKR_OK
+				)) != CKR_OK
 			) {
-				session->touch = TRUE;
+				goto retry11;
+			}
 
-				if (session->cached_certs == NULL) {
-					rv = _pkcs11h_certificate_enumSessionCertificates (session, user_data, mask_prompt);
+			session->touch = TRUE;
+
+			if (session->cached_certs == NULL) {
+				if (
+					(rv = _pkcs11h_certificate_enumSessionCertificates (
+						session,
+						user_data,
+						mask_prompt
+					)) != CKR_OK
+				) {
+					goto retry11;
 				}
 			}
 
+			rv = CKR_OK;
+
+		retry11:
+
 			if (rv != CKR_OK) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Cannot get token information for provider '%s' slot %ld rv=%lu-'%s'",
 					current_provider->manufacturerID,
@@ -2805,11 +2910,6 @@ pkcs11h_certificate_enumCertificateIds (
 					rv,
 					pkcs11h_getMessage (rv)
 				);
-
-				/*
-				 * Ignore error
-				 */
-				rv = CKR_OK;
 			}
 
 			if (session != NULL) {
@@ -2823,19 +2923,18 @@ pkcs11h_certificate_enumCertificateIds (
 			}
 		}
 
+		rv = CKR_OK;
+
+	retry1:
+
 		if (rv != CKR_OK) {
-			PKCS11H_DEBUG (
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
 				current_provider->manufacturerID,
 				rv,
 				pkcs11h_getMessage (rv)
 			);
-
-			/*
-			 * Ignore error
-			 */
-			rv = CKR_OK;
 		}
 
 		if (slots != NULL) {
@@ -2845,11 +2944,8 @@ pkcs11h_certificate_enumCertificateIds (
 	}
 
 	for (
-		current_session = g_pkcs11h_data->sessions;
-		(
-			current_session != NULL &&
-			rv == CKR_OK
-		);
+		current_session = _g_pkcs11h_data->sessions;
+		current_session != NULL;
 		current_session = current_session->next
 	) {
 		if (
@@ -2866,46 +2962,49 @@ pkcs11h_certificate_enumCertificateIds (
 
 			for (
 				entry = current_session->cached_certs;
-				(
-					entry != NULL &&
-					rv == CKR_OK
-				);
+				entry != NULL;
 				entry = entry->next
 			) {
 				pkcs11h_certificate_id_list_t new_entry = NULL;
 
 				if (
-					rv == CKR_OK &&
 					(rv = _pkcs11h_mem_malloc (
 						(void *)&new_entry,
 						sizeof (struct pkcs11h_certificate_id_list_s)
-					)) == CKR_OK &&
+					)) != CKR_OK ||
 					(rv = pkcs11h_certificate_duplicateCertificateId (
 						&new_entry->certificate_id,
 						entry->certificate_id
-					)) == CKR_OK
+					)) != CKR_OK
 				) {
-					new_entry->next = cert_id_list;
-					cert_id_list = new_entry;
-					new_entry = NULL;
+					if (new_entry != NULL) {
+						new_entry->next = NULL;
+						pkcs11h_certificate_freeCertificateIdList (new_entry);
+						new_entry = NULL;
+					}
+					goto cleanup;
 				}
 
-				if (new_entry != NULL) {
-					new_entry->next = NULL;
-					pkcs11h_certificate_freeCertificateIdList (new_entry);
-					new_entry = NULL;
-				}
+				new_entry->next = cert_id_list;
+				cert_id_list = new_entry;
+				new_entry = NULL;
 			}
 		}
 	}
 
-	if (rv == CKR_OK) {
-		rv = __pkcs11h_certificate_splitCertificateIdList (
+	if (
+		(rv = __pkcs11h_certificate_splitCertificateIdList (
 			cert_id_list,
 			p_cert_id_issuers_list,
 			p_cert_id_end_list
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 	if (cert_id_list != NULL) {
 		pkcs11h_certificate_freeCertificateIdList (cert_id_list);
@@ -2915,12 +3014,12 @@ pkcs11h_certificate_enumCertificateIds (
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.cache);
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.cache);
 		mutex_locked = FALSE;
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_enumCertificateIds return rv=%lu-'%s'",
 		rv,

@@ -66,27 +66,21 @@
 
 #if defined(_WIN32)
 #define PKCS11H_THREAD_NULL	NULL
-typedef HANDLE pkcs11h_cond_t;
-typedef HANDLE pkcs11h_mutex_t;
-typedef HANDLE pkcs11h_thread_t;
+typedef HANDLE _pkcs11h_cond_t;
+typedef HANDLE _pkcs11h_mutex_t;
+typedef HANDLE _pkcs11h_thread_t;
 #else
 #define PKCS11H_THREAD_NULL	0l
-typedef pthread_mutex_t pkcs11h_mutex_t;
-typedef pthread_t pkcs11h_thread_t;
+typedef pthread_mutex_t _pkcs11h_mutex_t;
+typedef pthread_t _pkcs11h_thread_t;
 
 typedef struct {
 	pthread_cond_t cond;
 	pthread_mutex_t mut;
-} pkcs11h_cond_t;
-
-typedef struct __pkcs11h_threading_mutex_entry_s {
-	struct __pkcs11h_threading_mutex_entry_s *next;
-	pkcs11h_mutex_t *p_mutex;
-	PKCS11H_BOOL locked;
-} *__pkcs11h_threading_mutex_entry_t;
+} _pkcs11h_cond_t;
 #endif
 
-typedef void * (*pkcs11h_thread_start_t)(void *);
+typedef void * (*_pkcs11h_thread_start_t)(void *);
 
 void
 _pkcs11h_threading_sleep (
@@ -95,55 +89,55 @@ _pkcs11h_threading_sleep (
 
 CK_RV
 _pkcs11h_threading_mutexInit (
-	OUT pkcs11h_mutex_t * const mutex
+	OUT _pkcs11h_mutex_t * const mutex
 );
 
 CK_RV
 _pkcs11h_threading_mutexLock (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 );
 
 CK_RV
 _pkcs11h_threading_mutexRelease (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 );
 
 CK_RV
 _pkcs11h_threading_mutexFree (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 );
 
 CK_RV
 _pkcs11h_threading_condSignal (
-	IN OUT pkcs11h_cond_t *const cond
+	IN OUT _pkcs11h_cond_t *const cond
 );
 
 CK_RV
 _pkcs11h_threading_condInit (
-	OUT pkcs11h_cond_t * const cond
+	OUT _pkcs11h_cond_t * const cond
 );
 
 CK_RV
 _pkcs11h_threading_condWait (
-	IN OUT pkcs11h_cond_t *const cond,
+	IN OUT _pkcs11h_cond_t *const cond,
 	IN const unsigned milli
 );
 
 CK_RV
 _pkcs11h_threading_condFree (
-	IN OUT pkcs11h_cond_t *const cond
+	IN OUT _pkcs11h_cond_t *const cond
 );
 
 CK_RV
 _pkcs11h_threading_threadStart (
-	OUT pkcs11h_thread_t * const thread,
-	IN pkcs11h_thread_start_t const start,
+	OUT _pkcs11h_thread_t * const thread,
+	IN _pkcs11h_thread_start_t const start,
 	IN void * data
 );
 
 CK_RV
 _pkcs11h_threading_threadJoin (
-	IN pkcs11h_thread_t * const thread
+	IN _pkcs11h_thread_t * const thread
 );
 
 #if !defined(_WIN32)

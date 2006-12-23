@@ -86,7 +86,7 @@ _pkcs11h_certificate_resetSession (
 
 CK_RV
 _pkcs11h_certificate_enumSessionCertificates (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN void * const user_data,
 	IN const unsigned mask_prompt
 );

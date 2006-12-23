@@ -57,7 +57,7 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
-#define PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|"
+#define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|"
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
 
@@ -68,13 +68,13 @@ pkcs11h_token_serializeTokenId (
 	IN const pkcs11h_token_id_t token_id
 ) {
 	const char *sources[5];
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t n;
 	int e;
 
-	/*PKCS11H_ASSERT (sz!=NULL); Not required*/
-	PKCS11H_ASSERT (max!=NULL);
-	PKCS11H_ASSERT (token_id!=NULL);
+	/*_PKCS11H_ASSERT (sz!=NULL); Not required*/
+	_PKCS11H_ASSERT (max!=NULL);
+	_PKCS11H_ASSERT (token_id!=NULL);
 
 	{ /* Must be after assert */
 		sources[0] = token_id->manufacturerID;
@@ -84,7 +84,7 @@ pkcs11h_token_serializeTokenId (
 		sources[4] = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_serializeTokenId entry sz=%p, *max=%u, token_id=%p",
 		sz,
@@ -93,31 +93,52 @@ pkcs11h_token_serializeTokenId (
 	);
 
 	n = 0;
-	for (e=0;rv == CKR_OK && sources[e] != NULL;e++) {
+	for (e=0;sources[e] != NULL;e++) {
 		size_t t;
-		rv = _pkcs11h_util_escapeString (NULL, sources[e], &t, PKCS11H_SERIALIZE_INVALID_CHARS);
+		if (
+			(rv = _pkcs11h_util_escapeString (
+				NULL,
+				sources[e],
+				&t,
+				__PKCS11H_SERIALIZE_INVALID_CHARS
+			)) != CKR_OK
+		) {
+			goto cleanup;
+		}
 		n+=t;
 	}
 
 	if (sz != NULL) {
 		if (*max < n) {
 			rv = CKR_ATTRIBUTE_VALUE_INVALID;
+			goto cleanup;
 		}
-		else {
-			n = 0;
-			for (e=0;sources[e] != NULL;e++) {
-				size_t t = *max-n;
-				_pkcs11h_util_escapeString (sz+n, sources[e], &t, PKCS11H_SERIALIZE_INVALID_CHARS);
-				n+=t;
-				sz[n-1] = '/';
+
+		n = 0;
+		for (e=0;sources[e] != NULL;e++) {
+			size_t t = *max-n;
+			if (
+				(rv = _pkcs11h_util_escapeString (
+					sz+n,
+					sources[e],
+					&t,
+					__PKCS11H_SERIALIZE_INVALID_CHARS
+				)) != CKR_OK
+			) {
+				goto cleanup;
 			}
-			sz[n-1] = '\x0';
+			n+=t;
+			sz[n-1] = '/';
 		}
+		sz[n-1] = '\x0';
 	}
 
 	*max = n;
+	rv = CKR_OK;
 
-	PKCS11H_DEBUG (
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_serializeTokenId return rv=%lu-'%s', *max=%u, sz='%s'",
 		rv,
@@ -144,12 +165,12 @@ pkcs11h_token_deserializeTokenId (
 	char *p1 = NULL;
 	char *_sz = NULL;
 	int e;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (p_token_id!=NULL);
-	PKCS11H_ASSERT (sz!=NULL);
+	_PKCS11H_ASSERT (p_token_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_deserializeTokenId entry p_token_id=%p, sz='%s'",
 		(void *)p_token_id,
@@ -158,32 +179,31 @@ pkcs11h_token_deserializeTokenId (
 
 	*p_token_id = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_strdup (
+	if (
+		(rv = _pkcs11h_mem_strdup (
 			(void *)&_sz,
 			sz
-		);
-	}
-
-	if (rv == CKR_OK) {
-		p1 = _sz;
-	}
-
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_token_newTokenId (&token_id)) == CKR_OK
+		)) != CKR_OK
 	) {
-		targets[0].p = token_id->manufacturerID;
-		targets[0].s = sizeof (token_id->manufacturerID);
-		targets[1].p = token_id->model;
-		targets[1].s = sizeof (token_id->model);
-		targets[2].p = token_id->serialNumber;
-		targets[2].s = sizeof (token_id->serialNumber);
-		targets[3].p = token_id->label;
-		targets[3].s = sizeof (token_id->label);
+		goto cleanup;
 	}
 
-	for (e=0;rv == CKR_OK && e < __PKCS11H_TARGETS_NUMBER;e++) {
+	p1 = _sz;
+
+	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	targets[0].p = token_id->manufacturerID;
+	targets[0].s = sizeof (token_id->manufacturerID);
+	targets[1].p = token_id->model;
+	targets[1].s = sizeof (token_id->model);
+	targets[2].p = token_id->serialNumber;
+	targets[2].s = sizeof (token_id->serialNumber);
+	targets[3].p = token_id->label;
+	targets[3].s = sizeof (token_id->label);
+
+	for (e=0;e < __PKCS11H_TARGETS_NUMBER;e++) {
 		size_t l;
 		char *p2 = NULL;
 
@@ -191,58 +211,59 @@ pkcs11h_token_deserializeTokenId (
 		 * Don't search for last
 		 * separator
 		 */
-		if (rv == CKR_OK) {
-			if (e != __PKCS11H_TARGETS_NUMBER-1) {
-				p2 = strchr (p1, '/');
-				if (p2 == NULL) {
-					rv = CKR_ATTRIBUTE_VALUE_INVALID;
-				}
-				else {
-					*p2 = '\x0';
-				}
+		if (e != __PKCS11H_TARGETS_NUMBER-1) {
+			p2 = strchr (p1, '/');
+			if (p2 == NULL) {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto cleanup;
+			}
+			else {
+				*p2 = '\x0';
 			}
 		}
 
-		if (rv == CKR_OK) {
-			_pkcs11h_util_unescapeString (
+		if (
+			(rv = _pkcs11h_util_unescapeString (
 				NULL,
 				p1,
 				&l
-			);
+			)) != CKR_OK
+		) {
+			goto cleanup;
 		}
 
-		if (rv == CKR_OK) {
-			if (l > targets[e].s) {
-				rv = CKR_ATTRIBUTE_VALUE_INVALID;
-			}
+		if (l > targets[e].s) {
+			rv = CKR_ATTRIBUTE_VALUE_INVALID;
+			goto cleanup;
 		}
 
-		if (rv == CKR_OK) {
-			l = targets[e].s;
-			_pkcs11h_util_unescapeString (
+		l = targets[e].s;
+
+		if (
+			(rv = _pkcs11h_util_unescapeString (
 				targets[e].p,
 				p1,
 				&l
-			);
+			)) != CKR_OK
+		) {
+			goto cleanup;
 		}
 
-		if (rv == CKR_OK) {
-			p1 = p2+1;
-		}
+		p1 = p2+1;
 	}
 
-	if (rv == CKR_OK) {
-		strncpy (
-			token_id->display,
-			token_id->label,
-			sizeof (token_id->display)
-		);
-	}
+	strncpy (
+		token_id->display,
+		token_id->label,
+		sizeof (token_id->display)
+	);
 
-	if (rv == CKR_OK) {
-		*p_token_id = token_id;
-		token_id = NULL;
-	}
+	*p_token_id = token_id;
+	token_id = NULL;
+
+	rv = CKR_OK;
+
+cleanup:
 
 	if (_sz != NULL) {
 		_pkcs11h_mem_free ((void *)&_sz);
@@ -266,16 +287,16 @@ pkcs11h_certificate_serializeCertificateId (
 	IN OUT size_t *max,
 	IN const pkcs11h_certificate_id_t certificate_id
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t saved_max = 0;
 	size_t n = 0;
 	size_t _max = 0;
 
-	/*PKCS11H_ASSERT (sz!=NULL); Not required */
-	PKCS11H_ASSERT (max!=NULL);
-	PKCS11H_ASSERT (certificate_id!=NULL);
+	/*_PKCS11H_ASSERT (sz!=NULL); Not required */
+	_PKCS11H_ASSERT (max!=NULL);
+	_PKCS11H_ASSERT (certificate_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_serializeCertificateId entry sz=%p, *max=%u, certificate_id=%p",
 		sz,
@@ -288,38 +309,39 @@ pkcs11h_certificate_serializeCertificateId (
 	}
 	*max = 0;
 
-	if (rv == CKR_OK) {
-		rv = pkcs11h_token_serializeTokenId (
+	if (
+		(rv = pkcs11h_token_serializeTokenId (
 			sz,
 			&n,
 			certificate_id->token_id
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		_max = n + certificate_id->attrCKA_ID_size*2 + 1;
-	}
+	_max = n + certificate_id->attrCKA_ID_size*2 + 1;
 
 	if (sz != NULL) {
 		if (saved_max < _max) {
 			rv = CKR_ATTRIBUTE_VALUE_INVALID;
+			goto cleanup;
 		}
 
-		if (rv == CKR_OK) {
-			sz[n-1] = '/';
-			rv = _pkcs11h_util_binaryToHex (
-				sz+n,
-				saved_max-n,
-				certificate_id->attrCKA_ID,
-				certificate_id->attrCKA_ID_size
-			);
-
-		}
+		sz[n-1] = '/';
+		rv = _pkcs11h_util_binaryToHex (
+			sz+n,
+			saved_max-n,
+			certificate_id->attrCKA_ID,
+			certificate_id->attrCKA_ID_size
+		);
 	}
 
 	*max = _max;
+	rv = CKR_OK;
 
-	PKCS11H_DEBUG (
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_serializeCertificateId return rv=%lu-'%s', *max=%u, sz='%s'",
 		rv,
@@ -337,78 +359,75 @@ pkcs11h_certificate_deserializeCertificateId (
 	IN const char * const sz
 ) {
 	pkcs11h_certificate_id_t certificate_id = NULL;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	char *p = NULL;
 	char *_sz = NULL;
 
-	PKCS11H_ASSERT (p_certificate_id!=NULL);
-	PKCS11H_ASSERT (sz!=NULL);
+	_PKCS11H_ASSERT (p_certificate_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
 
 	*p_certificate_id = NULL;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_deserializeCertificateId entry p_certificate_id=%p, sz='%s'",
 		(void *)p_certificate_id,
 		sz
 	);
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_strdup (
+	if (
+		(rv = _pkcs11h_mem_strdup (
 			(void *)&_sz,
 			sz
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		p = _sz;
+	p = _sz;
+
+	if ((rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_certificate_newCertificateId (&certificate_id);
+	if ((p = strrchr (_sz, '/')) == NULL) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
 	}
+
+	*p = '\x0';
+	p++;
 
 	if (
-		rv == CKR_OK &&
-		(p = strrchr (_sz, '/')) == NULL
-	) {
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-	}
-
-	if (rv == CKR_OK) {
-		*p = '\x0';
-		p++;
-	}
-
-	if (rv == CKR_OK) {
-		rv = pkcs11h_token_deserializeTokenId (
+		(rv = pkcs11h_token_deserializeTokenId (
 			&certificate_id->token_id,
 			_sz
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		certificate_id->attrCKA_ID_size = strlen (p)/2;
-	}
+	certificate_id->attrCKA_ID_size = strlen (p)/2;
 
 	if (
-		rv == CKR_OK &&
 		(rv = _pkcs11h_mem_malloc (
 			(void *)&certificate_id->attrCKA_ID,
 			certificate_id->attrCKA_ID_size)
-		) == CKR_OK
-	) {
-		rv = _pkcs11h_util_hexToBinary (
+		) != CKR_OK ||
+		(rv = _pkcs11h_util_hexToBinary (
 			certificate_id->attrCKA_ID,
 			p,
 			&certificate_id->attrCKA_ID_size
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		*p_certificate_id = certificate_id;
-		certificate_id = NULL;
-	}
+	*p_certificate_id = certificate_id;
+	certificate_id = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 	if (certificate_id != NULL) {
 		pkcs11h_certificate_freeCertificateId (certificate_id);
@@ -419,7 +438,7 @@ pkcs11h_certificate_deserializeCertificateId (
 		_pkcs11h_mem_free ((void *)&_sz);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_deserializeCertificateId return rv=%lu-'%s'",
 		rv,

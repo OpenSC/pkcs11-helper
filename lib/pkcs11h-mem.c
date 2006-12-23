@@ -61,14 +61,14 @@ _pkcs11h_mem_malloc (
 ) {
 	CK_RV rv = CKR_OK;
 
-	PKCS11H_ASSERT (p!=NULL);
-	PKCS11H_ASSERT (s!=0);
+	_PKCS11H_ASSERT (p!=NULL);
+	_PKCS11H_ASSERT (s!=0);
 
 	*p = NULL;
 
 	if (s > 0) {
 		if (
-			(*p = (void *)g_pkcs11h_sys_engine.malloc (s)) == NULL
+			(*p = (void *)_g_pkcs11h_sys_engine.malloc (s)) == NULL
 		) {
 			rv = CKR_HOST_MEMORY;
 		}
@@ -84,9 +84,9 @@ CK_RV
 _pkcs11h_mem_free (
 	IN const void * * const  p
 ) {
-	PKCS11H_ASSERT (p!=NULL);
+	_PKCS11H_ASSERT (p!=NULL);
 
-	g_pkcs11h_sys_engine.free ((void *)*p);
+	_g_pkcs11h_sys_engine.free ((void *)*p);
 	*p = NULL;
 
 	return CKR_OK;
@@ -112,11 +112,11 @@ _pkcs11h_mem_duplicate (
 	IN const void * const src,
 	IN const size_t mem_size
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (dest!=NULL);
-	/*PKCS11H_ASSERT (dest_size!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (!(mem_size!=0&&src==NULL));
+	_PKCS11H_ASSERT (dest!=NULL);
+	/*_PKCS11H_ASSERT (dest_size!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (!(mem_size!=0&&src==NULL));
 
 	*dest = NULL;
 	if (p_dest_size != NULL) {
@@ -124,16 +124,19 @@ _pkcs11h_mem_duplicate (
 	}
 
 	if (src != NULL) {
-		if (
-			rv == CKR_OK &&
-			(rv = _pkcs11h_mem_malloc (dest, mem_size)) == CKR_OK
-		) {
-			if (p_dest_size != NULL) {
-				*p_dest_size = mem_size;
-			}
-			memmove ((void*)*dest, src, mem_size);
+		if ((rv = _pkcs11h_mem_malloc (dest, mem_size)) != CKR_OK) {
+			goto cleanup;
 		}
+
+		if (p_dest_size != NULL) {
+			*p_dest_size = mem_size;
+		}
+		memmove ((void*)*dest, src, mem_size);
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 	return rv;
 }

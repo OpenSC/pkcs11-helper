@@ -56,7 +56,7 @@
 
 #include <pkcs11-helper-1.0/pkcs11h-engines.h>
 
-extern pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine;
+extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine;
 
 #endif
 

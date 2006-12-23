@@ -69,7 +69,7 @@
 #include <windows.h>
 #endif
 
-#define PKCS11H_ASSERT		assert
+#define _PKCS11H_ASSERT		assert
 
 #endif
 

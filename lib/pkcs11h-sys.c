@@ -83,7 +83,7 @@ __mygettimeofday (struct timeval *tv) {
 }
 #endif
 
-pkcs11h_engine_system_t g_pkcs11h_sys_engine = {
+pkcs11h_engine_system_t _g_pkcs11h_sys_engine = {
 	malloc,
 	free,
 	__mytime,
@@ -99,9 +99,9 @@ CK_RV
 pkcs11h_engine_setSystem (
 	IN const pkcs11h_engine_system_t * const engine
 ) {
-	PKCS11H_ASSERT (engine!=NULL);
+	_PKCS11H_ASSERT (engine!=NULL);
 
-	memmove (&g_pkcs11h_sys_engine, engine, sizeof (pkcs11h_engine_system_t));
+	memmove (&_g_pkcs11h_sys_engine, engine, sizeof (pkcs11h_engine_system_t));
 
 	return CKR_OK;
 }

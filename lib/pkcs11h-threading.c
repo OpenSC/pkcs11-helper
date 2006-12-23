@@ -64,17 +64,23 @@
 #include "_pkcs11h-threading.h"
 
 typedef struct {
-	pkcs11h_thread_start_t start;
+	_pkcs11h_thread_start_t start;
 	void *data;
-} __pkcs11h_thread_data_t;
+} ___pkcs11h_thread_data_t;
 
 /*==========================================
  * Static data
  */
 
 #if !defined(_WIN32)
+typedef struct __pkcs11h_threading_mutex_entry_s {
+	struct __pkcs11h_threading_mutex_entry_s *next;
+	_pkcs11h_mutex_t *p_mutex;
+	PKCS11H_BOOL locked;
+} *__pkcs11h_threading_mutex_entry_t;
+
 static struct {
-	pkcs11h_mutex_t mutex;
+	_pkcs11h_mutex_t mutex;
 	__pkcs11h_threading_mutex_entry_t head;
 } __s_pkcs11h_threading_mutex_list = {
 	PTHREAD_MUTEX_INITIALIZER,
@@ -86,54 +92,56 @@ void
 _pkcs11h_threading_sleep (
 	IN const unsigned milli
 ) {
-	g_pkcs11h_sys_engine.usleep (milli*1000);
+	_g_pkcs11h_sys_engine.usleep (milli*1000);
 }
 
 CK_RV
 _pkcs11h_threading_mutexInit (
-	OUT pkcs11h_mutex_t * const mutex
+	OUT _pkcs11h_mutex_t * const mutex
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
 #if defined(_WIN32)
-	if (
-		rv == CKR_OK &&
-		(*mutex = CreateMutex (NULL, FALSE, NULL)) == NULL
-	) {
+	if ((*mutex = CreateMutex (NULL, FALSE, NULL)) == NULL) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
+
 #else
 	{
 		__pkcs11h_threading_mutex_entry_t entry = NULL;
 		PKCS11H_BOOL mutex_locked = FALSE;
 
-		if (
-			rv == CKR_OK &&
-			(rv = _pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex)) == CKR_OK
-		) {
-			mutex_locked = TRUE;
+		if ((rv = _pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex)) != CKR_OK) {
+			goto cleanup;
 		}
+		mutex_locked = TRUE;
 		
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_mem_malloc (
+		if (
+			(rv = _pkcs11h_mem_malloc (
 				(void *)&entry,
 				sizeof (struct __pkcs11h_threading_mutex_entry_s)
-			);
-		}
-
-		if (
-			rv == CKR_OK &&
-			pthread_mutex_init (mutex, NULL)
+			)) != CKR_OK
 		) {
+			goto cleanup;
+		}
+
+		if (pthread_mutex_init (mutex, NULL)) {
 			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
 		}
 
-		if (rv == CKR_OK) {
-			entry->p_mutex = mutex;
-			entry->next = __s_pkcs11h_threading_mutex_list.head;
-			__s_pkcs11h_threading_mutex_list.head = entry;
-			entry = NULL;
-		}
+		entry->p_mutex = mutex;
+		entry->next = __s_pkcs11h_threading_mutex_list.head;
+		__s_pkcs11h_threading_mutex_list.head = entry;
+		entry = NULL;
+		rv = CKR_OK;
 
+	cleanup:
 		if (entry != NULL) {
 			_pkcs11h_mem_free ((void *)&entry);
 		}
@@ -149,53 +157,48 @@ _pkcs11h_threading_mutexInit (
 
 CK_RV
 _pkcs11h_threading_mutexLock (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 #if defined(_WIN32)
-	if (
-		rv == CKR_OK &&
-		WaitForSingleObject (*mutex, INFINITE) == WAIT_FAILED
-	) {
+	if (WaitForSingleObject (*mutex, INFINITE) == WAIT_FAILED) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #else
-	if (
-		rv == CKR_OK &&
-		pthread_mutex_lock (mutex)
-	) {
-		rv = CKR_FUNCTION_FAILED;
+	if (pthread_mutex_lock (mutex)) {
+		goto cleanup;
 	}
 #endif
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_mutexRelease (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 #if defined(_WIN32)
-	if (
-		rv == CKR_OK &&
-		!ReleaseMutex (*mutex)
-	) {
+	if (!ReleaseMutex (*mutex)) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #else
-	if (
-		rv == CKR_OK &&
-		pthread_mutex_unlock (mutex)
-	) {
+	if (pthread_mutex_unlock (mutex)) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #endif
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_mutexFree (
-	IN OUT pkcs11h_mutex_t *const mutex
+	IN OUT _pkcs11h_mutex_t *const mutex
 ) {
 #if defined(_WIN32)
 	if (*mutex != NULL) {
@@ -208,9 +211,10 @@ _pkcs11h_threading_mutexFree (
 		__pkcs11h_threading_mutex_entry_t entry = NULL;
 		PKCS11H_BOOL mutex_locked = FALSE;
 
-		if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) == CKR_OK) {
-			mutex_locked = TRUE;
+		if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) != CKR_OK) {
+			goto cleanup;
 		}
+		mutex_locked = TRUE;
 
 		entry =  __s_pkcs11h_threading_mutex_list.head;
 		while (
@@ -233,6 +237,7 @@ _pkcs11h_threading_mutexFree (
 
 		pthread_mutex_destroy (mutex);
 
+cleanup:
 		if (mutex_locked) {
 			_pkcs11h_threading_mutexRelease (&__s_pkcs11h_threading_mutex_list.mutex);
 			mutex_locked = FALSE;
@@ -256,9 +261,10 @@ _pkcs1h_threading_mutexLockAll (void) {
 	PKCS11H_BOOL mutex_locked = FALSE;
 	PKCS11H_BOOL all_mutexes_locked = FALSE;
 
-	if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) == CKR_OK) {
-		mutex_locked = TRUE;
+	if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 
 	for (
 		entry = __s_pkcs11h_threading_mutex_list.head;
@@ -305,6 +311,8 @@ _pkcs1h_threading_mutexLockAll (void) {
 		}
 	}
 
+cleanup:
+
 	if (mutex_locked) {
 		_pkcs11h_threading_mutexRelease (&__s_pkcs11h_threading_mutex_list.mutex);
 		mutex_locked = FALSE;
@@ -316,9 +324,10 @@ _pkcs1h_threading_mutexReleaseAll (void) {
 	__pkcs11h_threading_mutex_entry_t entry = NULL;
 	PKCS11H_BOOL mutex_locked = FALSE;
 
-	if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) == CKR_OK) {
-		mutex_locked = TRUE;
+	if (_pkcs11h_threading_mutexLock (&__s_pkcs11h_threading_mutex_list.mutex) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 
 	for (
 		entry = __s_pkcs11h_threading_mutex_list.head;
@@ -329,6 +338,8 @@ _pkcs1h_threading_mutexReleaseAll (void) {
 		entry->locked = FALSE;
 	}
 
+cleanup:
+
 	if (mutex_locked) {
 		_pkcs11h_threading_mutexRelease (&__s_pkcs11h_threading_mutex_list.mutex);
 		mutex_locked = FALSE;
@@ -338,19 +349,17 @@ _pkcs1h_threading_mutexReleaseAll (void) {
 
 CK_RV
 _pkcs11h_threading_condSignal (
-	IN OUT pkcs11h_cond_t *const cond
+	IN OUT _pkcs11h_cond_t *const cond
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
 #if defined(_WIN32)
-	if (
-		rv == CKR_OK &&
-		!SetEvent (*cond)
-	) {
+	if (!SetEvent (*cond)) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #else
 	if (
-		rv == CKR_OK &&
 		(
 			pthread_mutex_lock (&cond->mut) ||
 			pthread_cond_signal (&cond->cond) ||
@@ -358,27 +367,26 @@ _pkcs11h_threading_condSignal (
 		)
 	) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #endif
-
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_condInit (
-	OUT pkcs11h_cond_t * const cond
+	OUT _pkcs11h_cond_t * const cond
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 #if defined(_WIN32)
-	if (
-		rv == CKR_OK &&
-		(*cond = CreateEvent (NULL, FALSE, FALSE, NULL)) == NULL
-	) {
+	if ((*cond = CreateEvent (NULL, FALSE, FALSE, NULL)) == NULL) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #else
 	if (
-		rv == CKR_OK &&
 		(
 			pthread_mutex_init (&cond->mut, NULL) ||
 			pthread_cond_init (&cond->cond, NULL) ||
@@ -386,17 +394,20 @@ _pkcs11h_threading_condInit (
 		)
 	) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #endif
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_condWait (
-	IN OUT pkcs11h_cond_t *const cond,
+	IN OUT _pkcs11h_cond_t *const cond,
 	IN const unsigned milli
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 #if defined(_WIN32)
 	DWORD dwMilli;
@@ -408,51 +419,43 @@ _pkcs11h_threading_condWait (
 		dwMilli = milli;
 	}
 
-	if (
-		rv == CKR_OK &&
-		WaitForSingleObject (*cond, dwMilli) == WAIT_FAILED
-	) {
+	if (WaitForSingleObject (*cond, dwMilli) == WAIT_FAILED) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #else
 	if (milli == PKCS11H_COND_INFINITE) {
-		if (
-			rv == CKR_OK &&
-			pthread_cond_wait (&cond->cond, &cond->mut)
-		) {
+		if (pthread_cond_wait (&cond->cond, &cond->mut)	) {
 			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
 		}
 	}
 	else {
 		struct timeval now;
 		struct timespec timeout;
 
-		if (
-			rv == CKR_OK &&
-			g_pkcs11h_sys_engine.gettimeofday (&now)
-		) {
+		if (_g_pkcs11h_sys_engine.gettimeofday (&now)) {
 			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
 		}
 		
-		if (rv == CKR_OK) {
-			timeout.tv_sec = now.tv_sec + milli/1000;
-			timeout.tv_nsec = now.tv_usec*1000 + milli%1000;
-		}
+		timeout.tv_sec = now.tv_sec + milli/1000;
+		timeout.tv_nsec = now.tv_usec*1000 + milli%1000;
 		
-		if (
-			rv == CKR_OK &&
-			pthread_cond_timedwait (&cond->cond, &cond->mut, &timeout)
-		) {
+		if (pthread_cond_timedwait (&cond->cond, &cond->mut, &timeout)) {
 			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
 		}
 	}
 #endif
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_condFree (
-	IN OUT pkcs11h_cond_t *const cond
+	IN OUT _pkcs11h_cond_t *const cond
 ) {
 #if defined(_WIN32)
 	CloseHandle (*cond);
@@ -467,8 +470,8 @@ _pkcs11h_threading_condFree (
 static
 unsigned
 __stdcall
-__pkcs11h_thread_start (void *p) {
-	__pkcs11h_thread_data_t *_data = (__pkcs11h_thread_data_t *)p;
+___pkcs11h_thread_start (void *p) {
+	___pkcs11h_thread_data_t *_data = (___pkcs11h_thread_data_t *)p;
 	unsigned ret;
 
 	ret = (unsigned)_data->start (_data->data);
@@ -480,8 +483,8 @@ __pkcs11h_thread_start (void *p) {
 #else
 static
 void *
-__pkcs11h_thread_start (void *p) {
-	__pkcs11h_thread_data_t *_data = (__pkcs11h_thread_data_t *)p;
+___pkcs11h_thread_start (void *p) {
+	___pkcs11h_thread_data_t *_data = (___pkcs11h_thread_data_t *)p;
 	void *ret;
 	int i;
 
@@ -503,57 +506,57 @@ __pkcs11h_thread_start (void *p) {
 
 CK_RV
 _pkcs11h_threading_threadStart (
-	OUT pkcs11h_thread_t * const thread,
-	IN pkcs11h_thread_start_t const start,
+	OUT _pkcs11h_thread_t * const thread,
+	IN _pkcs11h_thread_start_t const start,
 	IN void * data
 ) {
-	__pkcs11h_thread_data_t *_data = NULL;
-	CK_RV rv = CKR_OK;
+	___pkcs11h_thread_data_t *_data = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_malloc (
+	if (
+		(rv = _pkcs11h_mem_malloc (
 			(void *)&_data,
-			sizeof (__pkcs11h_thread_data_t)
-		);
+			sizeof (___pkcs11h_thread_data_t)
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		_data->start = start;
-		_data->data = data;
-	}
+	_data->start = start;
+	_data->data = data;
 
 #if defined(_WIN32)
 	{
 		unsigned tmp;
 
 		if (
-			rv == CKR_OK &&
 			(*thread = (HANDLE)_beginthreadex (
 				NULL,
 				0,
-				__pkcs11h_thread_start,
+				___pkcs11h_thread_start,
 				_data,
 				0,
 				&tmp
 			)) == NULL
 		) {
 			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
 		}
 	}
 #else
-	if (
-		rv == CKR_OK &&
-		pthread_create (thread, NULL, __pkcs11h_thread_start, _data)
-	) {
+	if (pthread_create (thread, NULL, ___pkcs11h_thread_start, _data)) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #endif
+	rv = CKR_OK;
+cleanup:
 	return rv;
 }
 
 CK_RV
 _pkcs11h_threading_threadJoin (
-	IN pkcs11h_thread_t * const thread
+	IN _pkcs11h_thread_t * const thread
 ) {
 #if defined(_WIN32)
 	WaitForSingleObject (*thread, INFINITE);

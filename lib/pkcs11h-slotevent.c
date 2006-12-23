@@ -95,88 +95,89 @@ void *
 __pkcs11h_slotevent_provider (
 	IN void *p
 ) {
-	pkcs11h_provider_t provider = (pkcs11h_provider_t)p;
+	_pkcs11h_provider_t provider = (_pkcs11h_provider_t)p;
 	CK_SLOT_ID slot;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_slotevent_provider provider='%s' entry",
 		provider->manufacturerID
 	);
 
-	if (rv == CKR_OK && !provider->enabled) {
+	if (!provider->enabled) {
 		rv = CKR_OPERATION_NOT_INITIALIZED;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
+	if (provider->slot_poll_interval == 0) {
+		provider->slot_poll_interval = _PKCS11H_DEFAULT_SLOTEVENT_POLL;
+	}
 
-		if (provider->slot_poll_interval == 0) {
-			provider->slot_poll_interval = PKCS11H_DEFAULT_SLOTEVENT_POLL;
-		}
+	/*
+	 * If we cannot finalize, we cannot cause
+	 * WaitForSlotEvent to terminate
+	 */
+	if (!provider->should_finalize) {
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setup slotevent provider='%s' mode hardset to poll",
+			provider->manufacturerID
+		);
+		provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_POLL;
+	}
 
-		/*
-		 * If we cannot finalize, we cannot cause
-		 * WaitForSlotEvent to terminate
-		 */
-		if (!provider->should_finalize) {
-			PKCS11H_DEBUG (
+	if (
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER
+	) { 
+		if (
+			provider->f->C_WaitForSlotEvent (
+				CKF_DONT_BLOCK,
+				&slot,
+				NULL_PTR
+			) == CKR_FUNCTION_NOT_SUPPORTED
+		) {
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setup slotevent provider='%s' mode hardset to poll",
+				"PKCS#11: Setup slotevent provider='%s' mode is poll",
 				provider->manufacturerID
 			);
+
 			provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_POLL;
 		}
+		else {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setup slotevent provider='%s' mode is trigger",
+				provider->manufacturerID
+			);
 
-		if (
-			provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
-			provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER
-		) { 
-			if (
-				provider->f->C_WaitForSlotEvent (
-					CKF_DONT_BLOCK,
-					&slot,
-					NULL_PTR
-				) == CKR_FUNCTION_NOT_SUPPORTED
-			) {
-				PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Setup slotevent provider='%s' mode is poll",
-					provider->manufacturerID
-				);
-
-				provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_POLL;
-			}
-			else {
-				PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Setup slotevent provider='%s' mode is trigger",
-					provider->manufacturerID
-				);
-
-				provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_TRIGGER;
-			}
+			provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_TRIGGER;
 		}
 	}
 
 	if (provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER) {
 		while (
-			!g_pkcs11h_data->slotevent.should_terminate &&
+			!_g_pkcs11h_data->slotevent.should_terminate &&
 			provider->enabled &&
-			rv == CKR_OK &&
 			(rv = provider->f->C_WaitForSlotEvent (
 				0,
 				&slot,
 				NULL_PTR
 			)) == CKR_OK
 		) {
-			PKCS11H_DEBUG (
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Slotevent provider='%s' event",
 				provider->manufacturerID
 			);
 
-			_pkcs11h_threading_condSignal (&g_pkcs11h_data->slotevent.cond_event);
+			_pkcs11h_threading_condSignal (&_g_pkcs11h_data->slotevent.cond_event);
+		}
+
+		if (rv != CKR_OK) {
+			goto cleanup;
 		}
 	}
 	else {
@@ -184,87 +185,94 @@ __pkcs11h_slotevent_provider (
 		PKCS11H_BOOL is_first_time = TRUE;
 
 		while (
-			!g_pkcs11h_data->slotevent.should_terminate &&
-			provider->enabled &&
-			rv == CKR_OK
+			!_g_pkcs11h_data->slotevent.should_terminate &&
+			provider->enabled
 		) {
 			unsigned long current_checksum = 0;
 
+			CK_ULONG i;
 			CK_SLOT_ID_PTR slots = NULL;
 			CK_ULONG slotnum;
 
-			PKCS11H_DEBUG (
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Slotevent provider='%s' poll",
 				provider->manufacturerID
 			);
 
 			if (
-				rv == CKR_OK &&
 				(rv = _pkcs11h_session_getSlotList (
 					provider,
 					TRUE,
 					&slots,
 					&slotnum
-				)) == CKR_OK
+				)) != CKR_OK
 			) {
-				CK_ULONG i;
-				
-				for (i=0;i<slotnum;i++) {
-					CK_TOKEN_INFO info;
+				goto cleanup1;
+			}
 
-					if (provider->f->C_GetTokenInfo (slots[i], &info) == CKR_OK) {
-						current_checksum += (
-							__pkcs11h_slotevent_checksum (
-								info.label,
-								sizeof (info.label)
-							) +
-							__pkcs11h_slotevent_checksum (
-								info.manufacturerID,
-								sizeof (info.manufacturerID)
-							) +
-							__pkcs11h_slotevent_checksum (
-								info.model,
-								sizeof (info.model)
-							) +
-							__pkcs11h_slotevent_checksum (
-								info.serialNumber,
-								sizeof (info.serialNumber)
-							)
-						);
-					}
+			for (i=0;i<slotnum;i++) {
+				CK_TOKEN_INFO info;
+
+				if (provider->f->C_GetTokenInfo (slots[i], &info) == CKR_OK) {
+					current_checksum += (
+						__pkcs11h_slotevent_checksum (
+							info.label,
+							sizeof (info.label)
+						) +
+						__pkcs11h_slotevent_checksum (
+							info.manufacturerID,
+							sizeof (info.manufacturerID)
+						) +
+						__pkcs11h_slotevent_checksum (
+							info.model,
+							sizeof (info.model)
+						) +
+						__pkcs11h_slotevent_checksum (
+							info.serialNumber,
+							sizeof (info.serialNumber)
+						)
+					);
 				}
 			}
 			
-			if (rv == CKR_OK) {
-				if (is_first_time) {
-					is_first_time = FALSE;
-				}
-				else {
-					if (last_checksum != current_checksum) {
-						PKCS11H_DEBUG (
-							PKCS11H_LOG_DEBUG1,
-							"PKCS#11: Slotevent provider='%s' event",
-							provider->manufacturerID
-						);
-
-						_pkcs11h_threading_condSignal (&g_pkcs11h_data->slotevent.cond_event);
-					}
-				}
-				last_checksum = current_checksum;
+			if (is_first_time) {
+				is_first_time = FALSE;
 			}
+			else {
+				if (last_checksum != current_checksum) {
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Slotevent provider='%s' event",
+						provider->manufacturerID
+					);
+
+					_pkcs11h_threading_condSignal (&_g_pkcs11h_data->slotevent.cond_event);
+				}
+			}
+			last_checksum = current_checksum;
+
+			rv = CKR_OK;
+
+		cleanup1:
 
 			if (slots != NULL) {
 				_pkcs11h_mem_free ((void *)&slots);
 			}
 			
-			if (!g_pkcs11h_data->slotevent.should_terminate) {
+			if (!_g_pkcs11h_data->slotevent.should_terminate) {
 				_pkcs11h_threading_sleep (provider->slot_poll_interval);
+			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
 			}
 		}
 	}
 
-	PKCS11H_DEBUG (
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_slotevent_provider provider='%s' return",
 		provider->manufacturerID
@@ -282,7 +290,7 @@ __pkcs11h_slotevent_manager (
 
 	(void)p;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_slotevent_manager entry"
 	);
@@ -291,17 +299,17 @@ __pkcs11h_slotevent_manager (
 	 * Trigger hook, so application may
 	 * depend on initial slot change
 	 */
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: Calling slotevent hook"
 	);
-	g_pkcs11h_data->hooks.slotevent (g_pkcs11h_data->hooks.slotevent_data);
+	_g_pkcs11h_data->hooks.slotevent (_g_pkcs11h_data->hooks.slotevent_data);
 
 	while (
 		first_time ||	/* Must enter wait or mutex will never be free */
-		!g_pkcs11h_data->slotevent.should_terminate
+		!_g_pkcs11h_data->slotevent.should_terminate
 	) {
-		pkcs11h_provider_t current_provider;
+		_pkcs11h_provider_t current_provider;
 
 		first_time = FALSE;
 
@@ -311,18 +319,18 @@ __pkcs11h_slotevent_manager (
 		 * This is required in order to allow
 		 * adding new providers.
 		 */
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG2,
 			"PKCS#11: __pkcs11h_slotevent_manager examine provider list"
 		);
 		for (
-			current_provider = g_pkcs11h_data->providers;
+			current_provider = _g_pkcs11h_data->providers;
 			current_provider != NULL;
 			current_provider = current_provider->next
 		) {
 			if (current_provider->enabled) {
 				if (current_provider->slotevent_thread == PKCS11H_THREAD_NULL) {
-					PKCS11H_DEBUG (
+					_PKCS11H_DEBUG (
 						PKCS11H_LOG_DEBUG2,
 						"PKCS#11: __pkcs11h_slotevent_manager found enabled provider without thread"
 					);
@@ -335,7 +343,7 @@ __pkcs11h_slotevent_manager (
 			}
 			else {
 				if (current_provider->slotevent_thread != PKCS11H_THREAD_NULL) {
-					PKCS11H_DEBUG (
+					_PKCS11H_DEBUG (
 						PKCS11H_LOG_DEBUG2,
 						"PKCS#11: __pkcs11h_slotevent_manager found disabled provider with thread"
 					);
@@ -344,39 +352,39 @@ __pkcs11h_slotevent_manager (
 			}
 		}
 
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG2,
 			"PKCS#11: __pkcs11h_slotevent_manager waiting for slotevent"
 		);
-		_pkcs11h_threading_condWait (&g_pkcs11h_data->slotevent.cond_event, PKCS11H_COND_INFINITE);
+		_pkcs11h_threading_condWait (&_g_pkcs11h_data->slotevent.cond_event, PKCS11H_COND_INFINITE);
 
-		if (g_pkcs11h_data->slotevent.skip_event) {
-			PKCS11H_DEBUG (
+		if (_g_pkcs11h_data->slotevent.skip_event) {
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Slotevent skipping event"
 			);
-			g_pkcs11h_data->slotevent.skip_event = FALSE;
+			_g_pkcs11h_data->slotevent.skip_event = FALSE;
 		}
 		else {
-			PKCS11H_DEBUG (
+			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
 				"PKCS#11: Calling slotevent hook"
 			);
-			g_pkcs11h_data->hooks.slotevent (g_pkcs11h_data->hooks.slotevent_data);
+			_g_pkcs11h_data->hooks.slotevent (_g_pkcs11h_data->hooks.slotevent_data);
 		}
 	}
 
 	{
-		pkcs11h_provider_t current_provider;
+		_pkcs11h_provider_t current_provider;
 
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG2,
 			"PKCS#11: __pkcs11h_slotevent_manager joining threads"
 		);
 
 
 		for (
-			current_provider = g_pkcs11h_data->providers;
+			current_provider = _g_pkcs11h_data->providers;
 			current_provider != NULL;
 			current_provider = current_provider->next
 		) {
@@ -386,7 +394,7 @@ __pkcs11h_slotevent_manager (
 		}
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_slotevent_manager return"
 	);
@@ -396,32 +404,36 @@ __pkcs11h_slotevent_manager (
 
 CK_RV
 _pkcs11h_slotevent_init (void) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_init entry"
 	);
 
-	if (!g_pkcs11h_data->slotevent.initialized) {
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_threading_condInit (&g_pkcs11h_data->slotevent.cond_event);
+	if (!_g_pkcs11h_data->slotevent.initialized) {
+		if ((rv = _pkcs11h_threading_condInit (&_g_pkcs11h_data->slotevent.cond_event)) != CKR_OK) {
+			goto cleanup;
 		}
 		
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_threading_threadStart (
-				&g_pkcs11h_data->slotevent.thread,
+		if (
+			(rv = _pkcs11h_threading_threadStart (
+				&_g_pkcs11h_data->slotevent.thread,
 				__pkcs11h_slotevent_manager,
 				NULL
-			);
+			)) != CKR_OK
+		) {
+			goto cleanup;
 		}
 		
-		if (rv == CKR_OK) {
-			g_pkcs11h_data->slotevent.initialized = TRUE;
-		}
+		_g_pkcs11h_data->slotevent.initialized = TRUE;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_init return rv=%lu-'%s'",
 		rv,
@@ -434,17 +446,17 @@ _pkcs11h_slotevent_init (void) {
 CK_RV
 _pkcs11h_slotevent_notify (void) {
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_notify entry"
 	);
 
-	if (g_pkcs11h_data->slotevent.initialized) {
-		g_pkcs11h_data->slotevent.skip_event = TRUE;
-		_pkcs11h_threading_condSignal (&g_pkcs11h_data->slotevent.cond_event);
+	if (_g_pkcs11h_data->slotevent.initialized) {
+		_g_pkcs11h_data->slotevent.skip_event = TRUE;
+		_pkcs11h_threading_condSignal (&_g_pkcs11h_data->slotevent.cond_event);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_notify return"
 	);
@@ -454,9 +466,9 @@ _pkcs11h_slotevent_notify (void) {
 
 CK_RV
 _pkcs11h_slotevent_terminate_force (void) {
-	if (g_pkcs11h_data->slotevent.initialized) {
-		_pkcs11h_threading_condFree (&g_pkcs11h_data->slotevent.cond_event);
-		g_pkcs11h_data->slotevent.initialized = FALSE;
+	if (_g_pkcs11h_data->slotevent.initialized) {
+		_pkcs11h_threading_condFree (&_g_pkcs11h_data->slotevent.cond_event);
+		_g_pkcs11h_data->slotevent.initialized = FALSE;
 	}
 
 	return CKR_OK;
@@ -465,24 +477,24 @@ _pkcs11h_slotevent_terminate_force (void) {
 CK_RV
 _pkcs11h_slotevent_terminate (void) {
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_terminate entry"
 	);
 
-	if (g_pkcs11h_data->slotevent.initialized) {
-		g_pkcs11h_data->slotevent.should_terminate = TRUE;
+	if (_g_pkcs11h_data->slotevent.initialized) {
+		_g_pkcs11h_data->slotevent.should_terminate = TRUE;
 
 		_pkcs11h_slotevent_notify ();
 
-		if (g_pkcs11h_data->slotevent.thread != PKCS11H_THREAD_NULL) {
-			_pkcs11h_threading_threadJoin (&g_pkcs11h_data->slotevent.thread);
+		if (_g_pkcs11h_data->slotevent.thread != PKCS11H_THREAD_NULL) {
+			_pkcs11h_threading_threadJoin (&_g_pkcs11h_data->slotevent.thread);
 		}
 
 		_pkcs11h_slotevent_terminate_force ();
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_terminate return"
 	);

@@ -123,8 +123,8 @@ __pkcs11h_forkFixup (
  * Data
  */
 
-pkcs11h_data_t g_pkcs11h_data = NULL;
-unsigned int g_pkcs11h_loglevel = PKCS11H_LOG_INFO;
+_pkcs11h_data_t _g_pkcs11h_data = NULL;
+unsigned int _g_pkcs11h_loglevel = PKCS11H_LOG_INFO;
 
 /*======================================================================*
  * PUBLIC INTERFACE
@@ -267,52 +267,56 @@ pkcs11h_getFeatures (void) {
 
 CK_RV
 pkcs11h_initialize (void) {
-
 #if defined(ENABLE_PKCS11H_THREADING)
-	PKCS11H_BOOL mutex_locked = FALSE;
+	PKCS11H_BOOL has_mutex_global = FALSE;
+	PKCS11H_BOOL has_mutex_cache = FALSE;
+	PKCS11H_BOOL has_mutex_session = FALSE;
 #endif
-	CK_RV rv = CKR_OK;
 
-	PKCS11H_DEBUG (
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_pkcs11h_data_t data = NULL;
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_initialize entry"
 	);
 
 	pkcs11h_terminate ();
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_malloc ((void*)&g_pkcs11h_data, sizeof (struct pkcs11h_data_s));
+	if ((rv = _pkcs11h_mem_malloc ((void*)&data, sizeof (struct _pkcs11h_data_s))) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK && g_pkcs11h_crypto_engine.initialize == NULL) {
+	if (_g_pkcs11h_crypto_engine.initialize == NULL) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 
-	if (
-		rv == CKR_OK &&
-		!g_pkcs11h_crypto_engine.initialize (g_pkcs11h_crypto_engine.global_data)
-	) {
-		PKCS11H_DEBUG (
+	if (!_g_pkcs11h_crypto_engine.initialize (_g_pkcs11h_crypto_engine.global_data)) {
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_ERROR,
 			"PKCS#11: Cannot initialize crypto engine"
 		);
 
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_threading_mutexInit (&g_pkcs11h_data->mutexes.global); 
+	if ((rv = _pkcs11h_threading_mutexInit (&data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
 	}
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_threading_mutexInit (&g_pkcs11h_data->mutexes.session); 
+	has_mutex_global = TRUE;
+	if ((rv = _pkcs11h_threading_mutexInit (&data->mutexes.cache)) != CKR_OK) {
+		goto cleanup;
 	}
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_threading_mutexInit (&g_pkcs11h_data->mutexes.cache); 
+	has_mutex_cache = TRUE;
+	if ((rv = _pkcs11h_threading_mutexInit (&data->mutexes.session)) != CKR_OK) {
+		goto cleanup;
 	}
+	has_mutex_session = TRUE;
 #if !defined(_WIN32)
 	if (
-		rv == CKR_OK &&
 		pthread_atfork (
 			__pkcs11h_threading_atfork_prepare,
 			__pkcs11h_threading_atfork_parent,
@@ -320,37 +324,47 @@ pkcs11h_initialize (void) {
 		)
 	) {
 		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 #endif
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
-	}
 #endif
 
-	if (rv == CKR_OK) {
-		g_pkcs11h_data->max_retries = PKCS11H_DEFAULT_MAX_LOGIN_RETRY;
-		g_pkcs11h_data->allow_protected_auth = TRUE;
-		g_pkcs11h_data->pin_cache_period = PKCS11H_DEFAULT_PIN_CACHE_PERIOD;
-		g_pkcs11h_data->initialized = TRUE;
-	}
+	data->max_retries = _PKCS11H_DEFAULT_MAX_LOGIN_RETRY;
+	data->allow_protected_auth = TRUE;
+	data->pin_cache_period = _PKCS11H_DEFAULT_PIN_CACHE_PERIOD;
+	data->initialized = TRUE;
 
-	if (rv == CKR_OK) {
-		pkcs11h_setLogHook (__pkcs11h_hooks_default_log, NULL);
-		pkcs11h_setTokenPromptHook (__pkcs11h_hooks_default_token_prompt, NULL);
-		pkcs11h_setPINPromptHook (__pkcs11h_hooks_default_pin_prompt, NULL);
-	}
-	
+	_g_pkcs11h_data = data;
+	data = NULL;
+
+	pkcs11h_setLogHook (__pkcs11h_hooks_default_log, NULL);
+	pkcs11h_setTokenPromptHook (__pkcs11h_hooks_default_token_prompt, NULL);
+	pkcs11h_setPINPromptHook (__pkcs11h_hooks_default_pin_prompt, NULL);
+
+	rv = CKR_OK;
+
+cleanup:
+
+	if (data != NULL) {
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
-		mutex_locked = FALSE;
-	}
+		if (has_mutex_global) {
+			_pkcs11h_threading_mutexFree (&data->mutexes.global);
+			has_mutex_global = FALSE;
+		}
+		if (has_mutex_cache) {
+			_pkcs11h_threading_mutexFree (&data->mutexes.cache);
+			has_mutex_cache = FALSE;
+		}
+		if (has_mutex_session) {
+			_pkcs11h_threading_mutexFree (&data->mutexes.session); 
+			has_mutex_session = FALSE;
+		}
 #endif
+		_pkcs11h_mem_free ((void *)&data);
+		data = NULL;
+	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_initialize return rv=%lu-'%s'",
 		rv,
@@ -363,21 +377,21 @@ pkcs11h_initialize (void) {
 CK_RV
 pkcs11h_terminate (void) {
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_terminate entry"
 	);
 
-	if (g_pkcs11h_data != NULL) {
-		pkcs11h_provider_t current_provider = NULL;
+	if (_g_pkcs11h_data != NULL) {
+		_pkcs11h_provider_t current_provider = NULL;
 
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Removing providers"
 		);
 
 		for (
-			current_provider = g_pkcs11h_data->providers;
+			current_provider = _g_pkcs11h_data->providers;
 			current_provider != NULL;
 			current_provider = current_provider->next
 		) {
@@ -385,19 +399,19 @@ pkcs11h_terminate (void) {
 		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.cache);
-		_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.session);
-		_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global);
+		_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache);
+		_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.session);
+		_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global);
 #endif
 
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Releasing sessions"
 		);
 
-		while (g_pkcs11h_data->sessions != NULL) {
-			pkcs11h_session_t current = g_pkcs11h_data->sessions;
-			g_pkcs11h_data->sessions = g_pkcs11h_data->sessions->next;
+		while (_g_pkcs11h_data->sessions != NULL) {
+			_pkcs11h_session_t current = _g_pkcs11h_data->sessions;
+			_g_pkcs11h_data->sessions = _g_pkcs11h_data->sessions->next;
 
 #if defined(ENABLE_PKCS11H_THREADING)
 			_pkcs11h_threading_mutexLock (&current->mutex);
@@ -406,7 +420,7 @@ pkcs11h_terminate (void) {
 			current->valid = FALSE;
 
 			if (current->reference_count != 0) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Warning: Found session with references"
 				);
@@ -431,39 +445,39 @@ pkcs11h_terminate (void) {
 		}
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Terminating slotevent"
 		);
 
 		_pkcs11h_slotevent_terminate ();
 #endif
-		PKCS11H_DEBUG (
+		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Marking as uninitialized"
 		);
 		
-		g_pkcs11h_data->initialized = FALSE;
+		_g_pkcs11h_data->initialized = FALSE;
 
-		while (g_pkcs11h_data->providers != NULL) {
-			pkcs11h_provider_t current = g_pkcs11h_data->providers;
-			g_pkcs11h_data->providers = g_pkcs11h_data->providers->next;
+		while (_g_pkcs11h_data->providers != NULL) {
+			_pkcs11h_provider_t current = _g_pkcs11h_data->providers;
+			_g_pkcs11h_data->providers = _g_pkcs11h_data->providers->next;
 
 			_pkcs11h_mem_free ((void *)&current);
 		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexFree (&g_pkcs11h_data->mutexes.cache);
-		_pkcs11h_threading_mutexFree (&g_pkcs11h_data->mutexes.global); 
-		_pkcs11h_threading_mutexFree (&g_pkcs11h_data->mutexes.session); 
+		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.global); 
+		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.cache);
+		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.session); 
 #endif
 
-		g_pkcs11h_crypto_engine.uninitialize (g_pkcs11h_crypto_engine.global_data);
+		_g_pkcs11h_crypto_engine.uninitialize (_g_pkcs11h_crypto_engine.global_data);
 
-		_pkcs11h_mem_free ((void *)&g_pkcs11h_data);
+		_pkcs11h_mem_free ((void *)&_g_pkcs11h_data);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_terminate return"
 	);
@@ -475,7 +489,7 @@ void
 pkcs11h_setLogLevel (
 	IN const unsigned flags
 ) {
-	g_pkcs11h_loglevel = flags;
+	_g_pkcs11h_loglevel = flags;
 }
 
 CK_RV
@@ -483,20 +497,20 @@ pkcs11h_setForkMode (
 	IN const PKCS11H_BOOL safe
 ) {
 #if defined(ENABLE_PKCS11H_THREADING) && !defined(_WIN32)
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	g_pkcs11h_data->safefork = safe;
+	_g_pkcs11h_data->safefork = safe;
 #endif
 	return CKR_OK;
 }
 
 unsigned
 pkcs11h_getLogLevel (void) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	return g_pkcs11h_loglevel;
+	return _g_pkcs11h_loglevel;
 }
 
 CK_RV
@@ -504,12 +518,12 @@ pkcs11h_setLogHook (
 	IN const pkcs11h_hook_log_t hook,
 	IN void * const global_data
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (hook!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (hook!=NULL);
 
-	g_pkcs11h_data->hooks.log = hook;
-	g_pkcs11h_data->hooks.log_data = global_data;
+	_g_pkcs11h_data->hooks.log = hook;
+	_g_pkcs11h_data->hooks.log_data = global_data;
 
 	return CKR_OK;
 }
@@ -519,13 +533,13 @@ pkcs11h_setSlotEventHook (
 	IN const pkcs11h_hook_slotevent_t hook,
 	IN void * const global_data
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (hook!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (hook!=NULL);
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
-	g_pkcs11h_data->hooks.slotevent = hook;
-	g_pkcs11h_data->hooks.slotevent_data = global_data;
+	_g_pkcs11h_data->hooks.slotevent = hook;
+	_g_pkcs11h_data->hooks.slotevent_data = global_data;
 
 	return _pkcs11h_slotevent_init ();
 #else
@@ -540,12 +554,12 @@ pkcs11h_setPINPromptHook (
 	IN const pkcs11h_hook_pin_prompt_t hook,
 	IN void * const global_data
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (hook!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (hook!=NULL);
 
-	g_pkcs11h_data->hooks.pin_prompt = hook;
-	g_pkcs11h_data->hooks.pin_prompt_data = global_data;
+	_g_pkcs11h_data->hooks.pin_prompt = hook;
+	_g_pkcs11h_data->hooks.pin_prompt_data = global_data;
 
 	return CKR_OK;
 }
@@ -555,12 +569,12 @@ pkcs11h_setTokenPromptHook (
 	IN const pkcs11h_hook_token_prompt_t hook,
 	IN void * const global_data
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (hook!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (hook!=NULL);
 
-	g_pkcs11h_data->hooks.token_prompt = hook;
-	g_pkcs11h_data->hooks.token_prompt_data = global_data;
+	_g_pkcs11h_data->hooks.token_prompt = hook;
+	_g_pkcs11h_data->hooks.token_prompt_data = global_data;
 
 	return CKR_OK;
 }
@@ -569,10 +583,10 @@ CK_RV
 pkcs11h_setPINCachePeriod (
 	IN const int pin_cache_period
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	g_pkcs11h_data->pin_cache_period = pin_cache_period;
+	_g_pkcs11h_data->pin_cache_period = pin_cache_period;
 
 	return CKR_OK;
 }
@@ -581,10 +595,10 @@ CK_RV
 pkcs11h_setMaxLoginRetries (
 	IN const unsigned max_retries
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	g_pkcs11h_data->max_retries = max_retries;
+	_g_pkcs11h_data->max_retries = max_retries;
 
 	return CKR_OK;
 }
@@ -593,10 +607,10 @@ CK_RV
 pkcs11h_setProtectedAuthentication (
 	IN const PKCS11H_BOOL allow_protected_auth
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
-	g_pkcs11h_data->allow_protected_auth = allow_protected_auth;
+	_g_pkcs11h_data->allow_protected_auth = allow_protected_auth;
 
 	return CKR_OK;
 }
@@ -618,18 +632,19 @@ pkcs11h_addProvider (
 	int mypid = 0;
 #else
 	pid_t mypid = getpid ();
+	void *p;
 #endif
-	pkcs11h_provider_t provider = NULL;
+	_pkcs11h_provider_t provider = NULL;
 	CK_C_GetFunctionList gfl = NULL;
 	CK_INFO info;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (provider_location!=NULL);
-	/*PKCS11H_ASSERT (szSignMode!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (provider_location!=NULL);
+	/*_PKCS11H_ASSERT (szSignMode!=NULL); NOT NEEDED*/
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_addProvider entry pid=%d, reference='%s', provider_location='%s', allow_protected_auth=%d, mask_private_mode=%08x, cert_is_private=%d",
 		mypid,
@@ -640,7 +655,7 @@ pkcs11h_addProvider (
 		cert_is_private ? 1 : 0
 	);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: Adding provider '%s'-'%s'",
 		reference,
@@ -648,126 +663,136 @@ pkcs11h_addProvider (
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct pkcs11h_provider_s))) == CKR_OK
-	) {
-		strncpy (
-			provider->reference,
-			reference,
-			sizeof (provider->reference)-1
-		);
-		provider->reference[sizeof (provider->reference)-1] = '\x0';
-		strncpy (
-			provider->manufacturerID,
-			(
-			 	strlen (provider_location) < sizeof (provider->manufacturerID) ?
-				provider_location :
-				provider_location+strlen (provider_location)-sizeof (provider->manufacturerID)+1
-			),
-			sizeof (provider->manufacturerID)-1
-		);
-		provider->manufacturerID[sizeof (provider->manufacturerID)-1] = '\x0';
-		provider->allow_protected_auth = allow_protected_auth;
-		provider->mask_private_mode = mask_private_mode;
-		provider->slot_event_method = slot_event_method;
-		provider->slot_poll_interval = slot_poll_interval;
-		provider->cert_is_private = cert_is_private;
+	if ((rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct _pkcs11h_provider_s))) != CKR_OK) {
+		goto cleanup;
 	}
+
+	strncpy (
+		provider->reference,
+		reference,
+		sizeof (provider->reference)-1
+	);
+	provider->reference[sizeof (provider->reference)-1] = '\x0';
+	strncpy (
+		provider->manufacturerID,
+		(
+			strlen (provider_location) < sizeof (provider->manufacturerID) ?
+			provider_location :
+			provider_location+strlen (provider_location)-sizeof (provider->manufacturerID)+1
+		),
+		sizeof (provider->manufacturerID)-1
+	);
+	provider->manufacturerID[sizeof (provider->manufacturerID)-1] = '\x0';
+	provider->allow_protected_auth = allow_protected_auth;
+	provider->mask_private_mode = mask_private_mode;
+	provider->slot_event_method = slot_event_method;
+	provider->slot_poll_interval = slot_poll_interval;
+	provider->cert_is_private = cert_is_private;
 		
-	if (rv == CKR_OK) {
 #if defined(_WIN32)
-		provider->handle = LoadLibraryA (provider_location);
+	provider->handle = LoadLibraryA (provider_location);
 #else
-		provider->handle = dlopen (provider_location, RTLD_NOW);
+	provider->handle = dlopen (provider_location, RTLD_NOW);
 #endif
-		if (provider->handle == NULL) {
-			rv = CKR_FUNCTION_FAILED;
-		}
+
+	if (provider->handle == NULL) {
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
 #if defined(_WIN32)
-		gfl = (CK_C_GetFunctionList)GetProcAddress (
-			provider->handle,
-			"C_GetFunctionList"
-		);
+	gfl = (CK_C_GetFunctionList)GetProcAddress (
+		provider->handle,
+		"C_GetFunctionList"
+	);
 #else
-		/*
-		 * Make compiler happy!
-		 */
-		void *p = dlsym (
-			provider->handle,
-			"C_GetFunctionList"
-		);
-		memmove (
-			&gfl, 
-			&p,
-			sizeof (void *)
-		);
+	/*
+	 * Make compiler happy!
+	 */
+	p = dlsym (
+		provider->handle,
+		"C_GetFunctionList"
+	);
+	memmove (
+		&gfl, 
+		&p,
+		sizeof (void *)
+	);
 #endif
-		if (gfl == NULL) {
-			rv = CKR_FUNCTION_FAILED;
-		}
+	if (gfl == NULL) {
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = gfl (&provider->f);
+	if ((rv = gfl (&provider->f)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		if ((rv = provider->f->C_Initialize (NULL)) != CKR_OK) {
-			if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED) {
-				rv = CKR_OK;
-			}
+	if ((rv = provider->f->C_Initialize (NULL)) != CKR_OK) {
+		if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED) {
+			rv = CKR_OK;
 		}
 		else {
-			provider->should_finalize = TRUE;
+			goto cleanup;
 		}
 	}
+	else {
+		provider->should_finalize = TRUE;
+	}
 
-	if (
-		rv == CKR_OK &&
-		(rv = provider->f->C_GetInfo (&info)) == CKR_OK
-	) {
-		_pkcs11h_util_fixupFixedString (
-			provider->manufacturerID,
-			(char *)info.manufacturerID,
-			sizeof (info.manufacturerID)
+	if ((rv = provider->f->C_GetInfo (&info)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	_pkcs11h_util_fixupFixedString (
+		provider->manufacturerID,
+		(char *)info.manufacturerID,
+		sizeof (info.manufacturerID)
+	);
+	provider->enabled = TRUE;
+
+	if (_g_pkcs11h_data->providers == NULL) {
+		_g_pkcs11h_data->providers = provider;
+	}
+	else {
+		_pkcs11h_provider_t last = NULL;
+
+		for (
+			last = _g_pkcs11h_data->providers;
+			last->next != NULL;
+			last = last->next
 		);
+		last->next = provider;
 	}
 
-	if (rv == CKR_OK) {
-		provider->enabled = TRUE;
-	}
+	provider = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 	if (provider != NULL) {
-		if (g_pkcs11h_data->providers == NULL) {
-			g_pkcs11h_data->providers = provider;
+		if (provider->handle != NULL) {
+#if defined(_WIN32)
+			FreeLibrary (provider->handle);
+#else
+			dlclose (provider->handle);
+#endif
+			provider->handle = NULL;
 		}
-		else {
-			pkcs11h_provider_t last = NULL;
-	
-			for (
-				last = g_pkcs11h_data->providers;
-				last->next != NULL;
-				last = last->next
-			);
-			last->next = provider;
-		}
+
+		_pkcs11h_mem_free ((void *)&provider);
+		provider = NULL;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
 		mutex_locked = FALSE;
 	}
 #endif
@@ -776,7 +801,7 @@ pkcs11h_addProvider (
 	_pkcs11h_slotevent_notify ();
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: Provider '%s' added rv=%lu-'%s'",
 		reference,
@@ -784,7 +809,7 @@ pkcs11h_addProvider (
 		pkcs11h_getMessage (rv)
 	);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_addProvider return rv=%lu-'%s'",
 		rv,
@@ -799,32 +824,44 @@ pkcs11h_removeProvider (
 	IN const char * const reference
 ) {
 #if defined(ENABLE_PKCS11H_THREADING)
-	pkcs11h_session_t current_session = NULL;
+	_pkcs11h_session_t current_session = NULL;
+	PKCS11H_BOOL has_mutex_global = FALSE;
+	PKCS11H_BOOL has_mutex_cache = FALSE;
+	PKCS11H_BOOL has_mutex_session = FALSE;
 #endif
-	pkcs11h_provider_t provider = NULL;
-	CK_RV rv = CKR_OK;
+	_pkcs11h_provider_t provider = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (reference!=NULL);
+	_PKCS11H_ASSERT (reference!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_removeProvider entry reference='%s'",
 		reference
 	);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: Removing provider '%s'",
 		reference
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.cache);
-	_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.session);
-	_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global);
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache)) != CKR_OK) {
+		goto cleanup;
+	}
+	has_mutex_cache = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.session)) != CKR_OK) {
+		goto cleanup;
+	}
+	has_mutex_session = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
+	}
+	has_mutex_global = TRUE;
 
 	for (
-		current_session = g_pkcs11h_data->sessions;
+		current_session = _g_pkcs11h_data->sessions;
 		current_session != NULL;
 		current_session = current_session->next
 	) {
@@ -832,69 +869,80 @@ pkcs11h_removeProvider (
 	}
 #endif
 
-	provider = g_pkcs11h_data->providers;
+	provider = _g_pkcs11h_data->providers;
 	while (
-		rv == CKR_OK &&
 		provider != NULL &&
 		strcmp (reference, provider->reference)
 	) {
 		provider = provider->next;
 	}
 
-	if (rv == CKR_OK && provider == NULL) {
+	if (provider == NULL) {
 		rv = CKR_OBJECT_HANDLE_INVALID;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		provider->enabled = FALSE;
-		provider->reference[0] = '\0';
+	provider->enabled = FALSE;
+	provider->reference[0] = '\0';
 
-		if (provider->should_finalize) {
-			provider->f->C_Finalize (NULL);
-			provider->should_finalize = FALSE;
-		}
+	if (provider->should_finalize) {
+		provider->f->C_Finalize (NULL);
+		provider->should_finalize = FALSE;
+	}
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
-		_pkcs11h_slotevent_notify ();
-		
-		/*
-		 * Wait until manager join this thread
-		 * this happens saldom so I can poll
-		 */
-		while (provider->slotevent_thread != PKCS11H_THREAD_NULL) {
-			_pkcs11h_threading_sleep (500);
-		}
+	_pkcs11h_slotevent_notify ();
+	
+	/*
+	 * Wait until manager join this thread
+	 * this happens saldom so I can poll
+	 */
+	while (provider->slotevent_thread != PKCS11H_THREAD_NULL) {
+		_pkcs11h_threading_sleep (500);
+	}
 #endif
 
-		if (provider->f != NULL) {
-			provider->f = NULL;
-		}
-
-		if (provider->handle != NULL) {
-#if defined(_WIN32)
-			FreeLibrary (provider->handle);
-#else
-			dlclose (provider->handle);
-#endif
-			provider->handle = NULL;
-		}
+	if (provider->f != NULL) {
+		provider->f = NULL;
 	}
 
+	if (provider->handle != NULL) {
+#if defined(_WIN32)
+		FreeLibrary (provider->handle);
+#else
+		dlclose (provider->handle);
+#endif
+		provider->handle = NULL;
+	}
+
+	rv = CKR_OK;
+
+cleanup:
+	
 #if defined(ENABLE_PKCS11H_THREADING)
 	for (
-		current_session = g_pkcs11h_data->sessions;
+		current_session = _g_pkcs11h_data->sessions;
 		current_session != NULL;
 		current_session = current_session->next
 	) {
 		_pkcs11h_threading_mutexRelease (&current_session->mutex);
 	}
 
-	_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.cache);
-	_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.session);
-	_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
+	if (has_mutex_cache) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.cache);
+		has_mutex_cache = FALSE;
+	}
+	if (has_mutex_session) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.session);
+		has_mutex_session = FALSE;
+	}
+	if (has_mutex_global) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+		has_mutex_global = FALSE;
+	}
 #endif
-	
-	PKCS11H_DEBUG (
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_removeProvider return rv=%lu-'%s'",
 		rv,
@@ -925,23 +973,23 @@ pkcs11h_plugAndPlay (void) {
 	pid_t mypid = getpid ();
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_forkFixup entry pid=%d",
 		mypid
 	);
 
-	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
-		pkcs11h_provider_t current;
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+		_pkcs11h_provider_t current;
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 		PKCS11H_BOOL slot_event_active = FALSE;
 #endif
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global);
+		_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global);
 #endif
 		for (
-			current = g_pkcs11h_data->providers;
+			current = _g_pkcs11h_data->providers;
 			current != NULL;
 			current = current->next
 		) {
@@ -951,14 +999,14 @@ pkcs11h_plugAndPlay (void) {
 		}
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
-		if (g_pkcs11h_data->slotevent.initialized) {
+		if (_g_pkcs11h_data->slotevent.initialized) {
 			slot_event_active = TRUE;
 			_pkcs11h_slotevent_terminate ();
 		}
 #endif
 
 		for (
-			current = g_pkcs11h_data->providers;
+			current = _g_pkcs11h_data->providers;
 			current != NULL;
 			current = current->next
 		) {
@@ -974,11 +1022,11 @@ pkcs11h_plugAndPlay (void) {
 #endif
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
 #endif
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_forkFixup return"
 	);
@@ -998,16 +1046,16 @@ _pkcs11h_log (
 ) {
 	va_list args;
 
-	PKCS11H_ASSERT (format!=NULL);
+	_PKCS11H_ASSERT (format!=NULL);
 
 	va_start (args, format);
 
 	if (
-		g_pkcs11h_data != NULL &&
-		g_pkcs11h_data->initialized
+		_g_pkcs11h_data != NULL &&
+		_g_pkcs11h_data->initialized
 	) { 
-		if (PKCS11H_MSG_LEVEL_TEST (flags)) {
-			if (g_pkcs11h_data->hooks.log == NULL) {
+		if (__PKCS11H_MSG_LEVEL_TEST (flags)) {
+			if (_g_pkcs11h_data->hooks.log == NULL) {
 				__pkcs11h_hooks_default_log (
 					NULL,
 					flags,
@@ -1016,8 +1064,8 @@ _pkcs11h_log (
 				);
 			}
 			else {
-				g_pkcs11h_data->hooks.log (
-					g_pkcs11h_data->hooks.log_data,
+				_g_pkcs11h_data->hooks.log (
+					_g_pkcs11h_data->hooks.log_data,
 					flags,
 					format,
 					args
@@ -1051,15 +1099,15 @@ __pkcs11h_hooks_default_token_prompt (
 	IN const pkcs11h_token_id_t token,
 	IN const unsigned retry
 ) {
-	/*PKCS11H_ASSERT (global_data) NOT NEEDED */
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
-	PKCS11H_ASSERT (token!=NULL);
+	/*_PKCS11H_ASSERT (global_data) NOT NEEDED */
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+	_PKCS11H_ASSERT (token!=NULL);
 
 	(void)global_data;
 	(void)user_data;
 	(void)retry;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_hooks_default_token_prompt global_data=%p, user_data=%p, display='%s'",
 		global_data,
@@ -1080,9 +1128,9 @@ __pkcs11h_hooks_default_pin_prompt (
 	OUT char * const pin,
 	IN const size_t pin_max
 ) {
-	/*PKCS11H_ASSERT (global_data) NOT NEEDED */
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
-	PKCS11H_ASSERT (token!=NULL);
+	/*_PKCS11H_ASSERT (global_data) NOT NEEDED */
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+	_PKCS11H_ASSERT (token!=NULL);
 
 	(void)global_data;
 	(void)user_data;
@@ -1090,7 +1138,7 @@ __pkcs11h_hooks_default_pin_prompt (
 	(void)pin;
 	(void)pin_max;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_hooks_default_pin_prompt global_data=%p, user_data=%p, display='%s'",
 		global_data,
@@ -1107,8 +1155,8 @@ __pkcs11h_hooks_default_pin_prompt (
 static
 void
 __pkcs11h_threading_atfork_prepare  (void) {
-	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
-		if (g_pkcs11h_data->safefork) {
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+		if (_g_pkcs11h_data->safefork) {
 			_pkcs1h_threading_mutexLockAll ();
 		}
 	}
@@ -1116,8 +1164,8 @@ __pkcs11h_threading_atfork_prepare  (void) {
 static
 void
 __pkcs11h_threading_atfork_parent (void) {
-	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
-		if (g_pkcs11h_data->safefork) {
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+		if (_g_pkcs11h_data->safefork) {
 			_pkcs1h_threading_mutexReleaseAll ();
 		}
 	}
@@ -1125,9 +1173,9 @@ __pkcs11h_threading_atfork_parent (void) {
 static
 void
 __pkcs11h_threading_atfork_child (void) {
-	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs1h_threading_mutexReleaseAll ();
-		if (g_pkcs11h_data->safefork) {
+		if (_g_pkcs11h_data->safefork) {
 			__pkcs11h_forkFixup (TRUE);
 		}
 		else {
@@ -1149,7 +1197,7 @@ __pkcs11h_forkFixup (
 #endif
 	pid_t mypid = getpid ();
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_forkFixup entry pid=%d",
 		mypid
@@ -1159,17 +1207,18 @@ __pkcs11h_forkFixup (
 	(void)activate_slotevent;
 #endif
 
-	if (g_pkcs11h_data != NULL && g_pkcs11h_data->initialized) {
-		pkcs11h_provider_t current;
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+		_pkcs11h_provider_t current;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		if (_pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global) == CKR_OK) {
-			mutex_locked = TRUE;
+		if (_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global) != CKR_OK) {
+			goto cleanup;
 		}
+		mutex_locked = TRUE;
 #endif
 
 		for (
-			current = g_pkcs11h_data->providers;
+			current = _g_pkcs11h_data->providers;
 			current != NULL;
 			current = current->next
 		) {
@@ -1182,7 +1231,7 @@ __pkcs11h_forkFixup (
 			 * After fork we have no threads...
 			 * So just initialized.
 			 */
-			if (g_pkcs11h_data->slotevent.initialized) {
+			if (_g_pkcs11h_data->slotevent.initialized) {
 				_pkcs11h_slotevent_terminate_force ();
 
 				if (activate_slotevent) {
@@ -1191,16 +1240,18 @@ __pkcs11h_forkFixup (
 			}
 #endif
 		}
-	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
-		mutex_locked = FALSE;
-	}
-#endif
+	cleanup:
 
-	PKCS11H_DEBUG (
+		if (mutex_locked) {
+			_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+			mutex_locked = FALSE;
+		}
+#endif
+	}
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_forkFixup return"
 	);

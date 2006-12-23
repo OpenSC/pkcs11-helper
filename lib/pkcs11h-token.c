@@ -61,11 +61,11 @@ CK_RV
 pkcs11h_token_freeTokenId (
 	IN pkcs11h_token_id_t token_id
 ) {
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_freeTokenId entry certificate_id=%p",
 		(void *)token_id
@@ -73,7 +73,7 @@ pkcs11h_token_freeTokenId (
 
 	_pkcs11h_mem_free ((void *)&token_id);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_freeTokenId return"
 	);
@@ -86,14 +86,14 @@ pkcs11h_token_duplicateTokenId (
 	OUT pkcs11h_token_id_t * const to,
 	IN const pkcs11h_token_id_t from
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (to!=NULL);
-	PKCS11H_ASSERT (from!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (to!=NULL);
+	_PKCS11H_ASSERT (from!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_duplicateTokenId entry to=%p form=%p",
 		(void *)to,
@@ -102,16 +102,22 @@ pkcs11h_token_duplicateTokenId (
 
 	*to = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_duplicate (
+	if (
+		(rv = _pkcs11h_mem_duplicate (
 			(void*)to,
 			NULL,
 			from,
 			sizeof (struct pkcs11h_token_id_s)
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_duplicateTokenId return rv=%lu-'%s', *to=%p",
 		rv,
@@ -127,8 +133,8 @@ pkcs11h_token_sameTokenId (
 	IN const pkcs11h_token_id_t a,
 	IN const pkcs11h_token_id_t b
 ) {
-	PKCS11H_ASSERT (a!=NULL);
-	PKCS11H_ASSERT (b!=NULL);
+	_PKCS11H_ASSERT (a!=NULL);
+	_PKCS11H_ASSERT (b!=NULL);
 
 	return (
 		!strcmp (a->manufacturerID, b->manufacturerID) &&
@@ -144,12 +150,12 @@ _pkcs11h_token_getTokenId (
 	OUT pkcs11h_token_id_t * const p_token_id
 ) {
 	pkcs11h_token_id_t token_id;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	
-	PKCS11H_ASSERT (info!=NULL);
-	PKCS11H_ASSERT (p_token_id!=NULL);
+	_PKCS11H_ASSERT (info!=NULL);
+	_PKCS11H_ASSERT (p_token_id!=NULL);
 	
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_token_getTokenId entry p_token_id=%p",
 		(void *)p_token_id
@@ -157,47 +163,47 @@ _pkcs11h_token_getTokenId (
 
 	*p_token_id = NULL;
 
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_token_newTokenId (&token_id)) == CKR_OK
-	) {
-		_pkcs11h_util_fixupFixedString (
-			token_id->label,
-			(char *)info->label,
-			sizeof (info->label)
-		);
-		_pkcs11h_util_fixupFixedString (
-			token_id->manufacturerID,
-			(char *)info->manufacturerID,
-			sizeof (info->manufacturerID)
-		);
-		_pkcs11h_util_fixupFixedString (
-			token_id->model,
-			(char *)info->model,
-			sizeof (info->model)
-		);
-		_pkcs11h_util_fixupFixedString (
-			token_id->serialNumber,
-			(char *)info->serialNumber,
-			sizeof (info->serialNumber)
-		);
-		strncpy (
-			token_id->display,
-			token_id->label,
-			sizeof (token_id->display)
-		);
+	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		*p_token_id = token_id;
-		token_id = NULL;
-	}
+	_pkcs11h_util_fixupFixedString (
+		token_id->label,
+		(char *)info->label,
+		sizeof (info->label)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->manufacturerID,
+		(char *)info->manufacturerID,
+		sizeof (info->manufacturerID)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->model,
+		(char *)info->model,
+		sizeof (info->model)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->serialNumber,
+		(char *)info->serialNumber,
+		sizeof (info->serialNumber)
+	);
+	strncpy (
+		token_id->display,
+		token_id->label,
+		sizeof (token_id->display)
+	);
+
+	*p_token_id = token_id;
+	token_id = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 	if (token_id != NULL) {
 		_pkcs11h_mem_free ((void *)&token_id);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_token_getTokenId return rv=%lu-'%s', *p_token_id=%p",
 		rv,
@@ -212,13 +218,15 @@ CK_RV
 _pkcs11h_token_newTokenId (
 	OUT pkcs11h_token_id_t * const p_token_id
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (p_token_id!=NULL);
+	pkcs11h_token_id_t token_id = NULL;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (p_token_id!=NULL);
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_token_newTokenId entry p_token_id=%p",
 		(void *)p_token_id
@@ -226,11 +234,23 @@ _pkcs11h_token_newTokenId (
 
 	*p_token_id = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_mem_malloc ((void *)p_token_id, sizeof (struct pkcs11h_token_id_s));
+	if ((rv = _pkcs11h_mem_malloc ((void *)&token_id, sizeof (struct pkcs11h_token_id_s))) != CKR_OK) {
+		goto cleanup;
 	}
 
-	PKCS11H_DEBUG (
+	*p_token_id = token_id;
+	token_id = NULL;
+
+	rv = CKR_OK;
+
+cleanup:
+
+	if (token_id != NULL) {
+		_pkcs11h_mem_free ((void *)&token_id);
+		token_id = NULL;
+	}
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_token_newTokenId return rv=%lu-'%s', *p_token_id=%p",
 		rv,
@@ -250,16 +270,16 @@ pkcs11h_token_login (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	CK_SLOT_ID slot = PKCS11H_INVALID_SLOT_ID;
+	CK_SLOT_ID slot = _PKCS11H_INVALID_SLOT_ID;
 	CK_ULONG pin_size = 0;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	pkcs11h_session_t session = NULL;
+	_pkcs11h_session_t session = NULL;
 
-	PKCS11H_ASSERT (token_id!=NULL);
-	/*PKCS11H_ASSERT (pin!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (token_id!=NULL);
+	/*_PKCS11H_ASSERT (pin!=NULL); NOT NEEDED*/
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_login entry token_id=%p, readonly=%d\n", 
 		(void *)token_id,
@@ -270,36 +290,27 @@ pkcs11h_token_login (
 		pin_size = strlen (pin);
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_logout (session);
-	}
-
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_reset (session, NULL, 0, &slot);
-	}
-
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_touch (session);
-	}
-
-	if (rv == CKR_OK) {
-		rv = session->provider->f->C_OpenSession (
+	if (
+		(rv = _pkcs11h_session_logout (session)) != CKR_OK ||
+		(rv = _pkcs11h_session_reset (session, NULL, 0, &slot)) != CKR_OK ||
+		(rv = __pkcs11h_session_touch (session)) != CKR_OK ||
+		(rv = session->provider->f->C_OpenSession (
 			slot,
 			(
 				CKF_SERIAL_SESSION |
@@ -308,11 +319,11 @@ pkcs11h_token_login (
 			NULL_PTR,
 			NULL_PTR,
 			&session->session_handle
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
-
 	if (
-		rv == CKR_OK &&
 		(rv = session->provider->f->C_Login (
 			session->session_handle,
 			CKU_USER,
@@ -320,10 +331,14 @@ pkcs11h_token_login (
 			pin_size
 		)) != CKR_OK
 	) {
-		if (rv == CKR_USER_ALREADY_LOGGED_IN) {
-			rv = CKR_OK;
+		if (rv != CKR_USER_ALREADY_LOGGED_IN) {
+			goto cleanup;
 		}
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -337,7 +352,7 @@ pkcs11h_token_login (
 		session = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_login return rv=%lu-'%s'",
 		rv,
@@ -358,15 +373,17 @@ pkcs11h_token_ensureAccess (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
-	CK_RV rv = CKR_OK;
+	_pkcs11h_session_t session = NULL;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
+	CK_RV rv = CKR_FUNCTION_FAILED;
+	CK_SLOT_ID slot;
 
-	PKCS11H_DEBUG (
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_ensureAccess entry token_id=%p, user_data=%p, mask_prompt=%08x",
 		(void *)token_id,
@@ -374,32 +391,37 @@ pkcs11h_token_ensureAccess (
 		mask_prompt
 	);
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	if (rv == CKR_OK) {
-		CK_SLOT_ID slot;
 
-		rv = _pkcs11h_session_reset (
+	if (
+		(rv = _pkcs11h_session_reset (
 			session,
 			user_data,
 			mask_prompt,
 			&slot
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -413,7 +435,7 @@ pkcs11h_token_ensureAccess (
 		session = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_ensureAccess return rv=%lu-'%s'",
 		rv,
@@ -429,11 +451,11 @@ pkcs11h_token_freeTokenIdList (
 ) {
 	pkcs11h_token_id_list_t _id = token_id_list;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	/*PKCS11H_ASSERT (token_id_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	/*_PKCS11H_ASSERT (token_id_list!=NULL); NOT NEEDED*/
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_freeTokenIdList entry token_id_list=%p",
 		(void *)token_id_list
@@ -449,7 +471,7 @@ pkcs11h_token_freeTokenIdList (
 		_pkcs11h_mem_free ((void *)&x);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_freeTokenIdList return"
 	);
@@ -467,14 +489,14 @@ pkcs11h_token_enumTokenIds (
 #endif
 
 	pkcs11h_token_id_list_t token_id_list = NULL;
-	pkcs11h_provider_t current_provider;
-	CK_RV rv = CKR_OK;
+	_pkcs11h_provider_t current_provider;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (p_token_id_list!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (p_token_id_list!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_enumTokenIds entry method=%u, p_token_id_list=%p",
 		method,
@@ -484,73 +506,77 @@ pkcs11h_token_enumTokenIds (
 	*p_token_id_list = NULL;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&g_pkcs11h_data->mutexes.global)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
 	for (
-		current_provider = g_pkcs11h_data->providers;
-		(
-			current_provider != NULL &&
-			rv == CKR_OK
-		);
+		current_provider = _g_pkcs11h_data->providers;
+		current_provider != NULL;
 		current_provider = current_provider->next
 	) {
 		CK_SLOT_ID_PTR slots = NULL;
 		CK_ULONG slotnum;
 		CK_SLOT_ID slot_index;
 
+		/*
+		 * Skip disabled providers
+		 */
 		if (!current_provider->enabled) {
-			rv = CKR_CRYPTOKI_NOT_INITIALIZED;
+			continue;
 		}
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_getSlotList (
+		if (
+			(rv = _pkcs11h_session_getSlotList (
 				current_provider,
 				CK_TRUE,
 				&slots,
 				&slotnum
+			)) != CKR_OK
+		) {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
+				current_provider->manufacturerID,
+				rv,
+				pkcs11h_getMessage (rv)
 			);
+			goto retry1;
 		}
 
 		for (
 			slot_index=0;
-			(
-				slot_index < slotnum &&
-				rv == CKR_OK
-			);
+			slot_index < slotnum;
 			slot_index++
 		) {
 			pkcs11h_token_id_list_t entry = NULL;
 			CK_TOKEN_INFO info;
 
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_malloc ((void *)&entry, sizeof (struct pkcs11h_token_id_list_s));
-			}
-
-			if (rv == CKR_OK) {
-				rv = current_provider->f->C_GetTokenInfo (
+			if (
+				(rv = _pkcs11h_mem_malloc (
+					(void *)&entry,
+					sizeof (struct pkcs11h_token_id_list_s)
+				)) != CKR_OK ||
+				(rv = current_provider->f->C_GetTokenInfo (
 					slots[slot_index],
 					&info
-				);
-			}
-
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_token_getTokenId (
+				)) != CKR_OK ||
+				(rv = _pkcs11h_token_getTokenId (
 					&info,
 					&entry->token_id
-				);
+				))
+			) {
+				goto retry11;
 			}
 
-			if (rv == CKR_OK) {
-				entry->next = token_id_list;
-				token_id_list = entry;
-				entry = NULL;
-			}
+			entry->next = token_id_list;
+			token_id_list = entry;
+			entry = NULL;
+			rv = CKR_OK;
+
+		retry11:
 
 			if (entry != NULL) {
 				pkcs11h_token_freeTokenIdList (entry);
@@ -558,20 +584,7 @@ pkcs11h_token_enumTokenIds (
 			}
 		}
 
-		if (rv != CKR_OK) {
-			PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Cannot get slot list for provider '%s' rv=%lu-'%s'",
-				current_provider->manufacturerID,
-				rv,
-				pkcs11h_getMessage (rv)
-			);
-
-			/*
-			 * Ignore error
-			 */
-			rv = CKR_OK;
-		}
+	retry1:
 
 		if (slots != NULL) {
 			_pkcs11h_mem_free ((void *)&slots);
@@ -579,12 +592,12 @@ pkcs11h_token_enumTokenIds (
 		}
 	}
 
-	if (rv == CKR_OK && method == PKCS11H_ENUM_METHOD_CACHE) {
-		pkcs11h_session_t session = NULL;
+	if (method == PKCS11H_ENUM_METHOD_CACHE) {
+		_pkcs11h_session_t session = NULL;
 
 		for (
-			session = g_pkcs11h_data->sessions;
-			session != NULL && rv == CKR_OK;
+			session = _g_pkcs11h_data->sessions;
+			session != NULL;
 			session = session->next
 		) {
 			pkcs11h_token_id_list_t entry = NULL;
@@ -608,25 +621,24 @@ pkcs11h_token_enumTokenIds (
 			if (!found) {
 				entry = NULL;
 
-				if (rv == CKR_OK) {
-					rv = _pkcs11h_mem_malloc (
+				if (
+					(rv = _pkcs11h_mem_malloc (
 						(void *)&entry,
 						sizeof (struct pkcs11h_token_id_list_s)
-					);
-				}
-
-				if (rv == CKR_OK) {
-					rv = pkcs11h_token_duplicateTokenId (
+					)) != CKR_OK ||
+					(rv = pkcs11h_token_duplicateTokenId (
 						&entry->token_id,
 						session->token_id
-					);
+					)) != CKR_OK 
+				) {
+					goto retry12;
 				}
 
-				if (rv == CKR_OK) {
-					entry->next = token_id_list;
-					token_id_list = entry;
-					entry = NULL;
-				}
+				entry->next = token_id_list;
+				token_id_list = entry;
+				entry = NULL;
+
+			retry12:
 
 				if (entry != NULL) {
 					if (entry->token_id != NULL) {
@@ -638,10 +650,11 @@ pkcs11h_token_enumTokenIds (
 		}
 	}
 
-	if (rv == CKR_OK) {
-		*p_token_id_list = token_id_list;
-		token_id_list = NULL;
-	}
+	*p_token_id_list = token_id_list;
+	token_id_list = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 	if (token_id_list != NULL) {
 		pkcs11h_token_freeTokenIdList (token_id_list);
@@ -650,12 +663,12 @@ pkcs11h_token_enumTokenIds (
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
-		rv = _pkcs11h_threading_mutexRelease (&g_pkcs11h_data->mutexes.global);
+		rv = _pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
 		mutex_locked = FALSE;
 	}
 #endif
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_enumTokenIds return rv=%lu-'%s', *p_token_id_list=%p",
 		rv,

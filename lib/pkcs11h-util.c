@@ -60,8 +60,8 @@ _pkcs11h_util_fixupFixedString (
 ) {
 	char *p;
 
-	PKCS11H_ASSERT (source!=NULL);
-	PKCS11H_ASSERT (target!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	_PKCS11H_ASSERT (target!=NULL);
 	
 	p = target+length;
 	memmove (target, source, length);
@@ -84,9 +84,9 @@ _pkcs11h_util_hexToBinary (
 	char buf[3] = {'\0', '\0', '\0'};
 	int i = 0;
 
-	PKCS11H_ASSERT (source!=NULL);
-	PKCS11H_ASSERT (target!=NULL);
-	PKCS11H_ASSERT (p_target_size!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
+	_PKCS11H_ASSERT (target!=NULL);
+	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	target_max_size = *p_target_size;
 	p = source;
@@ -128,8 +128,8 @@ _pkcs11h_util_binaryToHex (
 	static const char *x = "0123456789ABCDEF";
 	size_t i;
 
-	PKCS11H_ASSERT (target!=NULL);
-	PKCS11H_ASSERT (source!=NULL);
+	_PKCS11H_ASSERT (target!=NULL);
+	_PKCS11H_ASSERT (source!=NULL);
 
 	if (target_size < source_size * 2 + 1) {
 		return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -152,21 +152,22 @@ _pkcs11h_util_escapeString (
 	IN const char * const invalid_chars
 ) {
 	static const char *x = "0123456789ABCDEF";
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	const char *s = source;
 	char *t = target;
 	size_t n = 0;
 
-	/*PKCS11H_ASSERT (target!=NULL); Not required*/
-	PKCS11H_ASSERT (source!=NULL);
-	PKCS11H_ASSERT (max!=NULL);
+	/*_PKCS11H_ASSERT (target!=NULL); Not required*/
+	_PKCS11H_ASSERT (source!=NULL);
+	_PKCS11H_ASSERT (max!=NULL);
 
-	while (rv == CKR_OK && *s != '\x0') {
+	while (*s != '\x0') {
 
 		if (*s == '\\' || strchr (invalid_chars, *s) || !isgraph (*s)) {
 			if (t != NULL) {
 				if (n+4 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
+					goto cleanup;
 				}
 				else {
 					t[0] = '\\';
@@ -182,6 +183,7 @@ _pkcs11h_util_escapeString (
 			if (t != NULL) {
 				if (n+1 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
+					goto cleanup;
 				}
 				else {
 					*t = *s;
@@ -197,6 +199,7 @@ _pkcs11h_util_escapeString (
 	if (t != NULL) {
 		if (n+1 > *max) {
 			rv = CKR_ATTRIBUTE_VALUE_INVALID;
+			goto cleanup;
 		}
 		else {
 			*t = '\x0';
@@ -206,6 +209,9 @@ _pkcs11h_util_escapeString (
 	n++;
 
 	*max = n;
+	rv = CKR_OK;
+
+cleanup:
 
 	return rv;
 }
@@ -216,20 +222,21 @@ _pkcs11h_util_unescapeString (
 	IN const char * const source,
 	IN size_t * const max
 ) {
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	const char *s = source;
 	char *t = target;
 	size_t n = 0;
 
-	/*PKCS11H_ASSERT (target!=NULL); Not required*/
-	PKCS11H_ASSERT (source!=NULL);
-	PKCS11H_ASSERT (max!=NULL);
+	/*_PKCS11H_ASSERT (target!=NULL); Not required*/
+	_PKCS11H_ASSERT (source!=NULL);
+	_PKCS11H_ASSERT (max!=NULL);
 
-	while (rv == CKR_OK && *s != '\x0') {
+	while (*s != '\x0') {
 		if (*s == '\\') {
 			if (t != NULL) {
 				if (n+1 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
+					goto cleanup;
 				}
 				else {
 					char b[3];
@@ -248,6 +255,7 @@ _pkcs11h_util_unescapeString (
 			if (t != NULL) {
 				if (n+1 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
+					goto cleanup;
 				}
 				else {
 					*t = *s;
@@ -263,6 +271,7 @@ _pkcs11h_util_unescapeString (
 	if (t != NULL) {
 		if (n+1 > *max) {
 			rv = CKR_ATTRIBUTE_VALUE_INVALID;
+			goto cleanup;
 		}
 		else {
 			*t = '\x0';
@@ -272,6 +281,9 @@ _pkcs11h_util_unescapeString (
 	n++;
 
 	*max = n;
+	rv = CKR_OK;
+
+cleanup:
 
 	return rv;
 }

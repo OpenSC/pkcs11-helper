@@ -62,52 +62,52 @@
 #include <unistd.h>
 #endif
 
-#define PKCS11H_INVALID_SLOT_ID		((CK_SLOT_ID)-1)
-#define PKCS11H_INVALID_SESSION_HANDLE	((CK_SESSION_HANDLE)-1)
-#define PKCS11H_INVALID_OBJECT_HANDLE	((CK_OBJECT_HANDLE)-1)
+#define _PKCS11H_INVALID_SLOT_ID		((CK_SLOT_ID)-1)
+#define _PKCS11H_INVALID_SESSION_HANDLE		((CK_SESSION_HANDLE)-1)
+#define _PKCS11H_INVALID_OBJECT_HANDLE		((CK_OBJECT_HANDLE)-1)
 
-#define PKCS11H_DEFAULT_SLOTEVENT_POLL		5000
-#define PKCS11H_DEFAULT_MAX_LOGIN_RETRY		3
-#define PKCS11H_DEFAULT_PIN_CACHE_PERIOD	PKCS11H_PIN_CACHE_INFINITE
+#define _PKCS11H_DEFAULT_SLOTEVENT_POLL		5000
+#define _PKCS11H_DEFAULT_MAX_LOGIN_RETRY	3
+#define _PKCS11H_DEFAULT_PIN_CACHE_PERIOD	PKCS11H_PIN_CACHE_INFINITE
 
 /*===========================================
  * Macros
  */
 
-#define PKCS11H_MSG_LEVEL_TEST(flags) (((unsigned int)flags) <= g_pkcs11h_loglevel)
+#define __PKCS11H_MSG_LEVEL_TEST(flags) (((unsigned int)flags) <= _g_pkcs11h_loglevel)
 
 #if defined(HAVE_CPP_VARARG_MACRO_ISO) && !defined(__LCLINT__)
-# define PKCS11H_LOG(flags, ...) do { if (PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), __VA_ARGS__); } while (FALSE)
+# define _PKCS11H_LOG(flags, ...) do { if (__PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), __VA_ARGS__); } while (FALSE)
 # ifdef ENABLE_PKCS11H_DEBUG
-#  define PKCS11H_DEBUG(flags, ...) do { if (PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), __VA_ARGS__); } while (FALSE)
+#  define _PKCS11H_DEBUG(flags, ...) do { if (__PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), __VA_ARGS__); } while (FALSE)
 # else
-#  define PKCS11H_DEBUG(flags, ...)
+#  define _PKCS11H_DEBUG(flags, ...)
 # endif
 #elif defined(HAVE_CPP_VARARG_MACRO_GCC) && !defined(__LCLINT__)
-# define PKCS11H_LOG(flags, args...) do { if (PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), args); } while (FALSE)
+# define _PKCS11H_LOG(flags, args...) do { if (__PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), args); } while (FALSE)
 # ifdef ENABLE_PKCS11H_DEBUG
-#  define PKCS11H_DEBUG(flags, args...) do { if (PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), args); } while (FALSE)
+#  define _PKCS11H_DEBUG(flags, args...) do { if (__PKCS11H_MSG_LEVEL_TEST(flags)) _pkcs11h_log((flags), args); } while (FALSE)
 # else
-#  define PKCS11H_DEBUG(flags, args...)
+#  define _PKCS11H_DEBUG(flags, args...)
 # endif
 #else
-# define PKCS11H_LOG _pkcs11h_log
-# define PKCS11H_DEBUG _pkcs11h_log
+# define _PKCS11H_LOG _pkcs11h_log
+# define _PKCS11H_DEBUG _pkcs11h_log
 #endif
 
 /*===========================================
  * Types
  */
 
-struct pkcs11h_provider_s;
-struct pkcs11h_session_s;
-struct pkcs11h_data_s;
-typedef struct pkcs11h_provider_s *pkcs11h_provider_t;
-typedef struct pkcs11h_session_s *pkcs11h_session_t;
-typedef struct pkcs11h_data_s *pkcs11h_data_t;
+struct _pkcs11h_provider_s;
+struct _pkcs11h_session_s;
+struct _pkcs11h_data_s;
+typedef struct _pkcs11h_provider_s *_pkcs11h_provider_t;
+typedef struct _pkcs11h_session_s *_pkcs11h_session_t;
+typedef struct _pkcs11h_data_s *_pkcs11h_data_t;
 
-struct pkcs11h_provider_s {
-	pkcs11h_provider_t next;
+struct _pkcs11h_provider_s {
+	_pkcs11h_provider_t next;
 
 	PKCS11H_BOOL enabled;
 	char reference[1024];
@@ -129,17 +129,17 @@ struct pkcs11h_provider_s {
 	unsigned slot_poll_interval;
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
-	pkcs11h_thread_t slotevent_thread;
+	_pkcs11h_thread_t slotevent_thread;
 #endif
 };
 
-struct pkcs11h_session_s {
-	pkcs11h_session_t next;
+struct _pkcs11h_session_s {
+	_pkcs11h_session_t next;
 
 	int reference_count;
 	PKCS11H_BOOL valid;
 
-	pkcs11h_provider_t provider;
+	_pkcs11h_provider_t provider;
 
 	pkcs11h_token_id_t token_id;
 
@@ -155,7 +155,7 @@ struct pkcs11h_session_s {
 #endif
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	pkcs11h_mutex_t mutex;
+	_pkcs11h_mutex_t mutex;
 #endif
 };
 
@@ -169,13 +169,13 @@ struct pkcs11h_certificate_s {
 
 	unsigned mask_private_mode;
 
-	pkcs11h_session_t session;
+	_pkcs11h_session_t session;
 	CK_OBJECT_HANDLE key_handle;
 
 	PKCS11H_BOOL operation_active;
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	pkcs11h_mutex_t mutex;
+	_pkcs11h_mutex_t mutex;
 #endif
 
 	unsigned mask_prompt;
@@ -184,12 +184,12 @@ struct pkcs11h_certificate_s {
 
 #endif				/* ENABLE_PKCS11H_CERTIFICATE */
 
-struct pkcs11h_data_s {
+struct _pkcs11h_data_s {
 	PKCS11H_BOOL initialized;
 	int pin_cache_period;
 
-	pkcs11h_provider_t providers;
-	pkcs11h_session_t sessions;
+	_pkcs11h_provider_t providers;
+	_pkcs11h_session_t sessions;
 
 	struct {
 		void * log_data;
@@ -207,9 +207,9 @@ struct pkcs11h_data_s {
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	struct {
-		pkcs11h_mutex_t global;
-		pkcs11h_mutex_t session;
-		pkcs11h_mutex_t cache;
+		_pkcs11h_mutex_t global;
+		_pkcs11h_mutex_t session;
+		_pkcs11h_mutex_t cache;
 	} mutexes;
 #if !defined(_WIN32)
 	PKCS11H_BOOL safefork;
@@ -221,8 +221,8 @@ struct pkcs11h_data_s {
 		PKCS11H_BOOL initialized;
 		PKCS11H_BOOL should_terminate;
 		PKCS11H_BOOL skip_event;
-		pkcs11h_cond_t cond_event;
-		pkcs11h_thread_t thread;
+		_pkcs11h_cond_t cond_event;
+		_pkcs11h_thread_t thread;
 	} slotevent;
 #endif
 };
@@ -238,7 +238,7 @@ _pkcs11h_log (
 #endif
 	;
 
-extern pkcs11h_data_t g_pkcs11h_data;
-extern unsigned int g_pkcs11h_loglevel;
+extern _pkcs11h_data_t _g_pkcs11h_data;
+extern unsigned int _g_pkcs11h_loglevel;
 
 #endif

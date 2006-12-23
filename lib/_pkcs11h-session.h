@@ -57,7 +57,7 @@
 
 CK_RV
 _pkcs11h_session_getSlotList (
-	IN const pkcs11h_provider_t provider,
+	IN const _pkcs11h_provider_t provider,
 	IN const CK_BBOOL token_present,
 	OUT CK_SLOT_ID_PTR * const pSlotList,
 	OUT CK_ULONG_PTR pulCount
@@ -65,7 +65,7 @@ _pkcs11h_session_getSlotList (
 
 CK_RV
 _pkcs11h_session_getObjectAttributes (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN const CK_OBJECT_HANDLE object,
 	IN OUT const CK_ATTRIBUTE_PTR attrs,
 	IN const unsigned count
@@ -79,7 +79,7 @@ _pkcs11h_session_freeObjectAttributes (
 
 CK_RV
 _pkcs11h_session_findObjects (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN const CK_ATTRIBUTE * const filter,
 	IN const CK_ULONG filter_attrs,
 	OUT CK_OBJECT_HANDLE **const p_objects,
@@ -89,17 +89,17 @@ _pkcs11h_session_findObjects (
 CK_RV
 _pkcs11h_session_getSessionByTokenId (
 	IN const pkcs11h_token_id_t token_id,
-	OUT pkcs11h_session_t * const p_session
+	OUT _pkcs11h_session_t * const p_session
 );
 
 CK_RV
 _pkcs11h_session_release (
-	IN const pkcs11h_session_t session
+	IN const _pkcs11h_session_t session
 );
 
 CK_RV
 _pkcs11h_session_reset (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN void * const user_data,
 	IN const unsigned mask_prompt,
 	OUT CK_SLOT_ID * const p_slot
@@ -107,7 +107,7 @@ _pkcs11h_session_reset (
 
 CK_RV
 _pkcs11h_session_getObjectById (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN const CK_OBJECT_CLASS class,
 	IN const CK_BYTE_PTR id,
 	IN const size_t id_size,
@@ -116,17 +116,17 @@ _pkcs11h_session_getObjectById (
 
 CK_RV
 _pkcs11h_session_validate (
-	IN const pkcs11h_session_t session
+	IN const _pkcs11h_session_t session
 );
 
 CK_RV
-_pkcs11h_session_touch (
-	IN const pkcs11h_session_t session
+__pkcs11h_session_touch (
+	IN const _pkcs11h_session_t session
 );
 
 CK_RV
 _pkcs11h_session_login (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN const PKCS11H_BOOL public_only,
 	IN const PKCS11H_BOOL readonly,
 	IN void * const user_data,
@@ -135,7 +135,7 @@ _pkcs11h_session_login (
 
 CK_RV
 _pkcs11h_session_logout (
-	IN const pkcs11h_session_t session
+	IN const _pkcs11h_session_t session
 );
 
 #endif

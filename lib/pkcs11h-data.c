@@ -60,7 +60,7 @@
 static
 CK_RV
 _pkcs11h_data_getObject (
-	IN const pkcs11h_session_t session,
+	IN const _pkcs11h_session_t session,
 	IN const char * const application,
 	IN const char * const label,
 	OUT CK_OBJECT_HANDLE * const p_handle
@@ -73,13 +73,13 @@ _pkcs11h_data_getObject (
 	};
 	CK_OBJECT_HANDLE *objects = NULL;
 	CK_ULONG objects_found = 0;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 	
-	PKCS11H_ASSERT (session!=NULL);
-	PKCS11H_ASSERT (application!=NULL);
-	PKCS11H_ASSERT (label!=NULL);
+	_PKCS11H_ASSERT (session!=NULL);
+	_PKCS11H_ASSERT (application!=NULL);
+	_PKCS11H_ASSERT (label!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_data_getObject entry session=%p, application='%s', label='%s', p_handle=%p",
 		(void *)session,
@@ -88,38 +88,39 @@ _pkcs11h_data_getObject (
 		(void *)p_handle
 	);
 
-	*p_handle = PKCS11H_INVALID_OBJECT_HANDLE;
+	*p_handle = _PKCS11H_INVALID_OBJECT_HANDLE;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_validate (session);
+	if ((rv = _pkcs11h_session_validate (session)) != CKR_OK) {
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_findObjects (
+	if (
+		(rv = _pkcs11h_session_findObjects (
 			session,
 			filter,
 			sizeof (filter) / sizeof (CK_ATTRIBUTE),
 			&objects,
 			&objects_found
-		);
-	}
-
-	if (
-		rv == CKR_OK &&
-		objects_found == 0
+		)) != CKR_OK
 	) {
-		rv = CKR_FUNCTION_REJECTED;
+		goto cleanup;
 	}
 
-	if (rv == CKR_OK) {
-		*p_handle = objects[0];
+	if (objects_found == 0) {
+		rv = CKR_FUNCTION_REJECTED;
+		goto cleanup;
 	}
+
+	*p_handle = objects[0];
+	rv = CKR_OK;
+
+cleanup:
 
 	if (objects != NULL) {
 		_pkcs11h_mem_free ((void *)&objects);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_data_getObject return rv=%lu-'%s', *p_handle=%08lx",
 		rv,
@@ -144,27 +145,27 @@ pkcs11h_data_get (
 	CK_ATTRIBUTE attrs[] = {
 		{CKA_VALUE, NULL, 0}
 	};
-	CK_OBJECT_HANDLE handle = PKCS11H_INVALID_OBJECT_HANDLE;
-	CK_RV rv = CKR_OK;
+	CK_OBJECT_HANDLE handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
+	_pkcs11h_session_t session = NULL;
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
 	size_t blob_size_max = 0;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
-	PKCS11H_ASSERT (application!=NULL);
-	PKCS11H_ASSERT (label!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
-	/*PKCS11H_ASSERT (blob!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (p_blob_size!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
+	_PKCS11H_ASSERT (application!=NULL);
+	_PKCS11H_ASSERT (label!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+	/*_PKCS11H_ASSERT (blob!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (p_blob_size!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_get entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, *p_blob_size=%u",
 		(void *)token_id,
@@ -181,52 +182,49 @@ pkcs11h_data_get (
 	}
 	*p_blob_size = 0;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
-
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_validate (session);
-		}
-
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_data_getObject (
+	while (!op_succeed) {
+		if (
+			(rv = _pkcs11h_session_validate (session)) != CKR_OK ||
+			(rv = _pkcs11h_data_getObject (
 				session,
 				application,
 				label,
 				&handle
-			);
-		}
-
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_getObjectAttributes (
+			)) != CKR_OK ||
+			(rv = _pkcs11h_session_getObjectAttributes (
 				session,
 				handle,
 				attrs,
 				sizeof (attrs)/sizeof (CK_ATTRIBUTE)
-			);
+			)) != CKR_OK
+		) {
+			goto retry;
 		}
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		op_succeed = TRUE;
+		rv = CKR_OK;
+	
+	retry:
+
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Read data object failed rv=%lu-'%s'",
 					rv,
@@ -241,8 +239,27 @@ pkcs11h_data_get (
 					mask_prompt
 				);
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
+
+	*p_blob_size = attrs[0].ulValueLen;
+
+	if (blob != NULL) {
+		if (*p_blob_size > blob_size_max) {
+			rv = CKR_BUFFER_TOO_SMALL;
+		}
+		else {
+			memmove (blob, attrs[0].pValue, *p_blob_size);
+		}
+	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -250,21 +267,6 @@ pkcs11h_data_get (
 		mutex_locked = FALSE;
 	}
 #endif
-
-	if (rv == CKR_OK) {
-		*p_blob_size = attrs[0].ulValueLen;
-	}
-
-	if (rv == CKR_OK) {
-		if (blob != NULL) {
-			if (*p_blob_size > blob_size_max) {
-				rv = CKR_BUFFER_TOO_SMALL;
-			}
-			else {
-				memmove (blob, attrs[0].pValue, *p_blob_size);
-			}
-		}
-	}
 
 	_pkcs11h_session_freeObjectAttributes (
 		attrs,
@@ -276,7 +278,7 @@ pkcs11h_data_get (
 		session = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_get return rv=%lu-'%s', *p_blob_size=%u",
 		rv,
@@ -311,25 +313,25 @@ pkcs11h_data_put (
 		{CKA_VALUE, blob, blob_size}
 	};
 
-	CK_OBJECT_HANDLE handle = PKCS11H_INVALID_OBJECT_HANDLE;
-	CK_RV rv = CKR_OK;
+	CK_OBJECT_HANDLE handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
+	_pkcs11h_session_t session = NULL;
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
-	PKCS11H_ASSERT (application!=NULL);
-	PKCS11H_ASSERT (label!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
-	PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
+	_PKCS11H_ASSERT (application!=NULL);
+	_PKCS11H_ASSERT (label!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
+	_PKCS11H_ASSERT (blob!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_put entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, blob_size=%u",
 		(void *)token_id,
@@ -341,43 +343,44 @@ pkcs11h_data_put (
 		blob != NULL ? blob_size : 0
 	);
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
+	while (!op_succeed) {
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_validate (session);
-		}
-
-		if (rv == CKR_OK) {
-			rv = session->provider->f->C_CreateObject (
+		if (
+			(rv = _pkcs11h_session_validate (session)) != CKR_OK ||
+			(rv = session->provider->f->C_CreateObject (
 				session->session_handle,
 				attrs,
 				sizeof (attrs)/sizeof (CK_ATTRIBUTE),
 				&handle
-			);
+			)) != CKR_OK
+		) {
+			goto retry;
 		}
+	
+		op_succeed = TRUE;
+		rv = CKR_OK;
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+	retry:
+
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Write data object failed rv=%lu-'%s'",
 					rv,
@@ -392,8 +395,16 @@ pkcs11h_data_put (
 					mask_prompt
 				);
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
+
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -407,7 +418,7 @@ pkcs11h_data_put (
 		session = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_put return rv=%lu-'%s'",
 		rv,
@@ -429,20 +440,20 @@ pkcs11h_data_del (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
+	_pkcs11h_session_t session = NULL;
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
-	CK_OBJECT_HANDLE handle = PKCS11H_INVALID_OBJECT_HANDLE;
-	CK_RV rv = CKR_OK;
+	CK_OBJECT_HANDLE handle = _PKCS11H_INVALID_OBJECT_HANDLE;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (token_id!=NULL);
-	PKCS11H_ASSERT (application!=NULL);
-	PKCS11H_ASSERT (label!=NULL);
-	/*PKCS11H_ASSERT (user_data) NOT NEEDED */
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (token_id!=NULL);
+	_PKCS11H_ASSERT (application!=NULL);
+	_PKCS11H_ASSERT (label!=NULL);
+	/*_PKCS11H_ASSERT (user_data) NOT NEEDED */
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_del entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x",
 		(void *)token_id,
@@ -452,50 +463,48 @@ pkcs11h_data_del (
 		mask_prompt
 	);
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
+	while (!op_succeed) {
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_validate (session);
-		}
-
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_data_getObject (
+		if (
+			(rv = _pkcs11h_session_validate (session)) != CKR_OK ||
+			(rv = _pkcs11h_data_getObject (
 				session,
 				application,
 				label,
 				&handle
-			);
-		}
-
-		if (rv == CKR_OK) {
-			rv = session->provider->f->C_DestroyObject (
+			)) != CKR_OK ||
+			(rv = session->provider->f->C_DestroyObject (
 				session->session_handle,
 				handle
-			);
+			)) != CKR_OK
+		) {
+			goto retry;
 		}
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		op_succeed = TRUE;
+		rv = CKR_OK;
+
+	retry:
+
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Remove data object failed rv=%lu-'%s'",
 					rv,
@@ -510,14 +519,20 @@ pkcs11h_data_del (
 					mask_prompt
 				);
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
 
+cleanup:
+
 #if defined(ENABLE_PKCS11H_THREADING)
-		if (mutex_locked) {
-			_pkcs11h_threading_mutexRelease (&session->mutex);
-			mutex_locked = FALSE;
-		}
+	if (mutex_locked) {
+		_pkcs11h_threading_mutexRelease (&session->mutex);
+		mutex_locked = FALSE;
+	}
 #endif
 
 	if (session != NULL) {
@@ -525,7 +540,7 @@ pkcs11h_data_del (
 		session = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_del return rv=%lu-'%s'",
 		rv,
@@ -541,11 +556,11 @@ pkcs11h_data_freeDataIdList (
 ) {
 	pkcs11h_data_id_list_t _id = data_id_list;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	/*PKCS11H_ASSERT (data_id_list!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	/*_PKCS11H_ASSERT (data_id_list!=NULL); NOT NEEDED*/
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_freeDataIdList entry token_id_list=%p",
 		(void *)data_id_list
@@ -564,7 +579,7 @@ pkcs11h_data_freeDataIdList (
 		_pkcs11h_mem_free ((void *)&x);
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_token_freeDataIdList return"
 	);
@@ -583,18 +598,18 @@ pkcs11h_data_enumDataObjects (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	pkcs11h_session_t session = NULL;
+	_pkcs11h_session_t session = NULL;
 	pkcs11h_data_id_list_t data_id_list = NULL;
-	CK_RV rv = CKR_OK;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	PKCS11H_BOOL op_succeed = FALSE;
 	PKCS11H_BOOL login_retry = FALSE;
 
-	PKCS11H_ASSERT (g_pkcs11h_data!=NULL);
-	PKCS11H_ASSERT (g_pkcs11h_data->initialized);
-	PKCS11H_ASSERT (p_data_id_list!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (p_data_id_list!=NULL);
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_enumDataObjects entry token_id=%p, is_public=%d, user_data=%p, mask_prompt=%08x, p_data_id_list=%p",
 		(void *)token_id,
@@ -606,23 +621,23 @@ pkcs11h_data_enumDataObjects (
 
 	*p_data_id_list = NULL;
 
-	if (rv == CKR_OK) {
-		rv = _pkcs11h_session_getSessionByTokenId (
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
 			token_id,
 			&session
-		);
+		)) != CKR_OK
+	) {
+		goto cleanup;
 	}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if (
-		rv == CKR_OK &&
-		(rv = _pkcs11h_threading_mutexLock (&session->mutex)) == CKR_OK
-	) {
-		mutex_locked = TRUE;
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
 	}
+	mutex_locked = TRUE;
 #endif
 
-	while (rv == CKR_OK && !op_succeed) {
+	while (!op_succeed) {
 
 		CK_OBJECT_CLASS class = CKO_DATA;
 		CK_ATTRIBUTE filter[] = {
@@ -633,21 +648,20 @@ pkcs11h_data_enumDataObjects (
 
 		CK_ULONG i;
 
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_validate (session);
-		}
-
-		if (rv == CKR_OK) {
-			rv = _pkcs11h_session_findObjects (
+		if (
+			(rv = _pkcs11h_session_validate (session)) != CKR_OK ||
+			(rv = _pkcs11h_session_findObjects (
 				session,
 				filter,
 				sizeof (filter) / sizeof (CK_ATTRIBUTE),
 				&objects,
 				&objects_found
-			);
+			)) != CKR_OK
+		) {
+			goto retry1;
 		}
 
-		for (i = 0;rv == CKR_OK && i < objects_found;i++) {
+		for (i = 0;i < objects_found;i++) {
 			pkcs11h_data_id_list_t entry = NULL;
 
 			CK_ATTRIBUTE attrs[] = {
@@ -655,49 +669,42 @@ pkcs11h_data_enumDataObjects (
 				{CKA_LABEL, NULL, 0}
 			};
 
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_session_getObjectAttributes (
+			if (
+				(rv = _pkcs11h_session_getObjectAttributes (
 					session,
 					objects[i],
 					attrs,
 					sizeof (attrs) / sizeof (CK_ATTRIBUTE)
-				);
-			}
-			
-			if (rv == CKR_OK) {
-				rv = _pkcs11h_mem_malloc (
+				)) != CKR_OK ||
+				(rv = _pkcs11h_mem_malloc (
 					(void *)&entry,
 					sizeof (struct pkcs11h_data_id_list_s)
-				);
-			}
-
-			if (
-				rv == CKR_OK &&
+				)) != CKR_OK ||
 				(rv = _pkcs11h_mem_malloc (
 					(void *)&entry->application,
 					attrs[0].ulValueLen+1
-				)) == CKR_OK
-			) {
-				memmove (entry->application, attrs[0].pValue, attrs[0].ulValueLen);
-				entry->application[attrs[0].ulValueLen] = '\0';
-			}
-
-			if (
-				rv == CKR_OK &&
+				)) != CKR_OK ||
 				(rv = _pkcs11h_mem_malloc (
 					(void *)&entry->label,
 					attrs[1].ulValueLen+1
-				)) == CKR_OK
+				)) != CKR_OK
 			) {
-				memmove (entry->label, attrs[1].pValue, attrs[1].ulValueLen);
-				entry->label[attrs[1].ulValueLen] = '\0';
+				goto retry11;
 			}
 
-			if (rv == CKR_OK) {
-				entry->next = data_id_list;
-				data_id_list = entry;
-				entry = NULL;
-			}
+			memmove (entry->application, attrs[0].pValue, attrs[0].ulValueLen);
+			entry->application[attrs[0].ulValueLen] = '\0';
+
+			memmove (entry->label, attrs[1].pValue, attrs[1].ulValueLen);
+			entry->label[attrs[1].ulValueLen] = '\0';
+
+			entry->next = data_id_list;
+			data_id_list = entry;
+			entry = NULL;
+
+			rv = CKR_OK;
+
+		retry11:
 
 			_pkcs11h_session_freeObjectAttributes (
 				attrs,
@@ -715,16 +722,18 @@ pkcs11h_data_enumDataObjects (
 			}
 		}
 
+		op_succeed = TRUE;
+		rv = CKR_OK;
+
+	retry1:
+
 		if (objects != NULL) {
 			_pkcs11h_mem_free ((void *)&objects);
 		}
 
-		if (rv == CKR_OK) {
-			op_succeed = TRUE;
-		}
-		else {
+		if (!op_succeed) {
 			if (!login_retry) {
-				PKCS11H_DEBUG (
+				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Enumerate data objects failed rv=%lu-'%s'",
 					rv,
@@ -739,8 +748,18 @@ pkcs11h_data_enumDataObjects (
 					mask_prompt
 				);
 			}
+
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
 		}
 	}
+
+	*p_data_id_list = data_id_list;
+	data_id_list = NULL;
+	rv = CKR_OK;
+
+cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
@@ -748,11 +767,6 @@ pkcs11h_data_enumDataObjects (
 		mutex_locked = FALSE;
 	}
 #endif
-
-	if (rv == CKR_OK) {
-		*p_data_id_list = data_id_list;
-		data_id_list = NULL;
-	}
 
 	if (session != NULL) {
 		_pkcs11h_session_release (session);
@@ -764,7 +778,7 @@ pkcs11h_data_enumDataObjects (
 		data_id_list = NULL;
 	}
 
-	PKCS11H_DEBUG (
+	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_data_enumDataObjects return rv=%lu-'%s', *p_data_id_list=%p",
 		rv,

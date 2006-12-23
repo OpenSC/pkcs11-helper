@@ -103,9 +103,9 @@
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 
 #if OPENSSL_VERSION_NUMBER < 0x00908000L
-typedef unsigned char *pkcs11_openssl_d2i_t;
+typedef unsigned char *__pkcs11_openssl_d2i_t;
 #else
-typedef const unsigned char *pkcs11_openssl_d2i_t;
+typedef const unsigned char *__pkcs11_openssl_d2i_t;
 #endif
 
 #endif
@@ -202,12 +202,12 @@ __pkcs11h_crypto_gnutls_certificate_is_issuer (
 
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 
-typedef PCCERT_CONTEXT (WINAPI *CertCreateCertificateContext_t) (
+typedef PCCERT_CONTEXT (WINAPI *__CertCreateCertificateContext_t) (
 	DWORD dwCertEncodingType,
 	const BYTE *pbCertEncoded,
 	DWORD cbCertEncoded
 );
-typedef BOOL (WINAPI *CertFreeCertificateContext_t) (
+typedef BOOL (WINAPI *__CertFreeCertificateContext_t) (
 	PCCERT_CONTEXT pCertContext
 );
 typedef DWORD (WINAPI *CertNameToStrW_t) (
@@ -217,7 +217,7 @@ typedef DWORD (WINAPI *CertNameToStrW_t) (
 	LPWSTR psz,
 	DWORD csz
 );
-typedef BOOL (WINAPI *CryptVerifyCertificateSignatureEx_t) (
+typedef BOOL (WINAPI *__CryptVerifyCertificateSignatureEx_t) (
 	void *hCryptProv,
 	DWORD dwCertEncodingType,
 	DWORD dwSubjectType,
@@ -230,10 +230,10 @@ typedef BOOL (WINAPI *CryptVerifyCertificateSignatureEx_t) (
 
 typedef struct __crypto_win32_data_s {
 	HMODULE handle;
-	CertCreateCertificateContext_t p_CertCreateCertificateContext;
-	CertFreeCertificateContext_t p_CertFreeCertificateContext;
+	__CertCreateCertificateContext_t p_CertCreateCertificateContext;
+	__CertFreeCertificateContext_t p_CertFreeCertificateContext;
 	CertNameToStrW_t p_CertNameToStrW;
-	CryptVerifyCertificateSignatureEx_t p_CryptVerifyCertificateSignatureEx;
+	__CryptVerifyCertificateSignatureEx_t p_CryptVerifyCertificateSignatureEx;
 } *__crypto_win32_data_t;
 
 static
@@ -280,7 +280,7 @@ __pkcs11h_crypto_win32_certificate_is_issuer (
 #endif
 
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
+pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	__pkcs11h_crypto_openssl_initialize,
 	__pkcs11h_crypto_openssl_uninitialize,
@@ -289,7 +289,7 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_openssl_certificate_is_issuer
 };
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
+pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	__pkcs11h_crypto_gnutls_initialize,
 	__pkcs11h_crypto_gnutls_uninitialize,
@@ -299,7 +299,7 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 };
 #elif defined(ENABLE_PKCS11H_ENGINE_WIN32)
 static struct __crypto_win32_data_s s_win32_data = { NULL };
-pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
+pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	&s_win32_data,
 	__pkcs11h_crypto_win32_initialize,
 	__pkcs11h_crypto_win32_uninitialize,
@@ -308,7 +308,7 @@ pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_win32_certificate_is_issuer
 };
 #else
-pkcs11h_engine_crypto_t g_pkcs11h_crypto_engine = {
+pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	NULL,
 	NULL,
@@ -323,9 +323,9 @@ CK_RV
 pkcs11h_engine_setCrypto (
 	IN const pkcs11h_engine_crypto_t * const engine
 ) {
-	PKCS11H_ASSERT (engine!=NULL);
+	_PKCS11H_ASSERT (engine!=NULL);
 
-	memmove (&g_pkcs11h_crypto_engine, engine, sizeof (pkcs11h_engine_crypto_t));
+	memmove (&_g_pkcs11h_crypto_engine, engine, sizeof (pkcs11h_engine_crypto_t));
 
 	return CKR_OK;
 }
@@ -366,16 +366,16 @@ __pkcs11h_crypto_openssl_certificate_get_expiration (
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (expiration!=NULL);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (expiration!=NULL);
 
 	*expiration = (time_t)0;
 
 	x509 = X509_new ();
 
 	if (x509 != NULL) {
-		pkcs11_openssl_d2i_t d2i = (pkcs11_openssl_d2i_t)blob;
+		__pkcs11_openssl_d2i_t d2i = (__pkcs11_openssl_d2i_t)blob;
 
 		if (
 			d2i_X509 (&x509, &d2i, blob_size)
@@ -424,20 +424,20 @@ __pkcs11h_crypto_openssl_certificate_get_dn (
 	IN const size_t dn_max
 ) {
 	X509 *x509 = NULL;
-	pkcs11_openssl_d2i_t d2i1;
+	__pkcs11_openssl_d2i_t d2i1;
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (dn!=NULL);
-	PKCS11H_ASSERT (dn_max>0);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (dn!=NULL);
+	_PKCS11H_ASSERT (dn_max>0);
 
 	dn[0] = '\x0';
 
 	if (blob_size > 0) {
 		if ((x509 = X509_new ()) != NULL) {
-			d2i1 = (pkcs11_openssl_d2i_t)blob;
+			d2i1 = (__pkcs11_openssl_d2i_t)blob;
 			if (d2i_X509 (&x509, &d2i1, blob_size)) {
 				X509_NAME_oneline (
 					X509_get_subject_name (x509),
@@ -466,67 +466,51 @@ __pkcs11h_crypto_openssl_certificate_is_issuer (
 	X509 *x509_issuer = NULL;
 	X509 *x509_cert = NULL;
 	EVP_PKEY *pub_issuer = NULL;
-	pkcs11_openssl_d2i_t d2i;
+	__pkcs11_openssl_d2i_t d2i;
 	PKCS11H_BOOL is_issuer = FALSE;
-	PKCS11H_BOOL ok = TRUE;
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (issuer_blob!=NULL);
-	PKCS11H_ASSERT (cert_blob!=NULL);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (issuer_blob!=NULL);
+	_PKCS11H_ASSERT (cert_blob!=NULL);
 
 	if (
-		ok &&
-		(x509_issuer = X509_new ()) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
+		(x509_issuer = X509_new ()) == NULL ||
 		(x509_cert = X509_new ()) == NULL
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
-	if (ok && (x509_issuer == NULL || x509_cert == NULL)) {
-		ok = FALSE;
-	}
-
-	d2i = (pkcs11_openssl_d2i_t)issuer_blob;
+	d2i = (__pkcs11_openssl_d2i_t)issuer_blob;
 	if (
-		ok &&
 		!d2i_X509 (
 			&x509_issuer,
 			&d2i,
 			issuer_blob_size
 		)
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
-	d2i = (pkcs11_openssl_d2i_t)cert_blob;
+	d2i = (__pkcs11_openssl_d2i_t)cert_blob;
 	if (
-		ok &&
 		!d2i_X509 (
 			&x509_cert,
 			&d2i,
 			cert_blob_size
 		)
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	if (
-		ok &&
 		(pub_issuer = X509_get_pubkey (x509_issuer)) == NULL
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	if (
-		ok &&
 		!X509_NAME_cmp (
 			X509_get_subject_name (x509_issuer),
 			X509_get_issuer_name (x509_cert)
@@ -535,6 +519,8 @@ __pkcs11h_crypto_openssl_certificate_is_issuer (
 	) {
 		is_issuer = TRUE;
 	}
+
+cleanup:
 
 	if (pub_issuer != NULL) {
 		EVP_PKEY_free (pub_issuer);
@@ -577,7 +563,7 @@ __pkcs11h_crypto_gnutls_initialize (
 ) {
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
 	if (gnutls_global_init () != GNUTLS_E_SUCCESS) {
 		return FALSE;
 	}
@@ -593,7 +579,7 @@ __pkcs11h_crypto_gnutls_uninitialize (
 ) {
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
 	gnutls_global_deinit ();
 
 	return TRUE;
@@ -611,9 +597,9 @@ __pkcs11h_crypto_gnutls_certificate_get_expiration (
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (expiration!=NULL);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (expiration!=NULL);
 
 	*expiration = (time_t)0;
 
@@ -652,10 +638,10 @@ __pkcs11h_crypto_gnutls_certificate_get_dn (
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (dn!=NULL);
-	PKCS11H_ASSERT (dn_max>0);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (dn!=NULL);
+	_PKCS11H_ASSERT (dn_max>0);
 
 	dn[0] = '\x0';
 
@@ -694,56 +680,52 @@ __pkcs11h_crypto_gnutls_certificate_is_issuer (
 	gnutls_x509_crt_t cert_cert = NULL;
 	gnutls_datum_t datum;
 	PKCS11H_BOOL is_issuer = FALSE;
-	PKCS11H_BOOL ok = TRUE;
 	unsigned int result = 0;
 
 	(void)global_data;
 
-	/*PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
-	PKCS11H_ASSERT (issuer_blob!=NULL);
-	PKCS11H_ASSERT (cert_blob!=NULL);
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (issuer_blob!=NULL);
+	_PKCS11H_ASSERT (cert_blob!=NULL);
 
 	if (ok && gnutls_x509_crt_init (&cert_issuer) != GNUTLS_E_SUCCESS) {
 		/* gnutls sets output */
 		cert_issuer = NULL;
-		ok = FALSE;
+		goto cleanup;
 	}
 	if (ok && gnutls_x509_crt_init (&cert_cert) != GNUTLS_E_SUCCESS) {
 		/* gnutls sets output */
 		cert_cert = NULL;
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	datum.data = (unsigned char *)issuer_blob;
 	datum.size = issuer_blob_size;
 
 	if (
-		ok &&
 		gnutls_x509_crt_import (
 			cert_issuer,
 			&datum,
 			GNUTLS_X509_FMT_DER
 		) != GNUTLS_E_SUCCESS
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	datum.data = (unsigned char *)cert_blob;
 	datum.size = cert_blob_size;
 
 	if (
-		ok &&
 		gnutls_x509_crt_import (
 			cert_cert,
 			&datum,
 			GNUTLS_X509_FMT_DER
 		) != GNUTLS_E_SUCCESS
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	if (
-		ok &&
 		gnutls_x509_crt_verify (
 			cert_cert,
 			&cert_issuer,
@@ -755,6 +737,8 @@ __pkcs11h_crypto_gnutls_certificate_is_issuer (
 	) {
 		is_issuer = TRUE;
 	}
+
+cleanup:
 
 	if (cert_cert != NULL) {
 		gnutls_x509_crt_deinit (cert_cert);
@@ -780,7 +764,7 @@ __pkcs11h_crypto_win32_initialize (
 ) {
 	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
 
-	PKCS11H_ASSERT (global_data!=NULL);
+	_PKCS11H_ASSERT (global_data!=NULL);
 
 	__pkcs11h_crypto_win32_uninitialize (data);
 
@@ -789,11 +773,11 @@ __pkcs11h_crypto_win32_initialize (
 		return 0;
 	}
 
-	data->p_CertCreateCertificateContext = (CertCreateCertificateContext_t)GetProcAddress (
+	data->p_CertCreateCertificateContext = (__CertCreateCertificateContext_t)GetProcAddress (
 		data->handle,
 		"CertCreateCertificateContext"
 	);
-	data->p_CertFreeCertificateContext = (CertFreeCertificateContext_t)GetProcAddress (
+	data->p_CertFreeCertificateContext = (__CertFreeCertificateContext_t)GetProcAddress (
 		data->handle,
 		"CertFreeCertificateContext"
 	);
@@ -801,7 +785,7 @@ __pkcs11h_crypto_win32_initialize (
 		data->handle,
 		"CertNameToStrW"
 	);
-	data->p_CryptVerifyCertificateSignatureEx = (CryptVerifyCertificateSignatureEx_t)GetProcAddress (
+	data->p_CryptVerifyCertificateSignatureEx = (__CryptVerifyCertificateSignatureEx_t)GetProcAddress (
 		data->handle,
 		"CryptVerifyCertificateSignatureEx"
 	);
@@ -826,7 +810,7 @@ __pkcs11h_crypto_win32_uninitialize (
 ) {
 	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
 
-	PKCS11H_ASSERT (global_data!=NULL);
+	_PKCS11H_ASSERT (global_data!=NULL);
 
 	if (data->handle != NULL) {
 		FreeLibrary (data->handle);
@@ -848,52 +832,46 @@ __pkcs11h_crypto_win32_certificate_get_expiration (
 ) {
 	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
 	PCCERT_CONTEXT cert = NULL;
-	PKCS11H_BOOL ok = TRUE;
+	PKCS11H_BOOL ok = FALSE;
+	time_t now = time (NULL);
 	SYSTEMTIME st;
+	struct tm tm1;
 
-	PKCS11H_ASSERT (global_data!=NULL);
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (expiration!=NULL);
+	_PKCS11H_ASSERT (global_data!=NULL);
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (expiration!=NULL);
 
 	*expiration = (time_t)0;
 
 	if (
-		ok &&
 		(cert = data->p_CertCreateCertificateContext (
 			PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
 			blob,
 			blob_size
-		)) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
+		)) == NULL ||
 		!FileTimeToSystemTime (
 			&cert->pCertInfo->NotAfter,
 			&st
 		)
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
-	if (ok) {
-		struct tm tm1;
-		time_t now = time (NULL);
+	memset (&tm1, 0, sizeof (tm1));
+	tm1.tm_year = st.wYear - 1900;
+	tm1.tm_mon  = st.wMonth - 1;
+	tm1.tm_mday = st.wDay;
+	tm1.tm_hour = st.wHour;
+	tm1.tm_min  = st.wMinute;
+	tm1.tm_sec  = st.wSecond;
 
-		memset (&tm1, 0, sizeof (tm1));
-		tm1.tm_year = st.wYear - 1900;
-		tm1.tm_mon  = st.wMonth - 1;
-		tm1.tm_mday = st.wDay;
-		tm1.tm_hour = st.wHour;
-		tm1.tm_min  = st.wMinute;
-		tm1.tm_sec  = st.wSecond;
+	tm1.tm_sec += (int)(mktime (localtime (&now)) - mktime (gmtime (&now)));
 
-		tm1.tm_sec += (int)(mktime (localtime (&now)) - mktime (gmtime (&now)));
+	*expiration = mktime (&tm1);
 
-		*expiration = mktime (&tm1);
-	}
+	ok = TRUE;
+
+cleanup:
 
 	if (cert != NULL) {
 		data->p_CertFreeCertificateContext (cert);
@@ -918,26 +896,19 @@ __pkcs11h_crypto_win32_certificate_get_dn (
 	DWORD wsize;
 	WCHAR *wstr = NULL;
 
-	PKCS11H_ASSERT (global_data!=NULL);
-	PKCS11H_ASSERT (blob!=NULL);
-	PKCS11H_ASSERT (dn!=NULL);
-	PKCS11H_ASSERT (dn_max>0);
+	_PKCS11H_ASSERT (global_data!=NULL);
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (dn!=NULL);
+	_PKCS11H_ASSERT (dn_max>0);
 
 	dn[0] = '\x0';
 
 	if (
-		ok &&
 		(cert = data->p_CertCreateCertificateContext (
 			PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
 			blob,
 			blob_size
-		)) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
+		)) == NULL ||
 		(wsize = data->p_CertNameToStrW (
 			X509_ASN_ENCODING,
 			&cert->pCertInfo->Subject,
@@ -946,31 +917,21 @@ __pkcs11h_crypto_win32_certificate_get_dn (
 			0
 		)) == 0
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 	
-	if (
-		ok &&
-		(wstr = (WCHAR *)g_pkcs11h_sys_engine.malloc (wsize * sizeof (WCHAR))) == NULL
-	) {
-		ok = FALSE;
+	if ((wstr = (WCHAR *)_g_pkcs11h_sys_engine.malloc (wsize * sizeof (WCHAR))) == NULL) {
+		goto cleanup;
 	}
 			
 	if (
-		ok &&
 		(wsize = data->p_CertNameToStrW (
 			X509_ASN_ENCODING,
 			&cert->pCertInfo->Subject,
 			CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG,
 			wstr,
 			wsize
-		)) == 0
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
+		)) == 0 ||
 		WideCharToMultiByte (
 			CP_UTF8,
 			0,
@@ -982,11 +943,15 @@ __pkcs11h_crypto_win32_certificate_get_dn (
 			NULL
 		) == 0
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
+	ok = TRUE;
+
+cleanup:
+
 	if (wstr != NULL) {
-		g_pkcs11h_sys_engine.free (wstr);
+		_g_pkcs11h_sys_engine.free (wstr);
 		wstr = NULL;
 	}
 
@@ -1010,37 +975,28 @@ __pkcs11h_crypto_win32_certificate_is_issuer (
 	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
 	PCCERT_CONTEXT cert_issuer = NULL;
 	PCCERT_CONTEXT cert_cert = NULL;
-	PKCS11H_BOOL ok = TRUE;
 	PKCS11H_BOOL issuer = FALSE;
 
-	PKCS11H_ASSERT (global_data!=NULL);
-	PKCS11H_ASSERT (issuer_blob!=NULL);
-	PKCS11H_ASSERT (cert_blob!=NULL);
+	_PKCS11H_ASSERT (global_data!=NULL);
+	_PKCS11H_ASSERT (issuer_blob!=NULL);
+	_PKCS11H_ASSERT (cert_blob!=NULL);
 
 	if (
-		ok &&
 		(cert_issuer = data->p_CertCreateCertificateContext (
 			PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
 			issuer_blob,
 			issuer_blob_size
-		)) == NULL
-	) {
-		ok = FALSE;
-	}
-
-	if (
-		ok &&
+		)) == NULL ||
 		(cert_cert = data->p_CertCreateCertificateContext (
 			PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
 			cert_blob,
 			cert_blob_size
 		)) == NULL
 	) {
-		ok = FALSE;
+		goto cleanup;
 	}
 
 	if (
-		ok &&
 		data->p_CryptVerifyCertificateSignatureEx (
 			NULL,
 			X509_ASN_ENCODING,
@@ -1054,6 +1010,8 @@ __pkcs11h_crypto_win32_certificate_is_issuer (
 	) {
 		issuer = TRUE;
 	}
+
+cleanup:
 
 	if (cert_issuer != NULL) {
 		data->p_CertFreeCertificateContext (cert_issuer);

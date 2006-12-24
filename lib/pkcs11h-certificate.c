@@ -346,6 +346,10 @@ __pkcs11h_certificate_loadCertificate (
 		goto cleanup;
 	}
 
+	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
+		goto cleanup;
+	}
+
 	rv = CKR_OK;
 
 cleanup:
@@ -615,11 +619,6 @@ _pkcs11h_certificate_validateSession (
 		(void *)certificate
 	);
 
-	if (certificate->session == NULL) {
-		rv = CKR_SESSION_HANDLE_INVALID;
-		goto cleanup;
-	}
-
 	if ((rv = _pkcs11h_session_validate (certificate->session)) != CKR_OK) {
 		goto cleanup;
 	}
@@ -670,17 +669,6 @@ _pkcs11h_certificate_resetSession (
 		session_mutex_locked ? 1 : 0
 	);
 
-	if (certificate->session == NULL) {
-		if (
-			(rv = _pkcs11h_session_getSessionByTokenId (
-				certificate->id->token_id,
-				&certificate->session
-			)) != CKR_OK
-		) {
-			goto cleanup;
-		}
-	}
-
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (!session_mutex_locked) {
 		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
@@ -689,30 +677,6 @@ _pkcs11h_certificate_resetSession (
 		mutex_locked = TRUE;
 	}
 #endif
-
-	if (!certificate->pin_cache_populated_to_session) {
-		certificate->pin_cache_populated_to_session = TRUE;
-
-		if (certificate->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
-			if (certificate->session->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
-				if (certificate->session->pin_cache_period > certificate->pin_cache_period) {
-					certificate->session->pin_expire_time = (
-						certificate->session->pin_expire_time -
-						(time_t)certificate->session->pin_cache_period +
-						(time_t)certificate->pin_cache_period
-					);
-					certificate->session->pin_cache_period = certificate->pin_cache_period;
-				}
-			}
-			else {
-				certificate->session->pin_expire_time = (
-					_g_pkcs11h_sys_engine.time () +
-					(time_t)certificate->pin_cache_period
-				);
-				certificate->session->pin_cache_period = certificate->pin_cache_period;
-			}
-		}	
-	}
 
 	/*
 	 * First, if session seems to be valid
@@ -772,10 +736,6 @@ _pkcs11h_certificate_resetSession (
 		) {
 			goto cleanup;
 		}
-	}
-
-	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
-		goto cleanup;
 	}
 
 	if (!public_only && certificate->key_handle == _PKCS11H_INVALID_OBJECT_HANDLE) {
@@ -1224,6 +1184,10 @@ pkcs11h_certificate_setCertificateIdCertificateBlob (
 		goto cleanup;
 	}
 
+	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
 	rv = CKR_OK;
 
 cleanup:
@@ -1254,9 +1218,12 @@ pkcs11h_certificate_freeCertificate (
 	if (certificate != NULL) {
 		if (certificate->session != NULL) {
 			_pkcs11h_session_release (certificate->session);
+			certificate->session = NULL;
 		}
-		pkcs11h_certificate_freeCertificateId (certificate->id);
-		certificate->id = NULL;
+		if (certificate->id != NULL) {
+			pkcs11h_certificate_freeCertificateId (certificate->id);
+			certificate->id = NULL;
+		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
 		_pkcs11h_threading_mutexFree (&certificate->mutex);
@@ -1283,17 +1250,6 @@ pkcs11h_certificate_lockSession (
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
-
-	if (certificate->session == NULL) {
-		if (
-			(rv = _pkcs11h_session_getSessionByTokenId (
-				certificate->id->token_id,
-				&certificate->session
-			)) != CKR_OK
-		) {
-			goto cleanup;
-		}
-	}
 
 	if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
 		goto cleanup;
@@ -1821,6 +1777,10 @@ pkcs11h_certificate_create (
 	IN const int pin_cache_period,
 	OUT pkcs11h_certificate_t * const p_certificate
 ) {
+#if defined(ENABLE_PKCS11H_THREADING)
+	PKCS11H_BOOL have_mutex = FALSE;
+	PKCS11H_BOOL mutex_locked = FALSE;
+#endif
 	pkcs11h_certificate_t certificate = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
@@ -1854,10 +1814,40 @@ pkcs11h_certificate_create (
 	if ((rv = _pkcs11h_threading_mutexInit (&certificate->mutex)) != CKR_OK) {
 		goto cleanup;
 	}
+	have_mutex = TRUE;
 #endif
 
 	if ((rv = pkcs11h_certificate_duplicateCertificateId (&certificate->id, certificate_id)) != CKR_OK) {
 		goto cleanup;
+	}
+
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
+			certificate->id->token_id,
+			&certificate->session
+		)) != CKR_OK
+	) {
+		goto cleanup;
+	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
+		goto cleanup;
+	}
+	mutex_locked = TRUE;
+#endif
+
+	if (certificate->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
+		if (certificate->session->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
+			if (certificate->session->pin_cache_period > certificate->pin_cache_period) {
+				certificate->session->pin_expire_time = (
+					certificate->session->pin_expire_time -
+					(time_t)certificate->session->pin_cache_period +
+					(time_t)certificate->pin_cache_period
+				);
+				certificate->session->pin_cache_period = certificate->pin_cache_period;
+			}
+		}
 	}
 
 	*p_certificate = certificate;
@@ -1866,9 +1856,31 @@ pkcs11h_certificate_create (
 
 cleanup:
 
-	if (certificate != NULL) {
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexFree (&certificate->mutex);
+	if (mutex_locked) {
+		if (certificate != NULL) {
+			_pkcs11h_threading_mutexRelease (&certificate->session->mutex);
+		}
+		else {
+			_pkcs11h_threading_mutexRelease (&(*p_certificate)->session->mutex);
+		}
+		mutex_locked = FALSE;
+	}
+#endif
+
+	if (certificate != NULL) {
+		if (certificate->session != NULL) {
+			_pkcs11h_session_release (certificate->session);
+			certificate->session = NULL;
+		}
+		if (certificate->id != NULL) {
+			pkcs11h_certificate_freeCertificateId (certificate->id);
+			certificate->id = NULL;
+		}
+#if defined(ENABLE_PKCS11H_THREADING)
+		if (have_mutex) {
+			_pkcs11h_threading_mutexFree (&certificate->mutex);
+		}
 #endif
 		_pkcs11h_mem_free ((void *)&certificate);
 	}
@@ -2007,11 +2019,6 @@ pkcs11h_certificate_getCertificateBlob (
 		PKCS11H_BOOL login_retry = FALSE;
 
 		while (!op_succeed) {
-			if (certificate->session == NULL) {
-				rv = CKR_SESSION_HANDLE_INVALID;
-				goto retry;
-			}
-
 			if ((rv = __pkcs11h_certificate_loadCertificate (certificate)) != CKR_OK) {
 				goto retry;
 			}
@@ -2039,10 +2046,6 @@ pkcs11h_certificate_getCertificateBlob (
 
 	if (certificate->id->certificate_blob == NULL) {
 		rv = CKR_FUNCTION_REJECTED;
-		goto cleanup;
-	}
-
-	if ((rv = __pkcs11h_certificate_updateCertificateIdDescription (certificate->id)) != CKR_OK) {
 		goto cleanup;
 	}
 
@@ -2112,11 +2115,6 @@ pkcs11h_certificate_ensureCertificateAccess (
 
 	if (!validCert) {
 		CK_OBJECT_HANDLE h = _PKCS11H_INVALID_OBJECT_HANDLE;
-
-		if (certificate->session == NULL) {
-			rv = CKR_SESSION_HANDLE_INVALID;
-			goto retry1;
-		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
 		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
@@ -2224,12 +2222,6 @@ pkcs11h_certificate_ensureKeyAccess (
 #endif
 
 	if (!valid_key) {
-
-		if (certificate->session == NULL) {
-			rv = CKR_SESSION_HANDLE_INVALID;
-			goto retry1;
-		}
-
 #if defined(ENABLE_PKCS11H_THREADING)
 		if ((rv = _pkcs11h_threading_mutexLock (&certificate->session->mutex)) != CKR_OK) {
 			goto retry1;

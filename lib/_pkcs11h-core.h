@@ -159,31 +159,6 @@ struct _pkcs11h_session_s {
 #endif
 };
 
-#if defined (ENABLE_PKCS11H_CERTIFICATE)
-
-struct pkcs11h_certificate_s {
-
-	pkcs11h_certificate_id_t id;
-	int pin_cache_period;
-	PKCS11H_BOOL pin_cache_populated_to_session;
-
-	unsigned mask_private_mode;
-
-	_pkcs11h_session_t session;
-	CK_OBJECT_HANDLE key_handle;
-
-	PKCS11H_BOOL operation_active;
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	_pkcs11h_mutex_t mutex;
-#endif
-
-	unsigned mask_prompt;
-	void * user_data;
-};
-
-#endif				/* ENABLE_PKCS11H_CERTIFICATE */
-
 struct _pkcs11h_data_s {
 	PKCS11H_BOOL initialized;
 	int pin_cache_period;

@@ -59,6 +59,26 @@
 #include "_pkcs11h-core.h"
 #include <pkcs11-helper-1.0/pkcs11h-certificate.h>
 
+struct pkcs11h_certificate_s {
+
+	pkcs11h_certificate_id_t id;
+	int pin_cache_period;
+
+	unsigned mask_private_mode;
+
+	_pkcs11h_session_t session;
+	CK_OBJECT_HANDLE key_handle;
+
+	PKCS11H_BOOL operation_active;
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_mutex_t mutex;
+#endif
+
+	unsigned mask_prompt;
+	void * user_data;
+};
+
 PKCS11H_BOOL
 _pkcs11h_certificate_isBetterCertificate (
 	IN const unsigned char * const current,

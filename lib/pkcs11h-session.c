@@ -995,7 +995,7 @@ _pkcs11h_session_login (
 				);
 
 				if (
-					!_g_pkcs11h_data->hooks.pin_prompt (
+					_g_pkcs11h_data->hooks.pin_prompt (
 						_g_pkcs11h_data->hooks.pin_prompt_data,
 						user_data,
 						session->token_id,
@@ -1004,12 +1004,10 @@ _pkcs11h_session_login (
 						sizeof (pin)
 					)
 				) {
-					rv = CKR_CANCEL;
-					goto retry;
+					rv = CKR_OK;
 				}
 				else {
-					utfPIN = (CK_UTF8CHAR_PTR)pin;
-					lPINLength = strlen (pin);
+					rv = CKR_CANCEL;
 				}
 
 				_PKCS11H_DEBUG (
@@ -1017,6 +1015,14 @@ _pkcs11h_session_login (
 					"PKCS#11: pin_prompt hook return rv=%ld",
 					rv
 				);
+
+				if (rv != CKR_OK ){
+					goto retry;
+				}
+
+				utfPIN = (CK_UTF8CHAR_PTR)pin;
+				lPINLength = strlen (pin);
+
 			}
 
 			if ((rv = __pkcs11h_session_touch (session)) != CKR_OK) {
@@ -1029,11 +1035,10 @@ _pkcs11h_session_login (
 					CKU_USER,
 					utfPIN,
 					lPINLength
-				)) != CKR_OK
+				)) != CKR_OK &&
+				rv != CKR_USER_ALREADY_LOGGED_IN
 			) {
-				if (rv != CKR_USER_ALREADY_LOGGED_IN) {
-					goto retry;
-				}
+				goto retry;
 			}
 
 			login_succeeded = TRUE;

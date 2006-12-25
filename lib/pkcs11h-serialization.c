@@ -273,6 +273,13 @@ cleanup:
 		pkcs11h_token_freeTokenId (token_id);
 	}
 
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_deserializeTokenId return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
 	return rv;
 #undef __PKCS11H_TARGETS_NUMBER
 }

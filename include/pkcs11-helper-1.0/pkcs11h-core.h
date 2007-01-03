@@ -125,15 +125,13 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include <pkcs11-helper-1.0/pkcs11h-version.h>
 #include <pkcs11-helper-1.0/pkcs11h-def.h>
 #include <pkcs11-helper-1.0/pkcs11h-engines.h>
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-/** Static pkcs11-helper library version */
-#define PKCS11H_VERSION	0x00010000
 
 /**
  * @brief pkcs11-helper features mask.

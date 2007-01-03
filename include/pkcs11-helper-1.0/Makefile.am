@@ -58,6 +58,12 @@ myinc_HEADERS= \
 	pkcs11h-core.h
 noinst_HEADERS=
 
+#
+# For win32 vc, add this into
+# dist as well
+#
+myinc_HEADERS+=pkcs11h-version.h
+
 if ENABLE_PKCS11H_CERTIFICATE
 myinc_HEADERS+=pkcs11h-certificate.h
 else

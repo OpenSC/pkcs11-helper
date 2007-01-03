@@ -85,8 +85,7 @@ libpkcs11_helper_la_SOURCES= \
 libpkcs11_helper_la_LDFLAGS= \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \
 	-export-symbols pkcs11-helper.exports \
-	-no-undefined \
-	$(no_undefined) $(export_symbols)
+	-no-undefined
 
 pkcs11-helper.exports: \
 		../config.h \

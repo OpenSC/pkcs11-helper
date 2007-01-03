@@ -360,7 +360,6 @@ fi
 docdir="${docdir}-${PACKAGE_VERSION}"
 pkgconfigdir="${libdir}/pkgconfig"
 AC_SUBST([pkgconfigdir])
-AC_SUBST([LIBS])
 AC_SUBST([PKCS11H_FEATURES])
 AM_CONDITIONAL(ENABLE_DOC, test "${ENABLE_DOC}" = "yes")
 AM_CONDITIONAL(WIN32, test "${WIN32}" = "yes")
@@ -376,6 +375,7 @@ AC_CONFIG_FILES([
 	pkcs11-helper.spec
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
+	include/pkcs11-helper-1.0/pkcs11h-version.h
 	man/Makefile
 	doc/Makefile
 	doc/api/Makefile

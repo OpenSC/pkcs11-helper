@@ -3,7 +3,7 @@ Copyright (c) 2006 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
-2006-??-?? - Version 1.02
+2007-10-05 - Version 1.02
 
 * Switch to free implementation of PKCS#11 headers.
 

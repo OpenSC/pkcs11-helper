@@ -50,7 +50,7 @@
 #
 
 AC_PREREQ(2.60)
-AC_INIT(pkcs11-helper, 1.02)
+AC_INIT(pkcs11-helper, 1.03-beta1)
 AM_INIT_AUTOMAKE(pkcs11-helper, [$PACKAGE_VERSION])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([lib/common.h])
@@ -357,8 +357,9 @@ if test \
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 
-docdir="${docdir}-${PACKAGE_VERSION}"
-pkgconfigdir="${libdir}/pkgconfig"
+mydocdir="\${docdir}-${PACKAGE_VERSION}"
+pkgconfigdir="\${libdir}/pkgconfig"
+AC_SUBST([mydocdir])
 AC_SUBST([pkgconfigdir])
 AC_SUBST([PKCS11H_FEATURES])
 AM_CONDITIONAL(ENABLE_DOC, test "${ENABLE_DOC}" = "yes")

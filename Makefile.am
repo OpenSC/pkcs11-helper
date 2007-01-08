@@ -55,7 +55,7 @@ AUTOMAKE_OPTIONS=foreign dist-bzip2
 
 SUBDIRS=man include lib m4dir doc tests
 
-dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
+dist_mydoc_DATA=README COPYING.GPL COPYING.BSD COPYING
 
 EXTRA_DIST=config-w32-vc.h pkcs11-helper.spec
 

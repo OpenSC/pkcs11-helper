@@ -52,7 +52,7 @@
 #define __PKCS11H_VERSION_H
 
 /**
- * @file pkcs11h-core.h
+ * @file pkcs11h-version.h
  * @brief pkcs11-helper core.
  * @author Alon Bar-Lev <alon.barlev@gmail.com>
  * @see pkcs11h_core.

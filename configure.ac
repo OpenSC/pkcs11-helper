@@ -357,9 +357,11 @@ if test \
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 
-mydocdir="\${docdir}-${PACKAGE_VERSION}"
-pkgconfigdir="\${libdir}/pkgconfig"
+mydocdir="\$(docdir)-\$(PACKAGE_VERSION)"
+myhtmldir="\$(htmldir)-\$(PACKAGE_VERSION)"
+pkgconfigdir="\$(libdir)/pkgconfig"
 AC_SUBST([mydocdir])
+AC_SUBST([myhtmldir])
 AC_SUBST([pkgconfigdir])
 AC_SUBST([PKCS11H_FEATURES])
 AM_CONDITIONAL(ENABLE_DOC, test "${ENABLE_DOC}" = "yes")

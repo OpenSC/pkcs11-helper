@@ -1,37 +1,41 @@
-%define         name    @PACKAGE@
-%define         version @VERSION@
-%define         release 2
-%define         prefix  /usr
-%define         with_doc        0
+%define		name		@PACKAGE@
+%define		version		@VERSION@
+%define		release		2
+%define		prefix		/usr
+%define		with_doc	0
 
-Summary:        pkcs11-helper is a helper library for the use with smart cards and the PKCS#11 API
-Name:           %{name}
-Version:        %{version}
-Release:        %{release}%{dist}
-License:        GPL/BSD
-Vendor:         opensc-project.org
-Packager:       Eddy Nigg <eddy_nigg@startcom.org>
-Group:          Applications/System
-Url:            http://www.opensc-project.org
-Source:         http://www.opensc-project.org/%{name}/%{name}-%{version}.tar.bz2
-BuildRoot:      /var/tmp/%{name}-%{version}-%{release}
-%if %{?with_doc:1}0
-BuildRequires:  doxygen
+Summary:	pkcs11-helper is a helper library for the use with smart cards and the PKCS#11 API
+Name:		%{name}
+Version:	%{version}
+Release:	%{release}%{dist}
+License:	GPL-2/BSD
+Vendor:		The OpenSC Project, http://www.opensc-project.org
+Packager:	Eddy Nigg <eddy_nigg@startcom.org>
+Group:		System/Crypto
+Url:		http://www.opensc-project.org/files/pkcs11-helper
+Source:		http://www.opensc-project.org/files/pkcs11-helper/%{name}-%{version}.tar.bz2
+BuildRoot:	/var/tmp/%{name}-%{version}-%{release}
+%if %{?with_doc}
+BuildRequires:	doxygen
 %endif
-BuildRequires:  openssl-devel >= 0.9.7a
-Requires:       openssl >= 0.9.7a
-Provides:       %{name} = %{version}
+BuildRequires:	openssl-devel >= 0.9.7a
+Requires:	openssl >= 0.9.7a
+Provides:	%{name} = %{version}
 
 %description
-pkcs11-helper provides a simple API to access PKCS#11 tokens.
+pkcs11-helper allows using multiple PKCS#11 providers at the same 
+time, selecting keys by id, label or certificate subject, handling 
+card removal and card insert events, handling card re-insert to a 
+different slot, supporting session expiration serialization and much 
+more, all using a simple API.
 
-%package        devel
-Summary:        pkcs11-helper development files
-Group:          Development/Libraries
-Requires:       %{name} >= %{version}
-Requires:       pkgconfig
+%package devel
+Summary:	pkcs11-helper development files
+Group:		Development/Libraries
+Requires:	%{name} >= %{version}
+Requires:	pkgconfig
 
-%description    devel
+%description devel
 pkcs11-helper development files.
 
 %prep
@@ -39,18 +43,9 @@ pkcs11-helper development files.
 
 %build
 %configure -q \
-        --disable-rpath \
+	--disable-rpath \
 %if %{?with_doc}
-        --enable-doc
-%endif
-
-#       --without-crypto-engine-openssl \
-#       --without-crypto-engine-gnutls \
-#       --disable-dependency-tracking \
-%ifarch x86_64
-%{__perl} -pi -e "s:= /usr/lib64/pkgconfig:= \$(DESTDIR)/usr/lib64/pkgconfig:g" lib/Makefile
-%else
-%{__perl} -pi -e "s:= /usr/lib/pkgconfig:= \$(DESTDIR)/usr/lib/pkgconfig:g" lib/Makefile
+	--enable-doc
 %endif
 
 make %{?_smp_mflags}
@@ -58,7 +53,7 @@ make %{?_smp_mflags}
 %install
 if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 
-%makeinstall
+%makeinstall 
 
 %clean
 if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
@@ -80,8 +75,17 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %endif
 
 %changelog
+* Mon Jan 15 2007 Eddy Nigg <eddy_nigg@startcom.org>
+- Make doxygen dependency only for doc builds 
+
+* Tue Jan 9 2007 Eddy Nigg <eddy_nigg@startcom.org>
+- Build new version 1.03
+
+* Sun Jan 7 2007 Eddy Nigg <eddy_nigg@startcom.org>
+- Fix for pkgconfig.
+
 * Mon Nov 27 2006 Eddy Nigg <eddy_nigg@startcom.org>
-- Fix documentation. Make doc build optional.
+- Fix documentation.
 
 * Sun Nov 26 2006 Eddy Nigg <eddy_nigg@startcom.org>
 - Initial build for StartCom Linux 5.0.x

@@ -36,6 +36,7 @@ install-sh
 ltmain.sh
 libtool
 
+pkcs11h-version.h
 config-w32-vc.h
 pkcs11-helper.exports
 pkcs11-helper.spec

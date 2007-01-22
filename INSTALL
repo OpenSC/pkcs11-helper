@@ -1,6 +1,6 @@
 pkcs11-helper -- PKCS#11 simplification.
 
-Copyright (c) 2005-2006 Alon Bar-Lev <alon.barlev@gmail.com>
+Copyright (c) 2005-2007 Alon Bar-Lev <alon.barlev@gmail.com>
 
 POSIX
 	Dependencies:

@@ -49,9 +49,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-AC_PREREQ(2.60)
-AC_INIT(pkcs11-helper, 1.03-beta1)
-AM_INIT_AUTOMAKE(pkcs11-helper, [$PACKAGE_VERSION])
+AC_PREREQ([2.60])
+AC_INIT([pkcs11-helper], [1.03_beta1])
+AM_INIT_AUTOMAKE([pkcs11-helper], [$PACKAGE_VERSION])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([lib/common.h])
 
@@ -65,10 +65,10 @@ AC_SUBST(LIBPKCS11_HELPER_LT_CURRENT)
 AC_SUBST(LIBPKCS11_HELPER_LT_REVISION)
 AC_SUBST(LIBPKCS11_HELPER_LT_AGE)
 
-AC_ARG_WITH(cygwin-native,
+AC_ARG_WITH([cygwin-native],
 	[  --with-cygwin-native              Compile native win32],
-	[CYGWIN_NATIVE="${withval}"],
-	[CYGWIN_NATIVE="no"]
+	,
+	[with_cygwin_native="no"]
 )
 
 WIN32="no"
@@ -80,121 +80,113 @@ case "${host}" in
 	*-cygwin*)
 		AC_MSG_CHECKING([cygwin mode to use])
 		CYGWIN="yes"
-		if test "${CYGWIN_NATIVE}" = "yes"; then
+		if test "${with_cygwin_native}" = "yes"; then
 			AC_MSG_RESULT([Using native win32])
 			CFLAGS="${CFLAGS} -mno-cygwin"
 			WIN32="yes"
 		else
 			AC_MSG_RESULT([Using cygwin])
-			AC_DEFINE(PKCS11H_USE_CYGWIN, 1, [Define if you are on Cygwin])
+			AC_DEFINE([PKCS11H_USE_CYGWIN], [1], [Define if you are on Cygwin])
 		fi
 	;;
 	*)
 	;;
 esac
 
-AC_ARG_ENABLE(doc,
+AC_ARG_ENABLE([doc],
 	[  --enable-doc                      Enable documantation],
-	[ENABLE_DOC="${enableval}"],
-	[ENABLE_DOC="no"]
+	,
+	[enable_doc="no"]
 )
 
-AC_ARG_ENABLE(debug,
+AC_ARG_ENABLE([debug],
 	[  --disable-debug                   Disable debug support],
-	[ENABLE_PKCS11H_DEBUG="${enableval}"],
-	[ENABLE_PKCS11H_DEBUG="yes"]
+	,
+	[enable_debug="yes"]
 )
 
-AC_ARG_ENABLE(threading,
+AC_ARG_ENABLE([threading],
 	[  --disable-threading               Disable threading],
-	[ENABLE_PKCS11H_THREADING="${enableval}"],
-	[ENABLE_PKCS11H_THREADING="yes"]
+	,
+	[enable_threading="yes"]
 )
 
-AC_ARG_ENABLE(token,
+AC_ARG_ENABLE([token],
 	[  --disable-token                   Disable token support],
-	[ENABLE_PKCS11H_TOKEN="${enableval}"],
-	[ENABLE_PKCS11H_TOKEN="yes"]
+	,
+	[enable_token="yes"]
 )
 
-AC_ARG_ENABLE(data,
+AC_ARG_ENABLE([data],
 	[  --disable-data                    Disable data objects support],
-	[ENABLE_PKCS11H_DATA="${enableval}"],
-	[ENABLE_PKCS11H_DATA="yes"]
+	,
+	[enable_data="yes"]
 )
 
-AC_ARG_ENABLE(certificate,
+AC_ARG_ENABLE([certificate],
 	[  --disable-certificate             Disable certificate support],
-	[ENABLE_PKCS11H_CERTIFICATE="${enableval}"],
-	[ENABLE_PKCS11H_CERTIFICATE="yes"]
+	,
+	[enable_certificate="yes"]
 )
 
-AC_ARG_ENABLE(slotevent,
+AC_ARG_ENABLE([slotevent],
 	[  --disable-slotevent               Disable slotevent support],
-	[ENABLE_PKCS11H_SLOTEVENT="${enableval}"],
-	[ENABLE_PKCS11H_SLOTEVENT="yes"]
+	,
+	[enable_slotevent="yes"]
 )
 
-AC_ARG_ENABLE(openssl,
+AC_ARG_ENABLE([openssl],
 	[  --disable-openssl                 Disable openssl interface],
-	[ENABLE_PKCS11H_OPENSSL="${enableval}"],
-	[ENABLE_PKCS11H_OPENSSL="yes"]
+	,
+	[enable_openssl="yes"]
 )
 
-AC_ARG_ENABLE(pedantic,
+AC_ARG_ENABLE([pedantic],
 	[  --enable-pedantic                 Enable pedantic compiler warnings, will not generate a working executable (debugging option)],
-	[PEDANTIC="${enableval}"],
-	[PEDANTIC="no"]
+	,
+	[enable_pedantic="no"]
 )
 
-AC_ARG_WITH(crypto-engine-openssl,
+AC_ARG_WITH([crypto-engine-openssl],
 	[  --without-crypto-engine-openssl   Disable OpenSSL crypto engine],
-	[WITH_CRYPTO_ENGINE_OPENSSL="${withval}"],
-	[WITH_CRYPTO_ENGINE_OPENSSL="yes"]
+	,
+	[with_crypto_engine_openssl="yes"]
 )
 
-AC_ARG_WITH(crypto-engine-gnutls,
+AC_ARG_WITH([crypto-engine-gnutls],
 	[  --without-crypto-engine-gnutls    Disable GNUTLS crypto engine (OpenSSL will be used if both enabled)],
-	[WITH_CRYPTO_ENGINE_GNUTLS="${withval}"],
-	[WITH_CRYPTO_ENGINE_GNUTLS="yes"]
+	,
+	[with_crypto_engine_gnutls="yes"]
 )
 
-AC_ARG_WITH(crypto-engine-win32,
+AC_ARG_WITH([crypto-engine-win32],
 	[  --without-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
-	[WITH_CRYPTO_ENGINE_WIN32="${withval}"],
-	[WITH_CRYPTO_ENGINE_WIN32="yes"]
+	[with_crypto_engine_win32="${withval}"],
+	[with_crypto_engine_win32="yes"]
 )
 
-AC_ARG_WITH(mem-check,
+AC_ARG_WITH([mem-check],
 	[  --with-mem-check=TYPE             Build with debug memory checking, TYPE = valgrind],
 	[MEMCHECK="$withval"]
 )
 
-AC_ARG_WITH(test-provider,
+AC_ARG_WITH([test-provider],
 	[  --with-test-provider=lib          Specify providers for test phase],
-	[
-		AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["${withval}"], [Test provider])
-	],
-	[
-		AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["/usr/lib/pkcs11/provider.so"], [Test provider])
-	]
+	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["${withval}"], [Test provider])],
+	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["/usr/lib/pkcs11/provider.so"], [Test provider])]
 )
 
-AC_ARG_WITH(test-log-level,
+AC_ARG_WITH([test-log-level],
 	[  --with-test-log-level=level       Specify log level for test phase],
-	[
-		AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [${withval}], [Test log level])
-	],
-	[
-		AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [3], [Test log level])
-	]
+	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [${withval}], [Test log level])],
+	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [3], [Test log level])]
 )
 
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
-if test "${ENABLE_DOC}" = "yes"; then
+if test "${enable_doc}" = "yes"; then
 	AC_CHECK_PROGS([DOXYGEN], [doxygen])
 	test -z "${DOXYGEN}" && AC_MSG_ERROR([doxygen is required for docs])
 fi
@@ -214,41 +206,41 @@ AC_CHECK_FUNCS([ \
 # Checks for libraries.
 AC_CHECK_LIB([dl], [dlopen])
 
-if test "${ENABLE_PKCS11H_THREADING}" = "yes" -a "${WIN32}" != "yes"; then
+if test "${enable_threading}" = "yes" -a "${WIN32}" != "yes"; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
-PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [HAVE_OPENSSL="yes"], [HAVE_OPENSSL="no"])
-if test "${HAVE_OPENSSL}" = "no"; then
-	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [HAVE_OPENSSL="yes"], [HAVE_OPENSSL="no"])
+PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
+if test "${have_openssl}" = "no"; then
+	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
 fi
 
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [HAVE_GNUTLS="yes"], [HAVE_GNUTLS="no"])
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 
 AC_MSG_CHECKING([cryptographic library to use])
 
-if test "${WITH_CRYPTO_ENGINE_OPENSSL}" = "yes" -a "${HAVE_OPENSSL}" != "yes"; then
-	WITH_CRYPTO_ENGINE_OPENSSL="no"
+if test "${with_crypto_engine_openssl}" = "yes" -a "${have_openssl}" != "yes"; then
+	with_crypto_engine_openssl="no"
 fi
 
-if test "${WITH_CRYPTO_ENGINE_GNUTLS}" = "yes" -a "${HAVE_GNUTLS}" != "yes"; then
-	WITH_CRYPTO_ENGINE_GNUTLS="no"
+if test "${with_crypto_engine_gnutls}" = "yes" -a "${have_gnutls}" != "yes"; then
+	with_crypto_engine_gnutls="no"
 fi
 
-if test "${WIN32}" = "yes" -a "${WITH_CRYPTO_ENGINE_WIN32}" = "yes"; then
+if test "${WIN32}" = "yes" -a "${with_crypto_engine_win32}" = "yes"; then
 	AC_MSG_RESULT([Using win32])
 	AC_DEFINE(ENABLE_PKCS11H_ENGINE_WIN32, 1, [Use win32 crypto engine])
 
-	if test "${ENABLE_PKCS11H_OPENSSL}" = "yes"; then
+	if test "${enable_openssl}" = "yes"; then
 		CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 		LIBS="${LIBS} ${OPENSSL_LIBS}"
 	fi
-elif test "${WITH_CRYPTO_ENGINE_OPENSSL}" = "yes"; then
+elif test "${with_crypto_engine_openssl}" = "yes"; then
 	AC_MSG_RESULT([Using OpenSSL])
 	AC_DEFINE(ENABLE_PKCS11H_ENGINE_OPENSSL, 1, [Use OpenSSL crypto engine])
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
-elif test "${WITH_CRYPTO_ENGINE_GNUTLS}" = "yes"; then
+elif test "${with_crypto_engine_gnutls}" = "yes"; then
 	AC_MSG_RESULT([Using GNUTLS])
 	AC_DEFINE(ENABLE_PKCS11H_ENGINE_GNUTLS, 1, [Use GNUTLS crypto engine])
 	CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
@@ -295,14 +287,14 @@ if test "$MEMCHECK" = "valgrind"; then
 	if test "${HAVE_VALGRIND}" != "yes"; then
 		AC_MSG_ERROR([valgrind was not found])
 	fi
-	AC_DEFINE(USE_VALGRIND, 1, [Use valgrind memory debugging library])
+	AC_DEFINE([USE_VALGRIND], [1], [Use valgrind memory debugging library])
 	CFLAGS="${CFLAGS} ${VALGRIND_CFLAGS} -g -fno-inline"
 #	LIBS="${VALGRIND_LIBS} ${LIBS}"
 fi
 
 CFLAGS="$CFLAGS -Wall -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
 
-if test "$PEDANTIC" = "yes"; then
+if test "$enable_pedantic" = "yes"; then
 	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE -D_SVID_SOURCE"
 fi
 
@@ -310,50 +302,50 @@ if test "${WIN32}" = "yes"; then
 	LIBS="${LIBS} -lkernel32 -lgdi32"
 fi
 
-if test "${ENABLE_PKCS11H_THREADING}" != "yes" -a "${ENABLE_PKCS11H_SLOTEVENT}" = "yes"; then
+if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then
 	AC_MSG_ERROR([Threading must be enabled for slotevent to be enabled])
 fi
 
-if test "${ENABLE_PKCS11H_OPENSSL}" = "yes" -a "${WITH_CRYPTO_ENGINE_OPENSSL}" != "yes"; then
+if test "${enable_openssl}" = "yes" -a "${with_crypto_engine_openssl}" != "yes"; then
 	AC_MSG_ERROR([OpenSSL must be linked for OpenSSL interface to operate])
 fi
 
-if test "${ENABLE_PKCS11H_OPENSSL}" = "yes" -a "${ENABLE_PKCS11H_CERTIFICATE}" != "yes"; then
+if test "${enable_openssl}" = "yes" -a "${enable_certificate}" != "yes"; then
 	AC_MSG_ERROR([OpenSSL interface requires certificate interface])
 fi
 
-if test "${ENABLE_PKCS11H_DEBUG}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_DEBUG], 1, [Enable debug support])
+if test "${enable_debug}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_DEBUG], [1], [Enable debug support])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} debug"
 fi
-if test "${ENABLE_PKCS11H_THREADING}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_THREADING], 1, [Enable threading])
+if test "${enable_threading}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_THREADING], [1], [Enable threading])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} threading"
 fi
-if test "${ENABLE_PKCS11H_TOKEN}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_TOKEN], 1, [Enable token interface])
+if test "${enable_token}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_TOKEN], [1], [Enable token interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} token"
 fi
-if test "${ENABLE_PKCS11H_DATA}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_DATA], 1, [Enable data interface])
+if test "${enable_data}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_DATA], [1], [Enable data interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} data"
 fi
-if test "${ENABLE_PKCS11H_CERTIFICATE}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_CERTIFICATE], 1, [Enable certificate interface])
+if test "${enable_certificate}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_CERTIFICATE], [1], [Enable certificate interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} certificate"
 fi
-if test "${ENABLE_PKCS11H_SLOTEVENT}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_SLOTEVENT], 1, [Enable slotevent interface])
+if test "${enable_slotevent}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_SLOTEVENT], [1], [Enable slotevent interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} slotevent"
 fi
-if test "${ENABLE_PKCS11H_OPENSSL}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], 1, [Enable openssl interface])
+if test "${enable_openssl}" = "yes"; then
+	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], [1], [Enable openssl interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
 fi
 if test \
-	"${WITH_CRYPTO_ENGINE_OPENSSL}" = "yes" -o \
-	"${WITH_CRYPTO_ENGINE_GNUTLS}" = "yes" -o \
-	"${WITH_CRYPTO_ENGINE_WIN32}" = "yes"; then
+	"${with_crypto_engine_openssl}" = "yes" -o \
+	"${with_crypto_engine_gnutls}" = "yes" -o \
+	"${with_crypto_engine_win32}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 
@@ -364,14 +356,14 @@ AC_SUBST([mydocdir])
 AC_SUBST([myhtmldir])
 AC_SUBST([pkgconfigdir])
 AC_SUBST([PKCS11H_FEATURES])
-AM_CONDITIONAL(ENABLE_DOC, test "${ENABLE_DOC}" = "yes")
-AM_CONDITIONAL(WIN32, test "${WIN32}" = "yes")
-AM_CONDITIONAL(CYGWIN, test "${CYGWIN}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_TOKEN, test "${ENABLE_PKCS11H_TOKEN}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_DATA, test "${ENABLE_PKCS11H_DATA}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_CERTIFICATE, test "${ENABLE_PKCS11H_CERTIFICATE}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_SLOTEVENT, test "${ENABLE_PKCS11H_SLOTEVENT}" = "yes")
-AM_CONDITIONAL(ENABLE_PKCS11H_OPENSSL, test "${ENABLE_PKCS11H_OPENSSL}" = "yes")
+AM_CONDITIONAL([WIN32], [test "${WIN32}" = "yes"])
+AM_CONDITIONAL([CYGWIN], [test "${CYGWIN}" = "yes"])
+AM_CONDITIONAL([ENABLE_DOC], [test "${enable_doc}" = "yes"])
+AM_CONDITIONAL([ENABLE_PKCS11H_TOKEN], [test "${enable_token}" = "yes"])
+AM_CONDITIONAL([ENABLE_PKCS11H_DATA], [test "${enable_data}" = "yes"])
+AM_CONDITIONAL([ENABLE_PKCS11H_CERTIFICATE], [test "${enable_certificate}" = "yes"])
+AM_CONDITIONAL([ENABLE_PKCS11H_SLOTEVENT], [test "${enable_slotevent}" = "yes"])
+AM_CONDITIONAL([ENABLE_PKCS11H_OPENSSL], [test "${enable_openssl}" = "yes"])
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h

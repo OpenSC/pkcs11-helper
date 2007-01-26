@@ -51,7 +51,7 @@
 
 AC_PREREQ([2.60])
 AC_INIT([pkcs11-helper], [1.03_beta1])
-AM_INIT_AUTOMAKE([pkcs11-helper], [$PACKAGE_VERSION])
+AM_INIT_AUTOMAKE([pkcs11-helper], [${PACKAGE_VERSION}])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([lib/common.h])
 
@@ -161,13 +161,12 @@ AC_ARG_WITH([crypto-engine-gnutls],
 
 AC_ARG_WITH([crypto-engine-win32],
 	[  --without-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
-	[with_crypto_engine_win32="${withval}"],
+	,
 	[with_crypto_engine_win32="yes"]
 )
 
 AC_ARG_WITH([mem-check],
-	[  --with-mem-check=TYPE             Build with debug memory checking, TYPE = valgrind],
-	[MEMCHECK="$withval"]
+	[  --with-mem-check=TYPE             Build with debug memory checking, TYPE = valgrind]
 )
 
 AC_ARG_WITH([test-provider],
@@ -229,7 +228,7 @@ fi
 
 if test "${WIN32}" = "yes" -a "${with_crypto_engine_win32}" = "yes"; then
 	AC_MSG_RESULT([Using win32])
-	AC_DEFINE(ENABLE_PKCS11H_ENGINE_WIN32, 1, [Use win32 crypto engine])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Use win32 crypto engine])
 
 	if test "${enable_openssl}" = "yes"; then
 		CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
@@ -237,12 +236,12 @@ if test "${WIN32}" = "yes" -a "${with_crypto_engine_win32}" = "yes"; then
 	fi
 elif test "${with_crypto_engine_openssl}" = "yes"; then
 	AC_MSG_RESULT([Using OpenSSL])
-	AC_DEFINE(ENABLE_PKCS11H_ENGINE_OPENSSL, 1, [Use OpenSSL crypto engine])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_OPENSSL], [1], [Use OpenSSL crypto engine])
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
 elif test "${with_crypto_engine_gnutls}" = "yes"; then
 	AC_MSG_RESULT([Using GNUTLS])
-	AC_DEFINE(ENABLE_PKCS11H_ENGINE_GNUTLS, 1, [Use GNUTLS crypto engine])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GNUTLS crypto engine])
 	CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
 	LIBS="${LIBS} ${GNUTLS_LIBS}"
 else
@@ -281,7 +280,7 @@ if test "${WIN32}" != "yes"; then
 	])
 fi
 
-if test "$MEMCHECK" = "valgrind"; then
+if test "$with_mem_check" = "valgrind"; then
 	AC_CHECKING([for valgrind tool and Header files])
 	PKG_CHECK_MODULES([VALGRIND], [valgrind >= 3.0.0], [HAVE_VALGRIND=yes], [HAVE_VALGRIND=no])
 	if test "${HAVE_VALGRIND}" != "yes"; then

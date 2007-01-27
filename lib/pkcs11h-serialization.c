@@ -86,7 +86,7 @@ pkcs11h_token_serializeTokenId (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_serializeTokenId entry sz=%p, *max=%u, token_id=%p",
+		"PKCS#11: pkcs11h_token_serializeTokenId entry sz=%p, *max="P_Z", token_id=%p",
 		sz,
 		sz != NULL ? *max : 0,
 		(void *)token_id
@@ -140,7 +140,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_serializeTokenId return rv=%lu-'%s', *max=%u, sz='%s'",
+		"PKCS#11: pkcs11h_token_serializeTokenId return rv=%lu-'%s', *max="P_Z", sz='%s'",
 		rv,
 		pkcs11h_getMessage (rv),
 		*max,
@@ -305,7 +305,7 @@ pkcs11h_certificate_serializeCertificateId (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_serializeCertificateId entry sz=%p, *max=%u, certificate_id=%p",
+		"PKCS#11: pkcs11h_certificate_serializeCertificateId entry sz=%p, *max="P_Z", certificate_id=%p",
 		sz,
 		sz != NULL ? *max : 0,
 		(void *)certificate_id
@@ -350,7 +350,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_serializeCertificateId return rv=%lu-'%s', *max=%u, sz='%s'",
+		"PKCS#11: pkcs11h_certificate_serializeCertificateId return rv=%lu-'%s', *max="P_Z", sz='%s'",
 		rv,
 		pkcs11h_getMessage (rv),
 		*max,

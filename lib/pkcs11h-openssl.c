@@ -295,6 +295,7 @@ __pkcs11h_openssl_sign (
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	int myrsa_size = 0;
+	size_t size_temp;
 	
 	unsigned char *enc_alloc = NULL;
 	unsigned char *enc = NULL;
@@ -306,7 +307,7 @@ __pkcs11h_openssl_sign (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_sign entered - type=%d, m=%p, m_len=%u, signret=%p, *signlen=%u, rsa=%p",
+		"PKCS#11: __pkcs11h_openssl_sign entered - type=%d, m=%p, m_len=%u, signret=%p, *siglen=%u, rsa=%p",
 		type,
 		m,
 		m_len,
@@ -393,7 +394,7 @@ __pkcs11h_openssl_sign (
 			enc,
 			enc_len,
 			sigret,
-			siglen
+			&size_temp
 		)) != CKR_OK
 	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform signature %ld:'%s'", rv, pkcs11h_getMessage (rv));

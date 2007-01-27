@@ -162,6 +162,9 @@
 /* Version number of package */
 #define VERSION "@VERSION@"
 
+/* size_t printf format */
+#define P_Z "%u"
+
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 

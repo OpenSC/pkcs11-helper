@@ -167,7 +167,7 @@ pkcs11h_data_get (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_get entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, *p_blob_size=%u",
+		"PKCS#11: pkcs11h_data_get entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, *p_blob_size="P_Z"",
 		(void *)token_id,
 		application,
 		label,
@@ -280,7 +280,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_get return rv=%lu-'%s', *p_blob_size=%u",
+		"PKCS#11: pkcs11h_data_get return rv=%lu-'%s', *p_blob_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_blob_size
@@ -333,7 +333,7 @@ pkcs11h_data_put (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_data_put entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, blob_size=%u",
+		"PKCS#11: pkcs11h_data_put entry token_id=%p, application='%s', label='%s', user_data=%p, mask_prompt=%08x, blob=%p, blob_size="P_Z"",
 		(void *)token_id,
 		application,
 		label,

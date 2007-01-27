@@ -783,7 +783,7 @@ _pkcs11h_session_getObjectById (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_session_getObjectById entry session=%p, class=%ld, id=%p, id_size=%u, p_handle=%p",
+		"PKCS#11: _pkcs11h_session_getObjectById entry session=%p, class=%ld, id=%p, id_size="P_Z", p_handle=%p",
 		(void *)session,
 		class,
 		id,

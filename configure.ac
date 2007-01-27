@@ -348,6 +348,12 @@ if test \
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 
+if test "${WIN32}" = "yes"; then
+    AC_DEFINE([P_Z], ["%u"], [size_t printf format])
+else
+    AC_DEFINE([P_Z], ["%zu"], [size_t printf format])
+fi
+
 mydocdir="\$(docdir)-\$(PACKAGE_VERSION)"
 myhtmldir="\$(htmldir)-\$(PACKAGE_VERSION)"
 pkgconfigdir="\$(libdir)/pkgconfig"

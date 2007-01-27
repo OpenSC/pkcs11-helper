@@ -121,7 +121,7 @@ _pkcs11h_certificate_isBetterCertificate (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_certificate_isBetterCertificate entry current=%p, current_size=%u, newone=%p, newone_size=%u",
+		"PKCS#11: _pkcs11h_certificate_isBetterCertificate entry current=%p, current_size="P_Z", newone=%p, newone_size="P_Z"",
 		current,
 		current_size,
 		newone,
@@ -819,7 +819,7 @@ __pkcs11h_certificate_doPrivateOperation (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_doPrivateOperation entry certificate=%p, op=%d, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: __pkcs11h_certificate_doPrivateOperation entry certificate=%p, op=%d, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		op,
 		mech_type,
@@ -1040,7 +1040,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_doPrivateOperation return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: __pkcs11h_certificate_doPrivateOperation return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1312,7 +1312,7 @@ pkcs11h_certificate_sign (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_sign entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_sign entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1345,7 +1345,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_sign return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_sign return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1374,7 +1374,7 @@ pkcs11h_certificate_signRecover (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signRecover entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signRecover entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1407,7 +1407,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signRecover return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signRecover return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1436,7 +1436,7 @@ pkcs11h_certificate_decrypt (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_decrypt entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_decrypt entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1469,7 +1469,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_decrypt return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_decrypt return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1498,7 +1498,7 @@ pkcs11h_certificate_unwrap (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_unwrap entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_unwrap entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1531,7 +1531,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_unwrap return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_unwrap return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1561,7 +1561,7 @@ pkcs11h_certificate_signAny (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signAny entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signAny entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1646,7 +1646,7 @@ cleanup:
 	
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signAny return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_signAny return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1676,7 +1676,7 @@ pkcs11h_certificate_decryptAny (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_decryptAny entry certificate=%p, mech_type=%ld, source=%p, source_size=%u, target=%p, *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_decryptAny entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		mech_type,
 		source,
@@ -1760,7 +1760,7 @@ cleanup:
 	
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%lu-'%s', *p_target_size=%u",
+		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%lu-'%s', *p_target_size="P_Z"",
 		rv,
 		pkcs11h_getMessage (rv),
 		*p_target_size
@@ -1996,7 +1996,7 @@ pkcs11h_certificate_getCertificateBlob (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_getCertificateBlob entry certificate=%p, certificate_blob=%p, *p_certificate_blob_size=%u",
+		"PKCS#11: pkcs11h_certificate_getCertificateBlob entry certificate=%p, certificate_blob=%p, *p_certificate_blob_size="P_Z"",
 		(void *)certificate,
 		certificate_blob,
 		certificate_blob != NULL ? *p_certificate_blob_size : 0

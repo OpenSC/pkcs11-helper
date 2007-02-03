@@ -7,6 +7,8 @@ $Id$
 
 * Autoconf fixups.
 
+* RPM spec is available.
+
 2007-10-05 - Version 1.02
 
 * Switch to free implementation of PKCS#11 headers.

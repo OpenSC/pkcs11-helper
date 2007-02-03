@@ -9,6 +9,8 @@ $Id$
 
 * RPM spec is available.
 
+* size_t printf 64bit fixups.
+
 2007-10-05 - Version 1.02
 
 * Switch to free implementation of PKCS#11 headers.

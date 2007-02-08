@@ -51,7 +51,7 @@
 
 AC_PREREQ([2.60])
 AC_INIT([pkcs11-helper], [1.03_beta1])
-AM_INIT_AUTOMAKE([pkcs11-helper], [${PACKAGE_VERSION}])
+AM_INIT_AUTOMAKE([${PACKAGE_NAME}], [${PACKAGE_VERSION}])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([lib/common.h])
 

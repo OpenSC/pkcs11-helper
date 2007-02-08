@@ -71,10 +71,13 @@ AC_ARG_WITH([cygwin-native],
 	[with_cygwin_native="no"]
 )
 
-WIN32="no"
-CYGWIN="no"
+test -z "${WIN32}" && WIN32="no"
+test -z "${CYGWIN}" && CYGWIN="no"
 case "${host}" in
 	*-mingw32*)
+		WIN32="yes"
+	;;
+	*-winnt*)
 		WIN32="yes"
 	;;
 	*-cygwin*)
@@ -185,10 +188,12 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
+
 if test "${enable_doc}" = "yes"; then
 	AC_CHECK_PROGS([DOXYGEN], [doxygen])
 	test -z "${DOXYGEN}" && AC_MSG_ERROR([doxygen is required for docs])
 fi
+
 if test "${WIN32}" = "yes"; then
 	AC_CHECK_PROGS([MAN2HTML], [man2html])
 	test -z "${MAN2HTML}" && AC_MSG_ERROR([man2html is required for win32])
@@ -291,14 +296,16 @@ if test "$with_mem_check" = "valgrind"; then
 #	LIBS="${VALGRIND_LIBS} ${LIBS}"
 fi
 
-CFLAGS="$CFLAGS -Wall -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
+if echo "${CC}" | grep gcc 2>&1 > /dev/null; then
+	CFLAGS="$CFLAGS -Wall -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
+
+	if test "${WIN32}" = "yes"; then
+		LIBS="${LIBS} -lkernel32 -lgdi32"
+	fi
+fi
 
 if test "$enable_pedantic" = "yes"; then
 	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE -D_SVID_SOURCE"
-fi
-
-if test "${WIN32}" = "yes"; then
-	LIBS="${LIBS} -lkernel32 -lgdi32"
 fi
 
 if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then

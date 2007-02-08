@@ -314,7 +314,6 @@ pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
 	NULL
 };
 #endif

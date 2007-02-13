@@ -49,13 +49,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# This option prevents autoreconf from overriding our COPYING and
-# INSTALL targets:
-AUTOMAKE_OPTIONS=foreign dist-bzip2
-
-SUBDIRS=man include lib m4dir doc distro tests
-
-dist_mydoc_DATA=README COPYING.GPL COPYING.BSD COPYING
-
-EXTRA_DIST=config-w32-vc.h
-
+EXTRA_DIST= \
+	changelog \
+	README.Debian \
+	compat \
+	control \
+	copyright \
+	rules \
+	watch \
+	pkcs11-helper-dev.dirs \
+	pkcs11-helper-dev.docs \
+	pkcs11-helper-dev.install \
+	pkcs11-helper.dirs \
+	pkcs11-helper.install \
+	pkcs11-helper.manpages

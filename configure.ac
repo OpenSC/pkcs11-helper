@@ -379,7 +379,6 @@ AM_CONDITIONAL([ENABLE_PKCS11H_OPENSSL], [test "${enable_openssl}" = "yes"])
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h
-	pkcs11-helper.spec
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
 	include/pkcs11-helper-1.0/pkcs11h-version.h
@@ -389,6 +388,10 @@ AC_CONFIG_FILES([
 	lib/Makefile
 	lib/libpkcs11-helper-1.pc
 	m4dir/Makefile
+	distro/Makefile
+	distro/rpm/Makefile
+	distro/rpm/pkcs11-helper.spec
+	distro/debian/Makefile
 	tests/Makefile
 	tests/test-basic/Makefile
 	tests/test-certificate/Makefile

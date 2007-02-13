@@ -28,7 +28,7 @@ Description:  library that simplifies the interaction with PKCS#11
 Package: pkcs11-helper
 Section: libs
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libssl0.9.8
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description:  library that simplifies the interaction with PKCS#11
  pkcs11-helper is a library that simplifies the interaction with PKCS#11
  providers for end-user applications.

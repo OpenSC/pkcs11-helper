@@ -1,0 +1,42 @@
+Source: pkcs11-helper
+Priority: extra
+Maintainer: S. Wefel <wefel@informatik.uni-halle.de>
+Build-Depends: cdbs (>= 0.4.27-1), debhelper (>= 5), autotools-dev, libssl-dev, pkg-config, doxygen
+Standards-Version: 3.7.2
+Section: libs
+
+Package: pkcs11-helper-dev
+Section: libdevel
+Architecture: any
+Depends: pkcs11-helper (= ${Source-Version}), libssl-dev
+Description:  library that simplifies the interaction with PKCS#11
+ pkcs11-helper is a library that simplifies the interaction with PKCS#11
+ providers for end-user applications.
+ .
+ pkcs11-helper allows using multiple PKCS#11 providers at the same time, enumerating
+ available token certificates, or selecting a certificate directly by serialized id,
+ handling card removal and card insert events, handling card re-insert to a different
+ slot, supporting session expiration and much more all using a simple API.
+ .
+ pkcs11-helper is not designed to manage card content, since object attributes
+ are usually vendor specific, and 99% of application need to access
+ existing objects in order to perform signature and decryption.
+
+ 
+
+Package: pkcs11-helper
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libssl0.9.8
+Description:  library that simplifies the interaction with PKCS#11
+ pkcs11-helper is a library that simplifies the interaction with PKCS#11
+ providers for end-user applications.
+ .
+ pkcs11-helper allows using multiple PKCS#11 providers at the same time, enumerating
+ available token certificates, or selecting a certificate directly by serialized id,
+ handling card removal and card insert events, handling card re-insert to a different
+ slot, supporting session expiration and much more all using a simple API.
+ .
+ pkcs11-helper is not designed to manage card content, since object attributes
+ are usually vendor specific, and 99% of application need to access
+ existing objects in order to perform signature and decryption.

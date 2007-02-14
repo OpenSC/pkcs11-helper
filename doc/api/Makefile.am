@@ -53,8 +53,7 @@ EXTRA_DIST=Doxyfile Doxyfile_footer.html *.gif
 
 if ENABLE_DOC
 
-apidir=$(myhtmldir)/api
-api_DATA=api.out/html/*
+apidoc_DATA=api.out/html/*
 
 api.out/html/*: \
 		$(EXTRA_DIST) \

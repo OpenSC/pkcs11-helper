@@ -150,6 +150,12 @@ AC_ARG_ENABLE([pedantic],
 	[enable_pedantic="no"]
 )
 
+AC_ARG_WITH([apidocdir],
+	[  --with-apidocdir                  Put API documents at this directory, default HTMLDIR\api],
+	[apidocdir="${with_apidocdir}"],
+	[apidocdir="\$(htmldir)/api"]
+)
+
 AC_ARG_WITH([crypto-engine-openssl],
 	[  --without-crypto-engine-openssl   Disable OpenSSL crypto engine],
 	,
@@ -361,11 +367,8 @@ else
     AC_DEFINE([P_Z], ["%zu"], [size_t printf format])
 fi
 
-mydocdir="\$(docdir)-\$(PACKAGE_VERSION)"
-myhtmldir="\$(htmldir)-\$(PACKAGE_VERSION)"
 pkgconfigdir="\$(libdir)/pkgconfig"
-AC_SUBST([mydocdir])
-AC_SUBST([myhtmldir])
+AC_SUBST([apidocdir])
 AC_SUBST([pkgconfigdir])
 AC_SUBST([PKCS11H_FEATURES])
 AM_CONDITIONAL([WIN32], [test "${WIN32}" = "yes"])

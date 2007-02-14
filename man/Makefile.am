@@ -56,7 +56,7 @@ if WIN32
 %.3.html:
 	$(MAN2HTML) < $*.3 > $@
 	
-nodist_myhtml_DATA=$(shell ls *.[0-9] | sed -r 's/(\.[0-9])/\1.html/g')
+nodist_html_DATA=$(shell ls *.[0-9] | sed -r 's/(\.[0-9])/\1.html/g')
 
 endif
 

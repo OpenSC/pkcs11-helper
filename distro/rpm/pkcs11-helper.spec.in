@@ -62,8 +62,8 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %defattr(-,root,root)
 %{_libdir}/libpkcs11-helper.*
 %{_mandir}/*
-%{_docdir}/%{name}-%{version}/COPYING.*
-%{_docdir}/%{name}-%{version}/README
+%{_docdir}/%{name}/COPYING.*
+%{_docdir}/%{name}/README
 
 %files devel
 %defattr(-,root,root,-)
@@ -71,10 +71,13 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %{_libdir}/pkgconfig/*
 %{_datadir}/aclocal/*
 %if %{?with_doc}
-%{_docdir}/%{name}-%{version}/api/*
+%{_docdir}/%{name}/api/*
 %endif
 
 %changelog
+* Mon Feb 15 2007 Aon Bar-Lev <alon.barlev@gmail.com>
+- Modify docs location.
+
 * Mon Jan 15 2007 Eddy Nigg <eddy_nigg@startcom.org>
 - Make doxygen dependency only for doc builds 
 

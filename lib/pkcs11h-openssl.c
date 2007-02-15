@@ -316,7 +316,7 @@ __pkcs11h_openssl_sign (
 		(void *)rsa
 	);
 
-	myrsa_size=RSA_size (rsa);
+	myrsa_size = RSA_size (rsa);
 
 	if (type == NID_md5_sha1) {
 		enc = (unsigned char *)m;
@@ -370,7 +370,7 @@ __pkcs11h_openssl_sign (
 		}
 	}
 
-	if (enc_len > (myrsa_size-RSA_PKCS1_PADDING_SIZE)) {
+	if (enc_len > (myrsa_size - RSA_PKCS1_PADDING_SIZE)) {
 		rv = CKR_KEY_SIZE_RANGE;
 		goto cleanup;
 	}
@@ -385,7 +385,7 @@ __pkcs11h_openssl_sign (
 		"PKCS#11: Performing signature"
 	);
 
-	*siglen = myrsa_size;
+	size_temp = myrsa_size;
 
 	if (
 		(rv = pkcs11h_certificate_signAny (
@@ -401,6 +401,7 @@ __pkcs11h_openssl_sign (
 		goto cleanup;
 	}
 
+	*siglen = (unsigned int)size_temp;
 	rv = CKR_OK;
 
 cleanup:

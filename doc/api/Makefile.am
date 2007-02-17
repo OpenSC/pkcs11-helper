@@ -63,8 +63,7 @@ api.out/html/*: \
 	$(DOXYGEN)
 	cp *.gif api.out/html
 
-clean-generic:
-	-rm -fr api.out
-
 endif
 
+clean-local:
+	-rm -fr api.out

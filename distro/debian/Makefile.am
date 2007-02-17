@@ -56,6 +56,7 @@ EXTRA_DIST= \
 	README.Debian \
 	compat \
 	control \
+	copyright.m4 \
 	copyright \
 	rules \
 	watch \

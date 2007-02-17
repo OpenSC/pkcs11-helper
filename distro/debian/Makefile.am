@@ -61,8 +61,7 @@ EXTRA_DIST= \
 	rules \
 	watch \
 	pkcs11-helper-dev.install \
-	pkcs11-helper.install \
-	pkcs11-helper.manpages
+	pkcs11-helper.install
 
 copyright:	copyright.m4
 	$(M4) $< > $@

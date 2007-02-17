@@ -194,6 +194,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
+AC_CHECK_PROGS([M4], [m4])
 
 if test "${enable_doc}" = "yes"; then
 	AC_CHECK_PROGS([DOXYGEN], [doxygen])

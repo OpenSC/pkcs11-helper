@@ -49,6 +49,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+BUILT_SOURCES=copyright
+
 EXTRA_DIST= \
 	changelog \
 	README.Debian \
@@ -57,9 +59,12 @@ EXTRA_DIST= \
 	copyright \
 	rules \
 	watch \
-	pkcs11-helper-dev.dirs \
-	pkcs11-helper-dev.docs \
 	pkcs11-helper-dev.install \
-	pkcs11-helper.dirs \
 	pkcs11-helper.install \
 	pkcs11-helper.manpages
+
+copyright:	copyright.m4
+	$(M4) $< > $@
+
+clean-local:
+	-rm copyright

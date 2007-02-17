@@ -1,3 +1,11 @@
+pkcs11-helper (1.02-99.0saw0) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * upgrade to version 1.03 beta 1
+    - use --with-apidocdir for the path to the api docs
+
+ -- Sandro Wefel (testlaeufer) <sandro.wefel@informatik.uni-halle.de>  Fri, 16 Feb 2007 15:54:41 +0100
+
 pkcs11-helper (1.02-1.0saw1) unstable; urgency=low
 
   * Non-maintainer upload.

@@ -53,8 +53,6 @@ if WIN32
 
 %.8.html:
 	$(MAN2HTML) < $*.8 > $@
-%.3.html:
-	$(MAN2HTML) < $*.3 > $@
 	
 nodist_html_DATA=$(shell ls *.[0-9] | sed -r 's/(\.[0-9])/\1.html/g')
 
@@ -62,9 +60,9 @@ endif
 
 # Must add exist file so automake will add this dependency
 if WIN32
-EXTRA_DIST=$(shell ls *.[0-9]) pkcs11-helper.8
+EXTRA_DIST=$(shell ls *.[0-9]) pkcs11-helper-1.8
 else
-dist_man_MANS=$(shell ls *.[0-9]) pkcs11-helper.8
+dist_man_MANS=$(shell ls *.[0-9]) pkcs11-helper-1.8
 endif
 
 clean-generic:

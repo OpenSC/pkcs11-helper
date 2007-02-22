@@ -7,9 +7,13 @@ $Id$
 
 * Autoconf fixups.
 
-* RPM spec is available.
+* RPM packaging is available, thank to Eddy Nigg.
 
-* size_t printf 64bit fixups.
+* Debian packaging is available, thank to Sandro Wefel.
+
+* size_t printf 64bit fixups (debug).
+
+* Certificate session period fixup, thank to Leo Pohl for reporting.
 
 2007-10-05 - Version 1.02
 

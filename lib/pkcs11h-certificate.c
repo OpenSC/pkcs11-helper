@@ -1838,7 +1838,10 @@ pkcs11h_certificate_create (
 #endif
 
 	if (certificate->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
-		if (certificate->session->pin_cache_period != PKCS11H_PIN_CACHE_INFINITE) {
+		if (certificate->session->pin_cache_period == PKCS11H_PIN_CACHE_INFINITE) {
+			certificate->session->pin_cache_period = certificate->pin_cache_period;
+		}
+		else {
 			if (certificate->session->pin_cache_period > certificate->pin_cache_period) {
 				certificate->session->pin_expire_time = (
 					certificate->session->pin_expire_time -

@@ -862,6 +862,13 @@ _pkcs11h_session_validate (
 		goto cleanup;
 	}
 
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: _pkcs11h_session_validate session->pin_expire_time=%u, time=%u",
+		(unsigned int)session->pin_expire_time,
+		(unsigned int)_g_pkcs11h_sys_engine.time ()
+	);
+
 	if (
 		session->pin_expire_time != (time_t)0 &&
 		session->pin_expire_time < _g_pkcs11h_sys_engine.time ()

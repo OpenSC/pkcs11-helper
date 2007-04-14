@@ -177,7 +177,7 @@ extern "C" {
 /** Error messages. */
 #define PKCS11H_LOG_ERROR	1
 /** Used in order to turn off logging. */
-#define PKCS11H_LOG_QUITE	0
+#define PKCS11H_LOG_QUIET	0
 /** @} */
 
 /** Inifite session limit */

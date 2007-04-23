@@ -1,7 +1,6 @@
 usr/lib/lib*.a
 usr/lib/lib*.so
-usr/lib/lib*.la
 usr/lib/pkgconfig
 usr/share/aclocal
-usr/share/doc/pkcs11-helper-dev/api
+usr/share/doc/libpkcs11-helper1-dev/api
 usr/include

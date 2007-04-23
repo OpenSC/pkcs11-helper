@@ -53,15 +53,15 @@ BUILT_SOURCES=copyright
 
 EXTRA_DIST= \
 	changelog \
-	README.Debian \
+	README.build \
 	compat \
 	control \
 	copyright.m4 \
 	copyright \
 	rules \
 	watch \
-	pkcs11-helper-dev.install \
-	pkcs11-helper.install
+	libpkcs11-helper1-dev.install \
+	libpkcs11-helper1.install
 
 copyright:	copyright.m4
 	$(M4) $< > $@

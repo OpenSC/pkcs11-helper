@@ -1,3 +1,14 @@
+libpkcs11-helper1 (1.03-0) unstable; urgency=low
+
+  * New maintainer
+  * New upstream release
+  * renamed to libpkcs11-helper1 (lintian check)
+  * removed *.la
+  * size_t printf 64bit fixups (debug).
+  * Certificate session period fixup, thank to Leo Pohl for reporting.
+
+ -- Sandro Wefel (testlaeufer) <sandro.wefel@informatik.uni-halle.de>  Mon, 23 Apr 2007 08:59:16 +0200
+
 pkcs11-helper (1.02-99.0saw0) unstable; urgency=low
 
   * Non-maintainer upload.

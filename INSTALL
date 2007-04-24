@@ -45,7 +45,7 @@ Cross-MinGW32
 		[[Must use Microsoft lib utility]]
 		lib /def:libpkcs11-helper-1.dll.def \
 			/name:libpkcs11-helper-1.dll \
-			/out:libpkcs11-helper-1.lib
+			/out:pkcs11-helper.dll.lib
 
 Native-Cygwin
 	Dependencies:

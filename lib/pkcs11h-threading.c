@@ -485,6 +485,7 @@ static
 void *
 ___pkcs11h_thread_start (void *p) {
 	___pkcs11h_thread_data_t *_data = (___pkcs11h_thread_data_t *)p;
+	sigset_t signal_mask;
 	void *ret;
 	int i;
 
@@ -492,9 +493,11 @@ ___pkcs11h_thread_start (void *p) {
 	 * Ignore any signal in
 	 * this thread
 	 */
+	sigemptyset (&signal_mask);
 	for (i=1;i<16;i++) {
-		signal (i, SIG_IGN);
+		sigaddset (&signal_mask, i);
 	}
+	pthread_sigmask (SIG_SETMASK, &signal_mask, NULL);
 
 	ret = _data->start (_data->data);
 

@@ -15,6 +15,8 @@ $Id$
 
 * Certificate session period fixup, thank to Leo Pohl for reporting.
 
+* Block signals for own threads using pthread calls.
+
 2007-10-05 - Version 1.02
 
 * Switch to free implementation of PKCS#11 headers.

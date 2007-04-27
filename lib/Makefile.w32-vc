@@ -51,7 +51,7 @@
 
 #
 # If you wish openssl interface
-# Provide OPENSS=1 OPENSSL_HOME=<location> as nmake argument.
+# Provide OPENSSL=1 OPENSSL_HOME=<location> as nmake argument.
 #
 #OPENSSL=1
 !ifdef OPENSSL
@@ -71,22 +71,14 @@ OPENSSL_LIBS=-LIBPATH:$(OPENSSL_HOME)\out32 user32.lib advapi32.lib $(OPENSSL_ST
 !endif
 
 CFLAGS = -I../include $(OPENSSL_CFLAGS) -DWIN32 -DWIN32_LEAN_AND_MEAN -D_MBCS -D_CRT_SECURE_NO_DEPRECATE
-LIBS = kernel32.lib gdi32.lib $(OPENSSL_LIBS)
-
-DLL = libpkcs11-helper-1.dll
-
 CC=cl.exe
-CC_ARG_COMMON=/nologo /W3 /O2 $(CFLAGS) /FD /c
-# release:
-CC_PROJ=$(CC_ARG_COMMON) /MD -DNDEBUG
-# debug:
-#CC_PROJ=$(CC_ARG_COMMON) /MDd /Zi /Od -D_DEBUG
+CFLAGS=$(CFLAGS) /nologo /W3 /O2 $(CFLAGS) /FD /c
+CFLAGS=$(CFLAGS) /MD -DNDEBUG
 
 LINK32=link.exe
-# release:
-LINK32_FLAGS=/nologo /subsystem:windows /dll /incremental:no /out:"$(DLL)"
-# debug:
-#LINK32_FLAGS=/nologo /subsystem:windows /dll /incremental:no /debug /out:"$(DLL)"
+LIB32=lib.exe
+LINK32_FLAGS=/nologo /subsystem:windows /dll /incremental:no
+LIB32_FLAGS=/nologo
 
 HEADERS = \
 	config.h \
@@ -126,7 +118,7 @@ OBJS =  \
 	pkcs11h-token.obj \
 	pkcs11h-util.obj
 
-all:	$(DLL)
+all:	libpkcs11-helper-1.dll pkcs11-helper.lib
 
 pkcs11-helper-1.dll.def:
 	echo LIBRARY libpkcs11-helper-1 > pkcs11-helper-1.dll.def
@@ -140,15 +132,26 @@ pkcs11-helper-1.dll.def:
 	type openssl.exports >> pkcs11-helper-1.dll.def
 !endif
 
-$(DLL): pkcs11-helper-1.dll.def $(OBJS)
+libpkcs11-helper-1.dll: pkcs11-helper-1.dll.def $(OBJS)
 	$(LINK32) @<<
-	$(LINK32_FLAGS) $(LIBS) /def:pkcs11-helper-1.dll.def $(OBJS)
+	$(LINK32_FLAGS)
+	/out:"libpkcs11-helper-1.dll" /def:pkcs11-helper-1.dll.def
+	kernel32.lib gdi32.lib $(OPENSSL_LIBS)
+	$(OBJS)
+<<
+	move libpkcs11-helper-1.lib pkcs11-helper.dll.lib
+
+pkcs11-helper.lib: $(OBJS)
+	$(LIB32) @<<
+	$(LIB32_FLAGS)
+	/out:"pkcs11-helper.lib"
+	$(OBJS)
 <<
 
 clean:
-	del /Q $(OBJS) $(DLL) *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.dll.def
+	-del /Q $(OBJS) libpkcs11-helper-1.dll *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.dll.def
 
 .c.obj::
    $(CC) @<<
-   $(CC_PROJ) $<
+   $(CFLAGS) $<
 <<

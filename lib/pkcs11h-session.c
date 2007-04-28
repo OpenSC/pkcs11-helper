@@ -1061,7 +1061,8 @@ _pkcs11h_session_login (
 			if (
 				rv != CKR_OK &&
 				rv != CKR_PIN_INCORRECT &&
-				rv != CKR_PIN_INVALID
+				rv != CKR_PIN_INVALID &&
+				rv != CKR_PIN_LEN_RANGE
 			) {
 				goto cleanup;
 			}

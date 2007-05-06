@@ -70,6 +70,10 @@ m4 Macros License
 		Copyright (c) James Yonan <jim@yonan.net>
 		Copyright (c) Matthias Andree <matthias.andree@web.de>
 
+pkcs11.h License
+	Copyright 2006, 2007 g10 Code GmbH
+	Copyright 2006 Andreas Jellinghaus
+
 OpenSSL License (Optional component, parsing certificates, engine)
 
 	This product includes software developed by the OpenSSL Project
@@ -79,7 +83,7 @@ OpenSSL License (Optional component, parsing certificates, engine)
 	(eay@cryptsoft.com).  This product includes software written by Tim
 	Hudson (tjh@cryptsoft.com).
 
-GNUTLS License (Optional component, for a complete GPLed license, replaces OpenSSL)
+GnuTLS License (Optional component, for a complete GPLed license, replaces OpenSSL)
 
 	Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005 Nikos Mavroyanopoulos
 	See the end for copying conditions.

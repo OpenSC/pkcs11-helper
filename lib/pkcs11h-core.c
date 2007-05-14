@@ -975,7 +975,7 @@ pkcs11h_plugAndPlay (void) {
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_forkFixup entry pid=%d",
+		"PKCS#11: pkcs11h_plugAndPlay entry pid=%d",
 		mypid
 	);
 
@@ -1028,7 +1028,7 @@ pkcs11h_plugAndPlay (void) {
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_forkFixup return"
+		"PKCS#11: pkcs11h_plugAndPlay return"
 	);
 
 	return CKR_OK;
@@ -1199,8 +1199,9 @@ __pkcs11h_forkFixup (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_forkFixup entry pid=%d",
-		mypid
+		"PKCS#11: __pkcs11h_forkFixup entry pid=%d, activate_slotevent=%d",
+		mypid,
+		activate_slotevent ? 1 : 0
 	);
 
 #if !defined(ENABLE_PKCS11H_SLOTEVENT)
@@ -1253,7 +1254,7 @@ __pkcs11h_forkFixup (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_forkFixup return"
+		"PKCS#11: __pkcs11h_forkFixup return"
 	);
 
 	return CKR_OK;

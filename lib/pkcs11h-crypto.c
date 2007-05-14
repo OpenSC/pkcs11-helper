@@ -280,7 +280,7 @@ __pkcs11h_crypto_win32_certificate_is_issuer (
 #endif
 
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl = {
 	NULL,
 	__pkcs11h_crypto_openssl_initialize,
 	__pkcs11h_crypto_openssl_uninitialize,
@@ -288,8 +288,9 @@ pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_openssl_certificate_get_dn,
 	__pkcs11h_crypto_openssl_certificate_is_issuer
 };
-#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
 	NULL,
 	__pkcs11h_crypto_gnutls_initialize,
 	__pkcs11h_crypto_gnutls_uninitialize,
@@ -297,9 +298,10 @@ pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_gnutls_certificate_get_dn,
 	__pkcs11h_crypto_gnutls_certificate_is_issuer
 };
-#elif defined(ENABLE_PKCS11H_ENGINE_WIN32)
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 static struct __crypto_win32_data_s s_win32_data = { NULL };
-pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
 	&s_win32_data,
 	__pkcs11h_crypto_win32_initialize,
 	__pkcs11h_crypto_win32_uninitialize,
@@ -307,7 +309,8 @@ pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	__pkcs11h_crypto_win32_certificate_get_dn,
 	__pkcs11h_crypto_win32_certificate_is_issuer
 };
-#else
+#endif
+
 pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	NULL,
@@ -316,17 +319,63 @@ pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	NULL
 };
-#endif
 
 CK_RV
 pkcs11h_engine_setCrypto (
 	IN const pkcs11h_engine_crypto_t * const engine
 ) {
-	_PKCS11H_ASSERT (engine!=NULL);
+	const pkcs11h_engine_crypto_t *_engine = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
 
-	memmove (&_g_pkcs11h_crypto_engine, engine, sizeof (pkcs11h_engine_crypto_t));
+	/*_PKCS11H_ASSERT (engine!=NULL); Not required */
 
-	return CKR_OK;
+	if (engine == PKCS11H_ENGINE_CRYPTO_AUTO) {
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#elif defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+		_engine = &_g_pkcs11h_crypto_engine_openssl;
+#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#else
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_OPENSSL) {
+#if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+		_engine = &_g_pkcs11h_crypto_engine_openssl;
+#else
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_GNUTLS) {
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+#endif
+	}
+	else {
+		_engine = engine;
+	}
+
+	memmove (&_g_pkcs11h_crypto_engine, _engine, sizeof (pkcs11h_engine_crypto_t));
+
+	rv = CKR_OK;
+
+cleanup:
+
+	return rv;
 }
 
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)

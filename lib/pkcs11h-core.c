@@ -234,10 +234,13 @@ unsigned int
 pkcs11h_getFeatures (void) {
 	unsigned int features = (
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-		PKCS11H_FEATURE_MASK_ENGINE_OPENSSL |
+		PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_OPENSSL |
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		PKCS11H_FEATURE_MASK_ENGINE_GNUTLS |
+		PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_GNUTLS |
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_WIN32 |
 #endif
 #if defined(ENABLE_PKCS11H_DEBUG)
 		PKCS11H_FEATURE_MASK_DEBUG |
@@ -288,8 +291,9 @@ pkcs11h_initialize (void) {
 	}
 
 	if (_g_pkcs11h_crypto_engine.initialize == NULL) {
-		rv = CKR_FUNCTION_FAILED;
-		goto cleanup;
+		if ((rv = pkcs11h_engine_setCrypto (PKCS11H_ENGINE_CRYPTO_AUTO)) != CKR_OK) {
+			goto cleanup;
+		}
 	}
 
 	if (!_g_pkcs11h_crypto_engine.initialize (_g_pkcs11h_crypto_engine.global_data)) {

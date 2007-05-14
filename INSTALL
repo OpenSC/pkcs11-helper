@@ -31,9 +31,14 @@ Cross-MinGW32
 		w32root=/tmp/w32root
 
 		Without openssl engine:
-			./configure --prefix=/ --host=mingw32 --disable-openssl
+			./configure \
+				--prefix=/ --host=mingw32 \
+				--disable-openssl \
+				--disable-crypto-engine-openssl \
+				--disable-crypto-engine-gnutls
 		With openssl engine:
 			./configure --prefix=/ --host=mingw32 \
+				--disable-crypto-engine-gnutls \
 				PKG_CONFIG=true \
 				OPENSSL_CFLAGS="-I${w32root}/include" \
 				OPENSSL_LIBS="-L${w32root}/lib -lcrypto"
@@ -52,17 +57,7 @@ Native-Cygwin
 		Same as Cross-MinGW32
 
 	Build:
-		w32root=/tmp/w32root
-
-		Without openssl engine:
-			./configure --prefix=/ --with-cygwin-native --disable-openssl
-		With openssl engine:
-			./configure --prefix=/ --with-cygwin-native \
-				PKG_CONFIG=true \
-				OPENSSL_CFLAGS="-I${w32root}/include" \
-				OPENSSL_LIBS="-L${w32root}/lib -lcrypto"
-		make
-		make install DESTDIR=${w32root}
+		Same as Cross-MinGW32, replace --host=mingw32 with --with-cygwin-native.
 
 Visual Studio
 	Dependencies:

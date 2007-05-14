@@ -150,28 +150,28 @@ AC_ARG_ENABLE([pedantic],
 	[enable_pedantic="no"]
 )
 
+AC_ARG_ENABLE([crypto-engine-openssl],
+	[  --disable-crypto-engine-openssl   Disable OpenSSL crypto engine],
+	,
+	[enable_crypto_engine_openssl="yes"]
+)
+
+AC_ARG_ENABLE([crypto-engine-gnutls],
+	[  --disable-crypto-engine-gnutls    Disable GnuTLS crypto engine],
+	,
+	[enable_crypto_engine_gnutls="yes"]
+)
+
+AC_ARG_ENABLE([crypto-engine-win32],
+	[  --disable-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
+	,
+	[enable_crypto_engine_win32="yes"]
+)
+
 AC_ARG_WITH([apidocdir],
 	[  --with-apidocdir                  Put API documents at this directory, default HTMLDIR\api],
 	[apidocdir="${with_apidocdir}"],
 	[apidocdir="\$(htmldir)/api"]
-)
-
-AC_ARG_WITH([crypto-engine-openssl],
-	[  --without-crypto-engine-openssl   Disable OpenSSL crypto engine],
-	,
-	[with_crypto_engine_openssl="yes"]
-)
-
-AC_ARG_WITH([crypto-engine-gnutls],
-	[  --without-crypto-engine-gnutls    Disable GNUTLS crypto engine (OpenSSL will be used if both enabled)],
-	,
-	[with_crypto_engine_gnutls="yes"]
-)
-
-AC_ARG_WITH([crypto-engine-win32],
-	[  --without-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
-	,
-	[with_crypto_engine_win32="yes"]
 )
 
 AC_ARG_WITH([mem-check],
@@ -228,36 +228,56 @@ fi
 
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 
-AC_MSG_CHECKING([cryptographic library to use])
-
-if test "${with_crypto_engine_openssl}" = "yes" -a "${have_openssl}" != "yes"; then
-	with_crypto_engine_openssl="no"
-fi
-
-if test "${with_crypto_engine_gnutls}" = "yes" -a "${have_gnutls}" != "yes"; then
-	with_crypto_engine_gnutls="no"
-fi
-
-if test "${WIN32}" = "yes" -a "${with_crypto_engine_win32}" = "yes"; then
-	AC_MSG_RESULT([Using win32])
-	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Use win32 crypto engine])
-
-	if test "${enable_openssl}" = "yes"; then
-		CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
-		LIBS="${LIBS} ${OPENSSL_LIBS}"
+AC_MSG_CHECKING([OpenSSL interface])
+if test "${enable_openssl}" = "yes"; then
+	if test "${have_openssl}" != "yes"; then
+		AC_MSG_ERROR([OpenSSL enabled but cannot be found])
 	fi
-elif test "${with_crypto_engine_openssl}" = "yes"; then
-	AC_MSG_RESULT([Using OpenSSL])
-	AC_DEFINE([ENABLE_PKCS11H_ENGINE_OPENSSL], [1], [Use OpenSSL crypto engine])
+	AC_MSG_RESULT([yes])
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
-elif test "${with_crypto_engine_gnutls}" = "yes"; then
-	AC_MSG_RESULT([Using GNUTLS])
-	AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GNUTLS crypto engine])
-	CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
-	LIBS="${LIBS} ${GNUTLS_LIBS}"
 else
-	AC_MSG_RESULT([No engine selected.])
+	AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([Win32 crypto engine])
+if test "${WIN32}" = "yes" -a "${enable_crypto_engine_win32}" = "yes"; then
+	AC_MSG_RESULT([yes])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Use win32 crypto engine])
+else
+	AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([OpenSSL crypto engine])
+if test "${enable_crypto_engine_openssl}" = "yes"; then
+	if test "${have_openssl}" = "yes"; then
+		AC_MSG_RESULT([yes])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_OPENSSL], [1], [Use OpenSSL crypto engine])
+
+		# don't add this twice
+		if test "${enable_openssl}" != "yes"; then
+			CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
+			LIBS="${LIBS} ${OPENSSL_LIBS}"
+		fi
+	else
+		AC_MSG_RESULT([no])
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([GnuTLS crypto engine])
+if test "${enable_crypto_engine_gnutls}" = "yes"; then
+	if test "${have_gnutls}" = "yes"; then
+		AC_MSG_RESULT([yes])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GNUTLS crypto engine])
+		CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
+		LIBS="${LIBS} ${GNUTLS_LIBS}"
+	else
+		AC_MSG_RESULT([no])
+	fi
+else
+	AC_MSG_RESULT([no])
 fi
 
 # Checks for header files.
@@ -319,10 +339,6 @@ if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then
 	AC_MSG_ERROR([Threading must be enabled for slotevent to be enabled])
 fi
 
-if test "${enable_openssl}" = "yes" -a "${with_crypto_engine_openssl}" != "yes"; then
-	AC_MSG_ERROR([OpenSSL must be linked for OpenSSL interface to operate])
-fi
-
 if test "${enable_openssl}" = "yes" -a "${enable_certificate}" != "yes"; then
 	AC_MSG_ERROR([OpenSSL interface requires certificate interface])
 fi
@@ -356,9 +372,9 @@ if test "${enable_openssl}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
 fi
 if test \
-	"${with_crypto_engine_openssl}" = "yes" -o \
-	"${with_crypto_engine_gnutls}" = "yes" -o \
-	"${with_crypto_engine_win32}" = "yes"; then
+	"${enable_crypto_engine_openssl}" = "yes" -o \
+	"${enable_crypto_engine_gnutls}" = "yes" -o \
+	"${enable_crypto_engine_win32}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 

@@ -140,23 +140,25 @@ extern "C" {
  * @{
  */
 /** Engine OpenSSL is enabled. */
-#define PKCS11H_FEATURE_MASK_ENGINE_OPENSSL	(1<< 0)
+#define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_OPENSSL	(1<< 0)
 /** Engine GNUTLS is enabled. */
-#define PKCS11H_FEATURE_MASK_ENGINE_GNUTLS	(1<< 1)
+#define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_GNUTLS	(1<< 1)
+/** Engine GNUTLS is enabled. */
+#define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_WIN32	(1<< 2)
 /** Debugging (logging) is enabled. */
-#define PKCS11H_FEATURE_MASK_DEBUG		(1<< 2)
+#define PKCS11H_FEATURE_MASK_DEBUG			(1<< 3)
 /** Threading support is enabled. */
-#define PKCS11H_FEATURE_MASK_THREADING		(1<< 3)
+#define PKCS11H_FEATURE_MASK_THREADING			(1<< 4)
 /** Token interface is enabled. */
-#define PKCS11H_FEATURE_MASK_TOKEN		(1<< 4)
+#define PKCS11H_FEATURE_MASK_TOKEN			(1<< 5)
 /** Data interface is enabled. */
-#define PKCS11H_FEATURE_MASK_DATA		(1<< 5)
+#define PKCS11H_FEATURE_MASK_DATA			(1<< 6)
 /** Certificate interface is enabled, */
-#define PKCS11H_FEATURE_MASK_CERTIFICATE	(1<< 6)
+#define PKCS11H_FEATURE_MASK_CERTIFICATE		(1<< 7)
 /** Slotevent interface is enabled. */
-#define PKCS11H_FEATURE_MASK_SLOTEVENT		(1<< 7)
+#define PKCS11H_FEATURE_MASK_SLOTEVENT			(1<< 8)
 /** OpenSSL interface is enabled. */
-#define PKCS11H_FEATURE_MASK_OPENSSL		(1<< 8)
+#define PKCS11H_FEATURE_MASK_OPENSSL			(1<< 9)
 /** @} */
 
 /**

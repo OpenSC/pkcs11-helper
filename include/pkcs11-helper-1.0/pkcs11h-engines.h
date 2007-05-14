@@ -193,6 +193,22 @@ typedef struct pkcs11h_crypto_engine_s {
 } pkcs11h_engine_crypto_t;
 
 /**
+ * @brief pkcs11-helper built-in engines.
+ * @addtogroup PKCS11H_ENGINE_CRYPTO
+ * @see pkcs11h_engine_setCrypto().
+ * @{
+ */
+/** Auto select. */
+#define PKCS11H_ENGINE_CRYPTO_AUTO	((pkcs11h_engine_crypto_t *)0)
+/** Select OpenSSL. */
+#define PKCS11H_ENGINE_CRYPTO_OPENSSL	((pkcs11h_engine_crypto_t *)1)
+/** Select GnuTLS. */
+#define PKCS11H_ENGINE_CRYPTO_GNUTLS	((pkcs11h_engine_crypto_t *)2)
+/** Select Win32. */
+#define PKCS11H_ENGINE_CRYPTO_WIN32	((pkcs11h_engine_crypto_t *)3)
+/** @} */
+
+/**
  * @brief Set system engine to be used.
  * @param engine	Engine to use.
  * @return CK_RV.
@@ -210,6 +226,7 @@ pkcs11h_engine_setSystem (
  * @return CK_RV.
  * @note Must be called before pkcs11h_initialize.
  * @note Default is provided at configuration time.
+ * @see PKCS11H_ENGINE_CRYPTO
  */
 CK_RV
 pkcs11h_engine_setCrypto (

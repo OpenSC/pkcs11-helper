@@ -17,6 +17,9 @@ $Id$
 
 * Block signals for own threads using pthread calls.
 
+* Fixup compilation error when using GnuTLS only environment, thank to
+  Simon Josefsson.
+
 2007-10-05 - Version 1.02
 
 * Switch to free implementation of PKCS#11 headers.

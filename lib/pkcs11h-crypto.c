@@ -687,12 +687,12 @@ __pkcs11h_crypto_gnutls_certificate_is_issuer (
 	_PKCS11H_ASSERT (issuer_blob!=NULL);
 	_PKCS11H_ASSERT (cert_blob!=NULL);
 
-	if (ok && gnutls_x509_crt_init (&cert_issuer) != GNUTLS_E_SUCCESS) {
+	if (gnutls_x509_crt_init (&cert_issuer) != GNUTLS_E_SUCCESS) {
 		/* gnutls sets output */
 		cert_issuer = NULL;
 		goto cleanup;
 	}
-	if (ok && gnutls_x509_crt_init (&cert_cert) != GNUTLS_E_SUCCESS) {
+	if (gnutls_x509_crt_init (&cert_cert) != GNUTLS_E_SUCCESS) {
 		/* gnutls sets output */
 		cert_cert = NULL;
 		goto cleanup;

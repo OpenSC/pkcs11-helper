@@ -337,15 +337,34 @@ pkcs11h_engine_setCrypto (
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
-		rv = CKR_FUNCTION_FAILED;
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
+#endif
+	}
+	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
+#if defined(_WIN32)
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+#else
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
 #endif
 	}
 	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 		_engine = &_g_pkcs11h_crypto_engine_win32;
 #else
-		rv = CKR_FUNCTION_FAILED;
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
 #endif
 	}
@@ -353,7 +372,7 @@ pkcs11h_engine_setCrypto (
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 		_engine = &_g_pkcs11h_crypto_engine_openssl;
 #else
-		rv = CKR_FUNCTION_FAILED;
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
 #endif
 	}
@@ -361,7 +380,7 @@ pkcs11h_engine_setCrypto (
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
-		rv = CKR_FUNCTION_FAILED;
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
 #endif
 	}

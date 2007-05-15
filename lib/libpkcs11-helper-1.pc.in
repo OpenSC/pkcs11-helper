@@ -8,4 +8,4 @@ Name: pkcs11-helper
 Description: PKCS#11 helper library
 Version: @PACKAGE_VERSION@
 Cflags: -I${includedir}
-Libs: -L${libdir} -lpkcs11-helper @LIBS@
+Libs: -L${libdir} @LIBS@ -lpkcs11-helper

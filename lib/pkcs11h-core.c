@@ -64,6 +64,7 @@
 #include "_pkcs11h-crypto.h"
 #include "_pkcs11h-util.h"
 #include "_pkcs11h-core.h"
+#include "_pkcs11h-session.h"
 #include "_pkcs11h-slotevent.h"
 
 /*======================================================================*
@@ -1036,6 +1037,49 @@ pkcs11h_plugAndPlay (void) {
 	);
 
 	return CKR_OK;
+}
+
+CK_RV
+pkcs11h_logout (void) {
+	_pkcs11h_session_t current_session = NULL;
+	CK_RV rv = CKR_OK;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_logout entry"
+	);
+
+	for (
+		current_session = _g_pkcs11h_data->sessions;
+		current_session != NULL;
+		current_session = current_session->next
+	) {
+		CK_RV _rv;
+
+#if defined(ENABLE_PKCS11H_THREADING)
+		if ((_rv = _pkcs11h_threading_mutexLock (&current_session->mutex)) == CKR_OK) {
+#else
+		{
+#endif
+			_rv = _pkcs11h_session_logout (current_session);
+#if defined(ENABLE_PKCS11H_THREADING)
+			_pkcs11h_threading_mutexRelease (&current_session->mutex);
+#endif
+		}
+
+		if (_rv != CKR_OK) {
+			rv = _rv;
+		}
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_logout return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
 }
 
 /*======================================================================*

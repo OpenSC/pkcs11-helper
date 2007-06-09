@@ -126,6 +126,16 @@ pkcs11h_token_sameTokenId (
 );
 
 /**
+ * @brief Force logout.
+ * @param token_id	Token to login into.
+ * @return CK_RV.
+ */
+CK_RV
+pkcs11h_token_logout (
+	IN const pkcs11h_token_id_t token_id
+);
+
+/**
  * @brief Force login, avoid hooks.
  * @param token_id	Token to login into.
  * @param readonly	Should session be readonly.

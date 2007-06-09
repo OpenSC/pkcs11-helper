@@ -262,6 +262,73 @@ cleanup:
 }
 
 CK_RV
+pkcs11h_token_logout (
+	IN const pkcs11h_token_id_t token_id
+) {
+#if defined(ENABLE_PKCS11H_THREADING)
+	PKCS11H_BOOL mutex_locked = FALSE;
+#endif
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_pkcs11h_session_t session = NULL;
+
+	_PKCS11H_ASSERT (token_id!=NULL);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_logout entry token_id=%p\n", 
+		(void *)token_id
+	);
+
+	if (
+		(rv = _pkcs11h_session_getSessionByTokenId (
+			token_id,
+			&session
+		)) != CKR_OK
+	) {
+		goto cleanup;
+	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
+		goto cleanup;
+	}
+	mutex_locked = TRUE;
+#endif
+
+	if (
+		(rv = _pkcs11h_session_logout (session)) != CKR_OK
+	) {
+		goto cleanup;
+	}
+
+	rv = CKR_OK;
+
+cleanup:
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if (mutex_locked) {
+		_pkcs11h_threading_mutexRelease (&session->mutex);
+		mutex_locked = FALSE;
+	}
+#endif
+
+	if (session != NULL) {
+		_pkcs11h_session_release (session);
+		session = NULL;
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_logout return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
+CK_RV
 pkcs11h_token_login (
 	IN const pkcs11h_token_id_t token_id,
 	IN const PKCS11H_BOOL readonly,

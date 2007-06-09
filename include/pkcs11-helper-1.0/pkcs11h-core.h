@@ -550,6 +550,13 @@ pkcs11h_forkFixup (void);
 CK_RV
 pkcs11h_plugAndPlay (void);
 
+/** 
+ * @brief Logout from all sessions.
+ * @return CK_RV.
+ */
+CK_RV
+pkcs11h_logout (void);
+
 #ifdef __cplusplus
 }
 #endif

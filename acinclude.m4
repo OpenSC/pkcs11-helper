@@ -53,9 +53,9 @@ AC_DEFUN([AX_SIZE_T_PRINTF], [dnl
 	AC_CHECK_SIZEOF([size_t])dnl
 	AC_MSG_CHECKING([size_t printf format])
 	if test ${ac_cv_sizeof_size_t} = 4; then
-		ax_cv_printf_z_format="%x"
+		ax_cv_printf_z_format="%08x"
 	else
-		ax_cv_printf_z_format="%lx"
+		ax_cv_printf_z_format="%016lx"
 	fi
 	AC_MSG_RESULT([${ax_cv_printf_z_format}])dnl
 	AC_DEFINE_UNQUOTED(

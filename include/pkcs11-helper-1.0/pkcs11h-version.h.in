@@ -70,9 +70,9 @@
  * @brief Library version.
  */
 #define PKCS11H_VERSION ( \
-	(@LIBPKCS11_HELPER_LT_CURRENT@<<16) | \
-	(@LIBPKCS11_HELPER_LT_REVISION@<<8) | \
-	(@LIBPKCS11_HELPER_LT_AGE@<<0) \
+	(@PKCS11H_VERSION_MAJOR@<<16) | \
+	(@PKCS11H_VERSION_MINOR@<<8) | \
+	(@PKCS11H_VERSION_FIX@<<0) \
 )
 
 /** @} */

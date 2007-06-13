@@ -651,7 +651,8 @@ pkcs11h_addProvider (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_addProvider entry pid=%d, reference='%s', provider_location='%s', allow_protected_auth=%d, mask_private_mode=%08x, cert_is_private=%d",
+		"PKCS#11: pkcs11h_addProvider entry version='%s', pid=%d, reference='%s', provider_location='%s', allow_protected_auth=%d, mask_private_mode=%08x, cert_is_private=%d",
+		PACKAGE_VERSION,
 		mypid,
 		reference,
 		provider_location,

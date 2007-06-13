@@ -59,3 +59,11 @@ dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 
 EXTRA_DIST=config-w32-vc.h
 
+#
+# pkcs11-helper.spec must be on root for invalid RPM
+#
+dist-hook:
+	ln -s distro/rpm/pkcs11-helper.spec $(distdir)/pkcs11-helper.spec
+
+clean-generic:
+	-rm pkcs11-helper.spec

@@ -69,6 +69,8 @@
 #include <windows.h>
 #endif
 
+#define P_Z PRINTF_Z_FORMAT
+
 #define _PKCS11H_ASSERT		assert
 
 #endif

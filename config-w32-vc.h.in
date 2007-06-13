@@ -138,6 +138,9 @@
 /* Define if you are on Cygwin */
 /* #undef PKCS11H_USE_CYGWIN */
 
+/* Define printf format for size_t */
+#define PRINTF_Z_FORMAT "%x"
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
@@ -161,9 +164,6 @@
 
 /* Version number of package */
 #define VERSION "@VERSION@"
-
-/* size_t printf format */
-#define P_Z "%u"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

@@ -50,7 +50,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([pkcs11-helper], [1.03_beta1])
+AC_INIT([pkcs11-helper], [1.03])
 AM_INIT_AUTOMAKE([${PACKAGE_NAME}], [${PACKAGE_VERSION}])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([lib/common.h])
@@ -174,10 +174,6 @@ AC_ARG_WITH([apidocdir],
 	[apidocdir="\$(htmldir)/api"]
 )
 
-AC_ARG_WITH([mem-check],
-	[  --with-mem-check=TYPE             Build with debug memory checking, TYPE = valgrind]
-)
-
 AC_ARG_WITH([test-provider],
 	[  --with-test-provider=lib          Specify providers for test phase],
 	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["${withval}"], [Test provider])],
@@ -291,7 +287,8 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-AC_CHECK_HEADERS([[ \
+AX_SIZE_T_PRINTF
+AC_CHECK_HEADERS([ \
 	stdio.h \
 	stdlib.h \
 	stdargs.h \
@@ -301,7 +298,7 @@ AC_CHECK_HEADERS([[ \
 	errno.h \
 	assert.h \
 	time.h \
-]])
+])
 if test "${WIN32}" != "yes"; then
 	AC_CHECK_HEADERS([ \
 		signal.h \
@@ -310,17 +307,6 @@ if test "${WIN32}" != "yes"; then
 		sys/time.h \
 		pthread.h \
 	])
-fi
-
-if test "$with_mem_check" = "valgrind"; then
-	AC_CHECKING([for valgrind tool and Header files])
-	PKG_CHECK_MODULES([VALGRIND], [valgrind >= 3.0.0], [HAVE_VALGRIND=yes], [HAVE_VALGRIND=no])
-	if test "${HAVE_VALGRIND}" != "yes"; then
-		AC_MSG_ERROR([valgrind was not found])
-	fi
-	AC_DEFINE([USE_VALGRIND], [1], [Use valgrind memory debugging library])
-	CFLAGS="${CFLAGS} ${VALGRIND_CFLAGS} -g -fno-inline"
-#	LIBS="${VALGRIND_LIBS} ${LIBS}"
 fi
 
 if echo "${CC}" | grep gcc 2>&1 > /dev/null; then
@@ -376,12 +362,6 @@ if test \
 	"${enable_crypto_engine_gnutls}" = "yes" -o \
 	"${enable_crypto_engine_win32}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
-fi
-
-if test "${WIN32}" = "yes"; then
-    AC_DEFINE([P_Z], ["%u"], [size_t printf format])
-else
-    AC_DEFINE([P_Z], ["%zu"], [size_t printf format])
 fi
 
 pkgconfigdir="\$(libdir)/pkgconfig"

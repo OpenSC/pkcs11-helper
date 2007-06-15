@@ -39,6 +39,7 @@ Cross-MinGW32
 		With openssl engine:
 			./configure --prefix=/ --host=mingw32 \
 				--disable-crypto-engine-gnutls \
+				--disable-crypto-engine-nss \
 				PKG_CONFIG=true \
 				OPENSSL_CFLAGS="-I${w32root}/include" \
 				OPENSSL_LIBS="-L${w32root}/lib -lcrypto"

@@ -64,6 +64,12 @@
 #include <gnutls/x509.h>
 #endif
 
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+#define _PKCS11T_H_ /* required so no conflict with ours */
+#include <nss.h>
+#include <cert.h>
+#endif
+
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 #include <wincrypt.h>
 #if !defined(CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT)
@@ -200,6 +206,51 @@ __pkcs11h_crypto_gnutls_certificate_is_issuer (
 
 #endif
 
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+
+static
+int
+__pkcs11h_crypto_nss_initialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_nss_uninitialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const signer_blob,
+	IN const size_t signer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+);
+
+#endif
+
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 
 typedef PCCERT_CONTEXT (WINAPI *__CertCreateCertificateContext_t) (
@@ -299,6 +350,17 @@ static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
 	__pkcs11h_crypto_gnutls_certificate_is_issuer
 };
 #endif
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+static int s_nss_data = 0;
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss = {
+	&s_nss_data,
+	__pkcs11h_crypto_nss_initialize,
+	__pkcs11h_crypto_nss_uninitialize,
+	__pkcs11h_crypto_nss_certificate_get_expiration,
+	__pkcs11h_crypto_nss_certificate_get_dn,
+	__pkcs11h_crypto_nss_certificate_is_issuer
+};
+#endif
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 static struct __crypto_win32_data_s s_win32_data = { NULL };
 static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
@@ -334,6 +396,8 @@ pkcs11h_engine_setCrypto (
 		_engine = &_g_pkcs11h_crypto_engine_win32;
 #elif defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 		_engine = &_g_pkcs11h_crypto_engine_openssl;
+#elif defined(ENABLE_PKCS11H_ENGINE_NSS)
+		_engine = &_g_pkcs11h_crypto_engine_nss;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
@@ -379,6 +443,14 @@ pkcs11h_engine_setCrypto (
 	else if (engine == PKCS11H_ENGINE_CRYPTO_GNUTLS) {
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_NSS) {
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+		_engine = &_g_pkcs11h_crypto_engine_nss;
 #else
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
@@ -815,6 +887,188 @@ cleanup:
 	if (cert_issuer != NULL) {
 		gnutls_x509_crt_deinit (cert_issuer);
 		cert_issuer = NULL;
+	}
+
+	return is_issuer;
+}
+
+#endif				/* ENABLE_PKCS11H_ENGINE_GNUTLS */
+
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+
+static
+int
+__pkcs11h_crypto_nss_initialize (
+	IN void * const global_data
+) {
+	int ret = FALSE;
+
+	if (NSS_IsInitialized ()) {
+		*(int *)global_data = FALSE;
+	}
+	else {
+		if (NSS_NoDB_Init (NULL) != SECSuccess) {
+			goto cleanup;
+		}
+		*(int *)global_data = TRUE;
+	}
+
+	ret = TRUE;
+
+cleanup:
+
+	return ret;
+}
+
+static
+int
+__pkcs11h_crypto_nss_uninitialize (
+	IN void * const global_data
+) {
+	if (*(int *)global_data != FALSE) {
+		NSS_Shutdown ();
+	}
+
+	return TRUE;
+}
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+) {
+	CERTCertificate *cert = NULL;
+	PRTime pr_notBefore, pr_notAfter;
+	time_t notBefore, notAfter;
+	time_t now = time (NULL);
+	int tm_isdst = localtime (&now)->tm_isdst;
+	struct tm *tm1;
+
+	(void)global_data;
+
+	*expiration = (time_t)0;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (expiration!=NULL);
+
+	if ((cert = CERT_DecodeCertFromPackage ((char *)blob, blob_size)) == NULL) {
+		goto cleanup;
+	}
+
+	if (CERT_GetCertTimes (cert, &pr_notBefore, &pr_notAfter) != SECSuccess) {
+		goto cleanup;
+	}
+
+	notBefore = pr_notBefore/1000000;
+	notAfter = pr_notAfter/1000000;
+
+	tm1 = gmtime (&notBefore);
+	tm1->tm_isdst = tm_isdst;
+	notBefore = mktime (tm1);
+	tm1 = gmtime (&notAfter);
+	tm1->tm_isdst = tm_isdst;
+	notAfter = mktime (tm1);
+
+	if (
+		now >= notBefore &&
+		now <= notAfter
+	) {
+		*expiration = notAfter;
+	}
+
+cleanup:
+
+	if (cert != NULL) {
+		CERT_DestroyCertificate (cert);
+	}
+
+	return *expiration != (time_t)0;
+}
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+) {
+	CERTCertificate *cert = NULL;
+
+	(void)global_data;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (dn!=NULL);
+	_PKCS11H_ASSERT (dn_max>0);
+
+	dn[0] = '\x0';
+
+	if ((cert = CERT_DecodeCertFromPackage ((char *)blob, blob_size)) == NULL) {
+		goto cleanup;
+	}
+
+	if (strlen (cert->subjectName) >= dn_max) {
+		goto cleanup;
+	}
+
+	strcpy (dn, cert->subjectName);
+
+cleanup:
+
+	if (cert != NULL) {
+		CERT_DestroyCertificate (cert);
+	}
+
+	return dn[0] != '\x0';
+}
+
+static
+int
+__pkcs11h_crypto_nss_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const issuer_blob,
+	IN const size_t issuer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+) {
+	PKCS11H_BOOL is_issuer = FALSE;
+	CERTCertificate *cert = NULL;
+	CERTCertificate *issuer = NULL;
+
+	(void)global_data;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (issuer_blob!=NULL);
+	_PKCS11H_ASSERT (cert_blob!=NULL);
+
+	if ((issuer = CERT_DecodeCertFromPackage ((char *)issuer_blob, issuer_blob_size)) == NULL) {
+		goto cleanup;
+	}
+
+	if ((cert = CERT_DecodeCertFromPackage ((char *)cert_blob, cert_blob_size)) == NULL) {
+		goto cleanup;
+	}
+
+	is_issuer = CERT_VerifySignedDataWithPublicKeyInfo (
+		&cert->signatureWrap,
+		&issuer->subjectPublicKeyInfo,
+		NULL
+	) == SECSuccess;
+
+cleanup:
+
+	if (cert != NULL) {
+		CERT_DestroyCertificate (cert);
+	}
+
+	if (issuer != NULL) {
+		CERT_DestroyCertificate (issuer);
 	}
 
 	return is_issuer;

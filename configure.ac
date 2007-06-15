@@ -174,6 +174,12 @@ AC_ARG_ENABLE([crypto-engine-gnutls],
 	[enable_crypto_engine_gnutls="yes"]
 )
 
+AC_ARG_ENABLE([crypto-engine-nss],
+	[  --disable-crypto-engine-nss   Disable NSS crypto engine],
+	,
+	[enable_crypto_engine_nss="yes"]
+)
+
 AC_ARG_ENABLE([crypto-engine-win32],
 	[  --disable-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
 	,
@@ -235,6 +241,7 @@ if test "${have_openssl}" = "no"; then
 fi
 
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
+PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
 
 AC_MSG_CHECKING([OpenSSL interface])
 if test "${enable_openssl}" = "yes"; then
@@ -278,9 +285,23 @@ AC_MSG_CHECKING([GnuTLS crypto engine])
 if test "${enable_crypto_engine_gnutls}" = "yes"; then
 	if test "${have_gnutls}" = "yes"; then
 		AC_MSG_RESULT([yes])
-		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GNUTLS crypto engine])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GnuTLS crypto engine])
 		CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
 		LIBS="${LIBS} ${GNUTLS_LIBS}"
+	else
+		AC_MSG_RESULT([no])
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([NSS crypto engine])
+if test "${enable_crypto_engine_nss}" = "yes"; then
+	if test "${have_nss}" = "yes"; then
+		AC_MSG_RESULT([yes])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_NSS], [1], [Use NSS crypto engine])
+		CFLAGS="${CFLAGS} ${NSS_CFLAGS}"
+		LIBS="${LIBS} ${NSS_LIBS}"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -372,6 +393,7 @@ fi
 if test \
 	"${enable_crypto_engine_openssl}" = "yes" -o \
 	"${enable_crypto_engine_gnutls}" = "yes" -o \
+	"${enable_crypto_engine_nss}" = "yes" -o \
 	"${enable_crypto_engine_win32}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi

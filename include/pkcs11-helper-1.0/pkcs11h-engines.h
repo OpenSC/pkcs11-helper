@@ -206,6 +206,8 @@ typedef struct pkcs11h_crypto_engine_s {
 #define PKCS11H_ENGINE_CRYPTO_GNUTLS	((pkcs11h_engine_crypto_t *)2)
 /** Select Win32. */
 #define PKCS11H_ENGINE_CRYPTO_WIN32	((pkcs11h_engine_crypto_t *)3)
+/** Select NSS. */
+#define PKCS11H_ENGINE_CRYPTO_NSS	((pkcs11h_engine_crypto_t *)4)
 /** Auto select GPL enigne. */
 #define PKCS11H_ENGINE_CRYPTO_GPL	((pkcs11h_engine_crypto_t *)10)
 /** @} */

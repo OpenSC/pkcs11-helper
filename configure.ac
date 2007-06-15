@@ -258,7 +258,7 @@ fi
 AC_MSG_CHECKING([Win32 crypto engine])
 if test "${WIN32}" = "yes" -a "${enable_crypto_engine_win32}" = "yes"; then
 	AC_MSG_RESULT([yes])
-	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Use win32 crypto engine])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Enable win32 crypto engine])
 else
 	AC_MSG_RESULT([no])
 fi
@@ -267,7 +267,7 @@ AC_MSG_CHECKING([OpenSSL crypto engine])
 if test "${enable_crypto_engine_openssl}" = "yes"; then
 	if test "${have_openssl}" = "yes"; then
 		AC_MSG_RESULT([yes])
-		AC_DEFINE([ENABLE_PKCS11H_ENGINE_OPENSSL], [1], [Use OpenSSL crypto engine])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_OPENSSL], [1], [Enable OpenSSL crypto engine])
 
 		# don't add this twice
 		if test "${enable_openssl}" != "yes"; then
@@ -285,7 +285,7 @@ AC_MSG_CHECKING([GnuTLS crypto engine])
 if test "${enable_crypto_engine_gnutls}" = "yes"; then
 	if test "${have_gnutls}" = "yes"; then
 		AC_MSG_RESULT([yes])
-		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Use GnuTLS crypto engine])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Enable GnuTLS crypto engine])
 		CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
 		LIBS="${LIBS} ${GNUTLS_LIBS}"
 	else
@@ -299,7 +299,7 @@ AC_MSG_CHECKING([NSS crypto engine])
 if test "${enable_crypto_engine_nss}" = "yes"; then
 	if test "${have_nss}" = "yes"; then
 		AC_MSG_RESULT([yes])
-		AC_DEFINE([ENABLE_PKCS11H_ENGINE_NSS], [1], [Use NSS crypto engine])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_NSS], [1], [Enable NSS crypto engine])
 		CFLAGS="${CFLAGS} ${NSS_CFLAGS}"
 		LIBS="${LIBS} ${NSS_LIBS}"
 	else

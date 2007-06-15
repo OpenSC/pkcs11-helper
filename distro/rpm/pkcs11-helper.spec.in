@@ -62,7 +62,7 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %defattr(-,root,root)
 %{_libdir}/libpkcs11-helper.*
 %{_mandir}/*
-%{_docdir}/%{name}/COPYING*
+%{_docdir}/%{name}/COPYING.*
 %{_docdir}/%{name}/README
 
 %files devel

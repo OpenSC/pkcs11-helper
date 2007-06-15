@@ -116,6 +116,141 @@ typedef const unsigned char *__pkcs11_openssl_d2i_t;
 
 #endif
 
+#if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+
+static
+int
+__pkcs11h_crypto_openssl_initialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_openssl_uninitialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_openssl_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+);
+
+static
+int
+__pkcs11h_crypto_openssl_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+);
+
+static
+int
+__pkcs11h_crypto_openssl_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const signer_blob,
+	IN const size_t signer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+);
+
+#endif
+
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+
+static
+int
+__pkcs11h_crypto_gnutls_initialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_gnutls_uninitialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_gnutls_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+);
+
+static
+int
+__pkcs11h_crypto_gnutls_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+);
+
+static
+int
+__pkcs11h_crypto_gnutls_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const signer_blob,
+	IN const size_t signer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+);
+
+#endif
+
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+
+static
+int
+__pkcs11h_crypto_nss_initialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_nss_uninitialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+);
+
+static
+int
+__pkcs11h_crypto_nss_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const signer_blob,
+	IN const size_t signer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+);
+
+#endif
+
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 
 typedef PCCERT_CONTEXT (WINAPI *__CertCreateCertificateContext_t) (
@@ -152,7 +287,187 @@ typedef struct __crypto_win32_data_s {
 	__CryptVerifyCertificateSignatureEx_t p_CryptVerifyCertificateSignatureEx;
 } *__crypto_win32_data_t;
 
+static
+int
+__pkcs11h_crypto_win32_initialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_win32_uninitialize (
+	IN void * const global_data
+);
+
+static
+int
+__pkcs11h_crypto_win32_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+);
+
+static
+int
+__pkcs11h_crypto_win32_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+);
+
+static
+int
+__pkcs11h_crypto_win32_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const signer_blob,
+	IN const size_t signer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+);
+
 #endif
+
+#if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl = {
+	NULL,
+	__pkcs11h_crypto_openssl_initialize,
+	__pkcs11h_crypto_openssl_uninitialize,
+	__pkcs11h_crypto_openssl_certificate_get_expiration,
+	__pkcs11h_crypto_openssl_certificate_get_dn,
+	__pkcs11h_crypto_openssl_certificate_is_issuer
+};
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
+	NULL,
+	__pkcs11h_crypto_gnutls_initialize,
+	__pkcs11h_crypto_gnutls_uninitialize,
+	__pkcs11h_crypto_gnutls_certificate_get_expiration,
+	__pkcs11h_crypto_gnutls_certificate_get_dn,
+	__pkcs11h_crypto_gnutls_certificate_is_issuer
+};
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+static int s_nss_data = 0;
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss = {
+	&s_nss_data,
+	__pkcs11h_crypto_nss_initialize,
+	__pkcs11h_crypto_nss_uninitialize,
+	__pkcs11h_crypto_nss_certificate_get_expiration,
+	__pkcs11h_crypto_nss_certificate_get_dn,
+	__pkcs11h_crypto_nss_certificate_is_issuer
+};
+#endif
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+static struct __crypto_win32_data_s s_win32_data = { NULL };
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
+	&s_win32_data,
+	__pkcs11h_crypto_win32_initialize,
+	__pkcs11h_crypto_win32_uninitialize,
+	__pkcs11h_crypto_win32_certificate_get_expiration,
+	__pkcs11h_crypto_win32_certificate_get_dn,
+	__pkcs11h_crypto_win32_certificate_is_issuer
+};
+#endif
+
+pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+CK_RV
+pkcs11h_engine_setCrypto (
+	IN const pkcs11h_engine_crypto_t * const engine
+) {
+	const pkcs11h_engine_crypto_t *_engine = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	/*_PKCS11H_ASSERT (engine!=NULL); Not required */
+
+	if (engine == PKCS11H_ENGINE_CRYPTO_AUTO) {
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#elif defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+		_engine = &_g_pkcs11h_crypto_engine_openssl;
+#elif defined(ENABLE_PKCS11H_ENGINE_NSS)
+		_engine = &_g_pkcs11h_crypto_engine_nss;
+#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
+#if defined(_WIN32)
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+#else
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
+#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+		_engine = &_g_pkcs11h_crypto_engine_win32;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_OPENSSL) {
+#if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
+		_engine = &_g_pkcs11h_crypto_engine_openssl;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_GNUTLS) {
+#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
+		_engine = &_g_pkcs11h_crypto_engine_gnutls;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_NSS) {
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+		_engine = &_g_pkcs11h_crypto_engine_nss;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else {
+		_engine = engine;
+	}
+
+	memmove (&_g_pkcs11h_crypto_engine, _engine, sizeof (pkcs11h_engine_crypto_t));
+
+	rv = CKR_OK;
+
+cleanup:
+
+	return rv;
+}
 
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 
@@ -215,6 +530,7 @@ __pkcs11h_crypto_openssl_certificate_get_expiration (
 				notAfter->length >= 12
 			) {
 				struct tm tm1;
+				time_t now = time (NULL);
 
 				memset (&tm1, 0, sizeof (tm1));
 				tm1.tm_year = (notAfter->data[ 0] - '0') * 10 + (notAfter->data[ 1] - '0') + 100;
@@ -224,8 +540,9 @@ __pkcs11h_crypto_openssl_certificate_get_expiration (
 				tm1.tm_min  = (notAfter->data[ 8] - '0') * 10 + (notAfter->data[ 9] - '0');
 				tm1.tm_sec  = (notAfter->data[10] - '0') * 10 + (notAfter->data[11] - '0');
 
+				tm1.tm_sec += (int)(mktime (localtime (&now)) - mktime (gmtime (&now)));
+
 				*expiration = mktime (&tm1);
-				*expiration += (int)(mktime (localtime (expiration)) - mktime (gmtime (expiration)));
 			}
 		}
 
@@ -359,15 +676,6 @@ cleanup:
 
 	return is_issuer;
 }
-
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl = {
-	NULL,
-	__pkcs11h_crypto_openssl_initialize,
-	__pkcs11h_crypto_openssl_uninitialize,
-	__pkcs11h_crypto_openssl_certificate_get_expiration,
-	__pkcs11h_crypto_openssl_certificate_get_dn,
-	__pkcs11h_crypto_openssl_certificate_is_issuer
-};
 
 /*======================================================================*
  * FIXUPS
@@ -584,15 +892,6 @@ cleanup:
 	return is_issuer;
 }
 
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
-	NULL,
-	__pkcs11h_crypto_gnutls_initialize,
-	__pkcs11h_crypto_gnutls_uninitialize,
-	__pkcs11h_crypto_gnutls_certificate_get_expiration,
-	__pkcs11h_crypto_gnutls_certificate_get_dn,
-	__pkcs11h_crypto_gnutls_certificate_is_issuer
-};
-
 #endif				/* ENABLE_PKCS11H_ENGINE_GNUTLS */
 
 #if defined(ENABLE_PKCS11H_ENGINE_NSS)
@@ -645,6 +944,8 @@ __pkcs11h_crypto_nss_certificate_get_expiration (
 	PRTime pr_notBefore, pr_notAfter;
 	time_t notBefore, notAfter;
 	time_t now = time (NULL);
+	int tm_isdst = localtime (&now)->tm_isdst;
+	struct tm *tm1;
 
 	(void)global_data;
 
@@ -665,10 +966,12 @@ __pkcs11h_crypto_nss_certificate_get_expiration (
 	notBefore = pr_notBefore/1000000;
 	notAfter = pr_notAfter/1000000;
 
-	notBefore = mktime (gmtime (&notBefore));
-	notBefore += (int)(mktime (localtime (&notBefore)) - mktime (gmtime (&notBefore)));
-	notAfter = mktime (gmtime (&notAfter));
-	notAfter += (int)(mktime (localtime (&notAfter)) - mktime (gmtime (&notAfter)));
+	tm1 = gmtime (&notBefore);
+	tm1->tm_isdst = tm_isdst;
+	notBefore = mktime (tm1);
+	tm1 = gmtime (&notAfter);
+	tm1->tm_isdst = tm_isdst;
+	notAfter = mktime (tm1);
 
 	if (
 		now >= notBefore &&
@@ -771,17 +1074,7 @@ cleanup:
 	return is_issuer;
 }
 
-static int s_nss_data = 0;
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss = {
-	&s_nss_data,
-	__pkcs11h_crypto_nss_initialize,
-	__pkcs11h_crypto_nss_uninitialize,
-	__pkcs11h_crypto_nss_certificate_get_expiration,
-	__pkcs11h_crypto_nss_certificate_get_dn,
-	__pkcs11h_crypto_nss_certificate_is_issuer
-};
-
-#endif				/* ENABLE_PKCS11H_ENGINE_NSS */
+#endif				/* ENABLE_PKCS11H_ENGINE_GNUTLS */
 
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 
@@ -861,7 +1154,8 @@ __pkcs11h_crypto_win32_certificate_get_expiration (
 	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
 	PCCERT_CONTEXT cert = NULL;
 	PKCS11H_BOOL ok = FALSE;
-	SYSTEMTIME ust, st;
+	time_t now = time (NULL);
+	SYSTEMTIME st;
 	struct tm tm1;
 
 	_PKCS11H_ASSERT (global_data!=NULL);
@@ -878,13 +1172,12 @@ __pkcs11h_crypto_win32_certificate_get_expiration (
 		)) == NULL ||
 		!FileTimeToSystemTime (
 			&cert->pCertInfo->NotAfter,
-			&ust
+			&st
 		)
 	) {
 		goto cleanup;
 	}
 
-	SystemTimeToTzSpecificLocalTime (NULL, &ust, &st);
 	memset (&tm1, 0, sizeof (tm1));
 	tm1.tm_year = st.wYear - 1900;
 	tm1.tm_mon  = st.wMonth - 1;
@@ -892,6 +1185,8 @@ __pkcs11h_crypto_win32_certificate_get_expiration (
 	tm1.tm_hour = st.wHour;
 	tm1.tm_min  = st.wMinute;
 	tm1.tm_sec  = st.wSecond;
+
+	tm1.tm_sec += (int)(mktime (localtime (&now)) - mktime (gmtime (&now)));
 
 	*expiration = mktime (&tm1);
 
@@ -1052,111 +1347,4 @@ cleanup:
 	return issuer != FALSE;
 }
 
-static struct __crypto_win32_data_s s_win32_data = { NULL };
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
-	&s_win32_data,
-	__pkcs11h_crypto_win32_initialize,
-	__pkcs11h_crypto_win32_uninitialize,
-	__pkcs11h_crypto_win32_certificate_get_expiration,
-	__pkcs11h_crypto_win32_certificate_get_dn,
-	__pkcs11h_crypto_win32_certificate_is_issuer
-};
-
 #endif				/* ENABLE_PKCS11H_ENGINE_WIN32 */
-
-pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-CK_RV
-pkcs11h_engine_setCrypto (
-	IN const pkcs11h_engine_crypto_t * const engine
-) {
-	const pkcs11h_engine_crypto_t *_engine = NULL;
-	CK_RV rv = CKR_FUNCTION_FAILED;
-
-	/*_PKCS11H_ASSERT (engine!=NULL); Not required */
-
-	if (engine == PKCS11H_ENGINE_CRYPTO_AUTO) {
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
-#elif defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-		_engine = &_g_pkcs11h_crypto_engine_openssl;
-#elif defined(ENABLE_PKCS11H_ENGINE_NSS)
-		_engine = &_g_pkcs11h_crypto_engine_nss;
-#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		_engine = &_g_pkcs11h_crypto_engine_gnutls;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-	}
-	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
-#if defined(_WIN32)
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
-#elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		_engine = &_g_pkcs11h_crypto_engine_gnutls;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-#else
-#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		_engine = &_g_pkcs11h_crypto_engine_gnutls;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-#endif
-	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_OPENSSL) {
-#if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-		_engine = &_g_pkcs11h_crypto_engine_openssl;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_GNUTLS) {
-#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		_engine = &_g_pkcs11h_crypto_engine_gnutls;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_NSS) {
-#if defined(ENABLE_PKCS11H_ENGINE_NSS)
-		_engine = &_g_pkcs11h_crypto_engine_nss;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
-	}
-	else {
-		_engine = engine;
-	}
-
-	memmove (&_g_pkcs11h_crypto_engine, _engine, sizeof (pkcs11h_engine_crypto_t));
-
-	rv = CKR_OK;
-
-cleanup:
-
-	return rv;
-}
-

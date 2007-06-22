@@ -599,6 +599,15 @@ _pkcs11h_session_reset (
 
 	*p_slot = _PKCS11H_INVALID_SLOT_ID;
 
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: _pkcs11h_session_reset Expected token manufacturerID='%s' model='%s', serialNumber='%s', label='%s'",
+		session->token_id->manufacturerID,
+		session->token_id->model,
+		session->token_id->serialNumber,
+		session->token_id->label
+	);
+
 	while (!found) {
 		_pkcs11h_provider_t current_provider = NULL;
 
@@ -666,6 +675,15 @@ _pkcs11h_session_reset (
 				) {
 					goto retry11;
 				}
+
+				_PKCS11H_DEBUG (
+					PKCS11H_LOG_DEBUG2,
+					"PKCS#11: _pkcs11h_session_reset Found token manufacturerID='%s' model='%s', serialNumber='%s', label='%s'",
+					token_id->manufacturerID,
+					token_id->model,
+					token_id->serialNumber,
+					token_id->label
+				);
 
 				if (
 					pkcs11h_token_sameTokenId (

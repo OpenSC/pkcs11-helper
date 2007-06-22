@@ -761,6 +761,14 @@ pkcs11h_addProvider (
 		(char *)info.manufacturerID,
 		sizeof (info.manufacturerID)
 	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_addProvider Provider '%s' manufacturerID '%s'",
+		reference,
+		provider->manufacturerID
+	);
+
 	provider->enabled = TRUE;
 
 	if (_g_pkcs11h_data->providers == NULL) {

@@ -1070,6 +1070,12 @@ _pkcs11h_session_login (
 			rv = CKR_OK;
 
 		retry:
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG2,
+				"PKCS#11: _pkcs11h_session_login C_Login rv=%lu-'%s'",
+				rv,
+				pkcs11h_getMessage (rv)
+			);
 
 			/*
 			 * Clean PIN buffer

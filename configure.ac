@@ -78,7 +78,7 @@ AC_SUBST(LIBPKCS11_HELPER_LT_REVISION)
 AC_SUBST(LIBPKCS11_HELPER_LT_AGE)
 
 AC_ARG_WITH([cygwin-native],
-	[  --with-cygwin-native              Compile native win32],
+	[AC_HELP_STRING([--with-cygwin-native], [Compile native win32])],
 	,
 	[with_cygwin_native="no"]
 )
@@ -109,97 +109,97 @@ case "${host}" in
 esac
 
 AC_ARG_ENABLE([doc],
-	[  --enable-doc                      Enable documantation],
+	[AC_HELP_STRING([--enable-doc], [Enable documantation])],
 	,
 	[enable_doc="no"]
 )
 
 AC_ARG_ENABLE([debug],
-	[  --disable-debug                   Disable debug support],
+	[AC_HELP_STRING([--disable-debug], [Disable debug support])],
 	,
 	[enable_debug="yes"]
 )
 
 AC_ARG_ENABLE([threading],
-	[  --disable-threading               Disable threading],
+	[AC_HELP_STRING([--disable-threading], [Disable threading])],
 	,
 	[enable_threading="yes"]
 )
 
 AC_ARG_ENABLE([token],
-	[  --disable-token                   Disable token support],
+	[AC_HELP_STRING([--disable-token], [Disable token support])],
 	,
 	[enable_token="yes"]
 )
 
 AC_ARG_ENABLE([data],
-	[  --disable-data                    Disable data objects support],
+	[AC_HELP_STRING([--disable-data], [Disable data objects support])],
 	,
 	[enable_data="yes"]
 )
 
 AC_ARG_ENABLE([certificate],
-	[  --disable-certificate             Disable certificate support],
+	[AC_HELP_STRING([--disable-certificate], [Disable certificate support])],
 	,
 	[enable_certificate="yes"]
 )
 
 AC_ARG_ENABLE([slotevent],
-	[  --disable-slotevent               Disable slotevent support],
+	[AC_HELP_STRING([--disable-slotevent], [Disable slotevent support])],
 	,
 	[enable_slotevent="yes"]
 )
 
 AC_ARG_ENABLE([openssl],
-	[  --disable-openssl                 Disable openssl interface],
+	[AC_HELP_STRING([--disable-openssl], [Disable openssl interface])],
 	,
 	[enable_openssl="yes"]
 )
 
 AC_ARG_ENABLE([pedantic],
-	[  --enable-pedantic                 Enable pedantic compiler warnings, will not generate a working executable (debugging option)],
+	[AC_HELP_STRING([--enable-pedantic], [Enable pedantic compiler warnings, will not generate a working executable (debugging option)])],
 	,
 	[enable_pedantic="no"]
 )
 
 AC_ARG_ENABLE([crypto-engine-openssl],
-	[  --disable-crypto-engine-openssl   Disable OpenSSL crypto engine],
+	[AC_HELP_STRING([--disable-crypto-engine-openssl], [Disable OpenSSL crypto engine)])],
 	,
 	[enable_crypto_engine_openssl="yes"]
 )
 
 AC_ARG_ENABLE([crypto-engine-gnutls],
-	[  --disable-crypto-engine-gnutls    Disable GnuTLS crypto engine],
+	[AC_HELP_STRING([--disable-crypto-engine-gnutls], [Disable GnuTLS crypto engine])],
 	,
 	[enable_crypto_engine_gnutls="yes"]
 )
 
 AC_ARG_ENABLE([crypto-engine-nss],
-	[  --disable-crypto-engine-nss   Disable NSS crypto engine],
+	[AC_HELP_STRING([--disable-crypto-engine-nss], [Disable NSS crypto engine])],
 	,
 	[enable_crypto_engine_nss="yes"]
 )
 
 AC_ARG_ENABLE([crypto-engine-win32],
-	[  --disable-crypto-engine-win32     Disable win32 native crypto engine on win32 systems],
+	[AC_HELP_STRING([--disable-crypto-engine-win32], [Disable win32 native crypto engine on win32 systems])],
 	,
 	[enable_crypto_engine_win32="yes"]
 )
 
 AC_ARG_WITH([apidocdir],
-	[  --with-apidocdir                  Put API documents at this directory, default HTMLDIR\api],
+	[AC_HELP_STRING([--with-apidocdir], [Put API documents at this directory, default HTMLDIR/api])],
 	[apidocdir="${with_apidocdir}"],
 	[apidocdir="\$(htmldir)/api"]
 )
 
 AC_ARG_WITH([test-provider],
-	[  --with-test-provider=lib          Specify providers for test phase],
+	[AC_HELP_STRING([--with-test-provider=lib], [Specify providers for test phase])],
 	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["${withval}"], [Test provider])],
 	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["/usr/lib/pkcs11/provider.so"], [Test provider])]
 )
 
 AC_ARG_WITH([test-log-level],
-	[  --with-test-log-level=level       Specify log level for test phase],
+	[AC_HELP_STRING([--with-test-log-level=level], [Specify log level for test phase])],
 	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [${withval}], [Test log level])],
 	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [3], [Test log level])]
 )

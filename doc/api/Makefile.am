@@ -49,7 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-EXTRA_DIST=Doxyfile Doxyfile_footer.html *.gif
+EXTRA_DIST=Doxyfile Doxyfile_footer.html *.dox *.gif
 
 if ENABLE_DOC
 

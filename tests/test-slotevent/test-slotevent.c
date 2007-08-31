@@ -76,6 +76,34 @@ int main () {
 		fatal ("pkcs11h_setSlotEventHook failed", rv);
 	}
 
+	printf ("Adding provider '%s' as auto\n", TEST_PROVIDER);
+
+	if (
+		(rv = pkcs11h_addProvider (
+			TEST_PROVIDER,
+			TEST_PROVIDER,
+			FALSE,
+			PKCS11H_PRIVATEMODE_MASK_AUTO,
+			PKCS11H_SLOTEVENT_METHOD_AUTO,
+			0,
+			FALSE
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_terminate failed", rv);
+	}
+
+	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
+
+#if defined(_WIN32)
+	Sleep (30*1024);
+#else
+	sleep (30);
+#endif
+
+	if ((rv = pkcs11h_removeProvider (TEST_PROVIDER)) != CKR_OK) {
+		fatal ("pkcs11h_removeProvider failed", rv);
+	}
+
 	printf ("Adding provider '%s' as trigger\n", TEST_PROVIDER);
 
 	if (
@@ -127,6 +155,36 @@ int main () {
 #else
 	sleep (30);
 #endif
+
+	printf ("Adding provider '%s' as fetch\n", TEST_PROVIDER);
+
+	if (
+		(rv = pkcs11h_addProvider (
+			TEST_PROVIDER,
+			TEST_PROVIDER,
+			FALSE,
+			PKCS11H_PRIVATEMODE_MASK_AUTO,
+			PKCS11H_SLOTEVENT_METHOD_FETCH,
+			0,
+			FALSE
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_terminate failed", rv);
+	}
+
+	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
+
+#if defined(_WIN32)
+	Sleep (30*1024);
+#else
+	sleep (30);
+#endif
+
+	printf ("Terminating pkcs11-helper\n");
+
+	if ((rv = pkcs11h_terminate ()) != CKR_OK) {
+		fatal ("pkcs11h_terminate failed", rv);
+	}
 
 	printf ("Terminating pkcs11-helper\n");
 

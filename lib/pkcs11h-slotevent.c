@@ -131,33 +131,12 @@ __pkcs11h_slotevent_provider (
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER
 	) { 
-		if (
-			provider->f->C_WaitForSlotEvent (
-				CKF_DONT_BLOCK,
-				&slot,
-				NULL_PTR
-			) == CKR_FUNCTION_NOT_SUPPORTED
-		) {
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setup slotevent provider='%s' mode is poll",
-				provider->manufacturerID
-			);
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setup slotevent provider='%s' checking trigger",
+			provider->manufacturerID
+		);
 
-			provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_POLL;
-		}
-		else {
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setup slotevent provider='%s' mode is trigger",
-				provider->manufacturerID
-			);
-
-			provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_TRIGGER;
-		}
-	}
-
-	if (provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER) {
 		while (
 			!_g_pkcs11h_data->slotevent.should_terminate &&
 			provider->enabled &&
@@ -176,13 +155,69 @@ __pkcs11h_slotevent_provider (
 			_pkcs11h_threading_condSignal (&_g_pkcs11h_data->slotevent.cond_event);
 		}
 
-		if (rv != CKR_OK) {
+		if (rv != CKR_FUNCTION_NOT_SUPPORTED) {
 			goto cleanup;
 		}
 	}
-	else {
+
+	if (
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_POLL
+	) { 
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setup slotevent provider='%s' checking poll",
+			provider->manufacturerID
+		);
+		PKCS11H_BOOL had_sleep = TRUE;
+
+		while (
+			!_g_pkcs11h_data->slotevent.should_terminate &&
+			provider->enabled &&
+			(
+				(rv = provider->f->C_WaitForSlotEvent (
+					CKF_DONT_BLOCK,
+					&slot,
+					NULL_PTR
+				)) == CKR_OK ||
+				rv == CKR_NO_EVENT
+			)
+		) {
+			if (rv == CKR_OK) {
+				if (had_sleep) {
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Slotevent provider='%s' event",
+						provider->manufacturerID
+					);
+
+					had_sleep = FALSE; /* Mask out seq events */
+					_pkcs11h_threading_condSignal (&_g_pkcs11h_data->slotevent.cond_event);
+				}
+			}
+			else {
+				_pkcs11h_threading_sleep (provider->slot_poll_interval);
+				had_sleep = TRUE;
+			}
+		}
+
+		if (rv != CKR_FUNCTION_NOT_SUPPORTED) {
+			goto cleanup;
+		}
+	}
+
+	if (
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
+		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_FETCH
+	) { 
 		unsigned long last_checksum = 0;
 		PKCS11H_BOOL is_first_time = TRUE;
+
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setup slotevent provider='%s' checking fetch",
+			provider->manufacturerID
+		);
 
 		while (
 			!_g_pkcs11h_data->slotevent.should_terminate &&
@@ -260,12 +295,12 @@ __pkcs11h_slotevent_provider (
 				_pkcs11h_mem_free ((void *)&slots);
 			}
 			
-			if (!_g_pkcs11h_data->slotevent.should_terminate) {
-				_pkcs11h_threading_sleep (provider->slot_poll_interval);
-			}
-
 			if (rv != CKR_OK) {
 				goto cleanup;
+			}
+
+			if (!_g_pkcs11h_data->slotevent.should_terminate) {
+				_pkcs11h_threading_sleep (provider->slot_poll_interval);
 			}
 		}
 	}

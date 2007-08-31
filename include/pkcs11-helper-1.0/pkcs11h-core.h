@@ -158,6 +158,8 @@ extern "C" {
 #define PKCS11H_SLOTEVENT_METHOD_TRIGGER	1
 /** Force poll. */
 #define PKCS11H_SLOTEVENT_METHOD_POLL		2
+/** Force fetch. */
+#define PKCS11H_SLOTEVENT_METHOD_FETCH		3
 /** @} */
 
 /**

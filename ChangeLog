@@ -7,6 +7,8 @@ $Id$
 
 * Added NSS crypto enigne.
 
+* Added new slotevent mode (poll vs fetch).
+
 2007-06-13 - Version 1.03
 
 * Autoconf fixups.

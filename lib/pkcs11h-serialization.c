@@ -57,7 +57,7 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
-#define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|"
+#define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|:;,.+-"
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
 

@@ -5,68 +5,70 @@ $Id$
 
 ????-??-?? - Version 1.04
 
-* Added NSS crypto enigne.
+ * Added NSS crypto enigne.
 
-* Added new slotevent mode (poll vs fetch).
+ * Added new slotevent mode (poll vs fetch).
+
+ * Add more invalid characters to serialization string.
 
 2007-06-13 - Version 1.03
 
-* Autoconf fixups.
+ * Autoconf fixups.
 
-* RPM packaging is available, thank to Eddy Nigg.
+ * RPM packaging is available, thank to Eddy Nigg.
 
-* Debian packaging is available, thank to Sandro Wefel.
+ * Debian packaging is available, thank to Sandro Wefel.
 
-* size_t printf 64bit fixups (debug).
+ * size_t printf 64bit fixups (debug).
 
-* Certificate session period fixup, thank to Leo Pohl for reporting.
+ * Certificate session period fixup, thank to Leo Pohl for reporting.
 
-* Block signals for own threads using pthread calls.
+ * Block signals for own threads using pthread calls.
 
-* Fixup compilation error when using GnuTLS only environment, thank to
-  Simon Josefsson.
+ * Fixup compilation error when using GnuTLS only environment, thank to
+   Simon Josefsson.
 
-* Allow several engines to co-exist, so application may select its
-  favorite.
+ * Allow several engines to co-exist, so application may select its
+   favorite.
 
-* Add logout verb.
+ * Add logout verb.
 
 2007-10-05 - Version 1.02
 
-* Switch to free implementation of PKCS#11 headers.
+ * Switch to free implementation of PKCS#11 headers.
 
-* First standalone version.
+ * First standalone version.
 
-* Fix invalid certificate max size handling (Zeljko Vrba).
+ * Fix invalid certificate max size handling (Zeljko Vrba).
 
-* Added object serialization.
+ * Added object serialization.
 
-* Added user data to hooks.
+ * Added user data to hooks.
 
-* Added a force login method.
+ * Added a force login method.
 
-* Added support for gnutls in addition to openssl.
+ * Added support for gnutls in addition to openssl.
 
-* Fixup threading lock issues.
+ * Fixup threading lock issues.
 
-* Added support for duplicate serial tokens, based on label.
+ * Added support for duplicate serial tokens, based on label.
 
-* Added workaround for OpenSC cards, OpenSC bug#108, thanks to Kaupo Arulo.
+ * Added workaround for OpenSC cards, OpenSC bug#108, thanks to Kaupo Arulo.
 
-* Added a methods to lock session between two sign/decrypt operations.
+ * Added a methods to lock session between two sign/decrypt operations.
 
-* Modified openssl interface.
+ * Modified openssl interface.
 
-* Added engines for system and crypto to minimize dependencies.
+ * Added engines for system and crypto to minimize dependencies.
 
-* Added win32 crypto engine.
+ * Added win32 crypto engine.
 
-* Added decrypt option using C_UnwrapKey, thanks for Christoph Neerfeld.
+ * Added decrypt option using C_UnwrapKey, thanks for Christoph Neerfeld.
 
 2006-06-26 - Version 1.01
 
-* Fix handling multiple providers.
+ * Fix handling multiple providers.
 
 2006-05-14 - Version 1.00
 
-* First stable release.
+ * First stable release.

@@ -11,6 +11,8 @@ $Id$
 
  * Add more invalid characters to serialization string.
 
+ * Fix openssl decrypt return code.
+
 2007-06-13 - Version 1.03
 
  * Autoconf fixups.

@@ -164,12 +164,13 @@ __pkcs11h_slotevent_provider (
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_POLL
 	) { 
+		PKCS11H_BOOL had_sleep = TRUE;
+
 		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Setup slotevent provider='%s' checking poll",
 			provider->manufacturerID
 		);
-		PKCS11H_BOOL had_sleep = TRUE;
 
 		while (
 			!_g_pkcs11h_data->slotevent.should_terminate &&

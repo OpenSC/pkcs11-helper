@@ -3,6 +3,10 @@ Copyright (c) 2006 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
+2007-10-12 - Version 1.05
+
+ * Export pkcs11h_logout().
+
 2007-10-05 - Version 1.04
 
  * Added NSS crypto enigne.

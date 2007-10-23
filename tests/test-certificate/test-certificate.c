@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32)
+#include <conio.h>
+#endif
 
-#if !(!defined(_WIN32) && defined(ENABLE_PKCS11H_CERTIFICATE) && (defined(ENABLE_PKCS11H_ENGINE_OPENSSL) || defined (ENABLE_PKCS11H_ENGINE_GNUTLS) || defined(ENABLE_PKCS11H_ENGINE_WIN32)))
+#if !(defined(ENABLE_PKCS11H_CERTIFICATE) && (defined(ENABLE_PKCS11H_ENGINE_OPENSSL) || defined (ENABLE_PKCS11H_ENGINE_GNUTLS) || defined(ENABLE_PKCS11H_ENGINE_WIN32)))
 int main () {
 	printf ("!win32, certificate, enum and crypto engine interfaces should be enabled for this test");
 	exit (0);
@@ -27,6 +30,7 @@ mypause (const char * const m) {
 	char temp[10];
 
 	fprintf (stdout, "%s", m);
+	fflush (stdout);
 	fgets (temp, sizeof (temp), stdin);
 }
 
@@ -40,6 +44,7 @@ _pkcs11h_hooks_log (
 ) {
 	vfprintf (stdout, format, args);
 	fprintf (stdout, "\n");
+	fflush (stdout);
 }
 
 static

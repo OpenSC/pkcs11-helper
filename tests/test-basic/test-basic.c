@@ -20,6 +20,7 @@ _pkcs11h_hooks_log (
 ) {
 	vfprintf (stdout, format, args);
 	fprintf (stdout, "\n");
+	fflush (stdout);
 }
 
 int main () {

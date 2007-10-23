@@ -55,7 +55,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	printf ("Terminating pkcs11-helper\n");

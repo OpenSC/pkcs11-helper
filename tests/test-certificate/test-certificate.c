@@ -201,7 +201,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	mypause ("Please remove all tokens, press <Enter>: ");

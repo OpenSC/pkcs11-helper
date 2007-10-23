@@ -89,7 +89,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
@@ -117,7 +117,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
@@ -145,7 +145,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
@@ -155,6 +155,10 @@ int main () {
 #else
 	sleep (30);
 #endif
+
+	if ((rv = pkcs11h_removeProvider (TEST_PROVIDER)) != CKR_OK) {
+		fatal ("pkcs11h_removeProvider failed", rv);
+	}
 
 	printf ("Adding provider '%s' as fetch\n", TEST_PROVIDER);
 
@@ -169,7 +173,7 @@ int main () {
 			FALSE
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_terminate failed", rv);
+		fatal ("pkcs11h_addProvider failed", rv);
 	}
 
 	printf ("Please remove and insert tokens (pause for 30 seconds)\n");
@@ -179,12 +183,6 @@ int main () {
 #else
 	sleep (30);
 #endif
-
-	printf ("Terminating pkcs11-helper\n");
-
-	if ((rv = pkcs11h_terminate ()) != CKR_OK) {
-		fatal ("pkcs11h_terminate failed", rv);
-	}
 
 	printf ("Terminating pkcs11-helper\n");
 

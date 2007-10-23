@@ -32,6 +32,7 @@ mypause (const char * const m) {
 	char temp[10];
 
 	fprintf (stdout, "%s", m);
+	fflush (stdout);
 	fgets (temp, sizeof (temp), stdin);
 }
 
@@ -45,6 +46,7 @@ _pkcs11h_hooks_log (
 ) {
 	vfprintf (stdout, format, args);
 	fprintf (stdout, "\n");
+	fflush (stdout);
 }
 
 static

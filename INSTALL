@@ -45,7 +45,7 @@ Cross-MinGW32
 				OPENSSL_LIBS="-L${w32root}/lib -lcrypto"
 											
 		make
-		make install DESTDIR=${w32root}
+		make install DESTDIR="${w32root}"
 
 	Create Microsoft LIB file (Optional):
 		[[Must use Microsoft lib utility]]

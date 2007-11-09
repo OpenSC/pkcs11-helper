@@ -165,8 +165,15 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[strict],
+	[AC_HELP_STRING([--enable-strict], [Enable strict compiler warnings])],
+	,
+	[enable_strict="no"]
+)
+
+AC_ARG_ENABLE(
 	[pedantic],
-	[AC_HELP_STRING([--enable-pedantic], [Enable pedantic compiler warnings, will not generate a working executable (debugging option)])],
+	[AC_HELP_STRING([--enable-pedantic], [Enable pedantic compiler warnings])],
 	,
 	[enable_pedantic="no"]
 )
@@ -358,16 +365,17 @@ if test "${WIN32}" != "yes"; then
 	])
 fi
 
-if echo "${CC}" | grep gcc 2>&1 > /dev/null; then
-	CFLAGS="$CFLAGS -Wall -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
-
-	if test "${WIN32}" = "yes"; then
-		LIBS="${LIBS} -lkernel32 -lgdi32"
-	fi
+if test "${enable_pedantic}" = "yes"; then
+	enable_strict="yes"
+	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_BSD_SOURCE -D_POSIX_SOURCE"
 fi
 
-if test "$enable_pedantic" = "yes"; then
-	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_BSD_SOURCE -D_POSIX_SOURCE"
+if test "${enable_strict}" = "yes"; then
+	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
+fi
+
+if test "${WIN32}" = "yes"; then
+	LIBS="${LIBS} -lkernel32 -lgdi32"
 fi
 
 if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then

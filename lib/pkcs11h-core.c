@@ -633,12 +633,17 @@ pkcs11h_addProvider (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
+#if defined(ENABLE_PKCS11H_DEBUG)
 #if defined(_WIN32)
 	int mypid = 0;
 #else
 	pid_t mypid = getpid ();
+#endif
+#endif
+#if !defined(_WIN32)
 	void *p;
 #endif
+
 	_pkcs11h_provider_t provider = NULL;
 	CK_C_GetFunctionList gfl = NULL;
 	CK_INFO info;
@@ -981,10 +986,12 @@ pkcs11h_forkFixup (void) {
 
 CK_RV
 pkcs11h_plugAndPlay (void) {
+#if defined(ENABLE_PKCS11H_DEBUG)
 #if defined(_WIN32)
 	int mypid = 0;
 #else
 	pid_t mypid = getpid ();
+#endif
 #endif
 
 	_PKCS11H_DEBUG (
@@ -1252,7 +1259,9 @@ __pkcs11h_forkFixup (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
+#if defined(ENABLE_PKCS11H_DEBUG)
 	pid_t mypid = getpid ();
+#endif
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,

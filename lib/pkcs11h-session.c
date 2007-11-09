@@ -552,9 +552,9 @@ _pkcs11h_session_release (
 
 	rv = CKR_OK;
 
+#if defined(ENABLE_PKCS11H_THREADING)
 cleanup:
 
-#if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
 		_pkcs11h_threading_mutexRelease (&session->mutex);
 		mutex_locked = FALSE;

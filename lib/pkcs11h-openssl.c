@@ -264,7 +264,7 @@ cleanup:
 		pkcs11h_getMessage (rv)
 	);
 
-	return rv == CKR_OK ? tlen : -1; 
+	return rv == CKR_OK ? (int)tlen : -1; 
 }
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L

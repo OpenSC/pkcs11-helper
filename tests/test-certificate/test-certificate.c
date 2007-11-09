@@ -4,6 +4,8 @@
 #include <string.h>
 #if defined(_WIN32)
 #include <conio.h>
+#else
+#include <unistd.h>
 #endif
 
 #if !(defined(ENABLE_PKCS11H_CERTIFICATE) && (defined(ENABLE_PKCS11H_ENGINE_OPENSSL) || defined (ENABLE_PKCS11H_ENGINE_GNUTLS) || defined(ENABLE_PKCS11H_ENGINE_WIN32)))

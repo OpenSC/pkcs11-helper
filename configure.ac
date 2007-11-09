@@ -367,7 +367,7 @@ if echo "${CC}" | grep gcc 2>&1 > /dev/null; then
 fi
 
 if test "$enable_pedantic" = "yes"; then
-	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE -D_SVID_SOURCE"
+	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_BSD_SOURCE -D_POSIX_SOURCE"
 fi
 
 if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then

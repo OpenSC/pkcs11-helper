@@ -12,7 +12,7 @@ License:	GPL-2/BSD
 Vendor:		The OpenSC Project, http://www.opensc-project.org
 Packager:	Eddy Nigg <eddy_nigg@startcom.org>
 Group:		System/Crypto
-Url:		http://www.opensc-project.org/files/pkcs11-helper
+Url:		http://www.opensc-project.org/pkcs11-helper
 Source:		http://www.opensc-project.org/files/pkcs11-helper/%{name}-%{version}.tar.bz2
 BuildRoot:	/var/tmp/%{name}-%{version}-%{release}
 %if %{?with_doc}

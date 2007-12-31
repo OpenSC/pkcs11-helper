@@ -64,7 +64,7 @@ EXTRA_DIST= \
 	libpkcs11-helper1.install
 
 copyright:	copyright.m4
-	$(M4) $< > $@
+	$(M4) copyright.m4 > $@
 
 clean-local:
 	-rm copyright

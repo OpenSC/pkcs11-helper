@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2007 Alon Bar-Lev <alon.barlev@gmail.com>
+ * Copyright (c) 2005-2008 Alon Bar-Lev <alon.barlev@gmail.com>
  * All rights reserved.
  *
  * This software is available to you under a choice of one of two

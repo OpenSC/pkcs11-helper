@@ -374,10 +374,6 @@ if test "${enable_strict}" = "yes"; then
 	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
 fi
 
-if test "${WIN32}" = "yes"; then
-	LIBS="${LIBS} -lkernel32 -lgdi32"
-fi
-
 if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then
 	AC_MSG_ERROR([Threading must be enabled for slotevent to be enabled])
 fi

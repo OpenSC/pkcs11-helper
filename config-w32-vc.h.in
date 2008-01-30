@@ -180,3 +180,8 @@
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */
 /* #undef volatile */
+
+/* Visual Studio 2005 supports vararg macros */
+#if _MSC_VER >= 1400
+#define HAVE_CPP_VARARG_MACRO_ISO 1
+#endif

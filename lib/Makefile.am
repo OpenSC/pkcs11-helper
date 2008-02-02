@@ -88,6 +88,8 @@ libpkcs11_helper_la_LDFLAGS= \
 	-no-undefined
 if WIN32
 libpkcs11_helper_la_SOURCES+=versioninfo.rc
+else
+EXTRA_DIST+=versioninfo.rc
 endif
 
 pkcs11-helper.exports: \

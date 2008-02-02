@@ -3,6 +3,9 @@ Copyright (c) 2006 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
+????-??-?? - Version 1.06
+ * Fix some VC6 issues thanks to Justin Karneges.
+
 2007-10-12 - Version 1.05
 
  * Export pkcs11h_logout().

@@ -230,6 +230,7 @@ AC_ARG_WITH(
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_LIBTOOL_WIN32_DLL
+AC_LIBTOOL_RC
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
 AC_CHECK_PROGS([M4], [m4])
@@ -442,6 +443,7 @@ AC_CONFIG_FILES([
 	doc/api/Makefile
 	lib/Makefile
 	lib/libpkcs11-helper-1.pc
+	lib/versioninfo.rc
 	m4dir/Makefile
 	distro/Makefile
 	distro/rpm/Makefile

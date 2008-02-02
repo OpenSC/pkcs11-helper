@@ -11,6 +11,8 @@ $Id$
 
  * Fix some VC6 issues thanks to Justin Karneges.
 
+ * Add version resource for Windows.
+
 2007-10-12 - Version 1.05
 
  * Export pkcs11h_logout().

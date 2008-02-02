@@ -72,8 +72,11 @@ OPENSSL_LIBS=-LIBPATH:$(OPENSSL_HOME)\out32 user32.lib advapi32.lib $(OPENSSL_ST
 
 CFLAGS = -I../include $(OPENSSL_CFLAGS) -DWIN32 -DWIN32_LEAN_AND_MEAN -D_MBCS -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x0400
 CC=cl.exe
-CFLAGS=$(CFLAGS) /nologo /W3 /O2 $(CFLAGS) /FD /c
-CFLAGS=$(CFLAGS) /MD -DNDEBUG
+RC=rc.exe
+CCPARAMS=/nologo /W3 /O2 /FD /c
+
+CCPARAMS=$(CCPARAMS) /MD
+CFLAGS=$(CFLAGS) -DNDEBUG
 
 LINK32=link.exe
 LIB32=lib.exe
@@ -118,6 +121,9 @@ OBJS =  \
 	pkcs11h-token.obj \
 	pkcs11h-util.obj
 
+RES = \
+	versioninfo.res
+
 all:	libpkcs11-helper-1.dll pkcs11-helper.lib
 
 pkcs11-helper-1.dll.def:
@@ -132,12 +138,13 @@ pkcs11-helper-1.dll.def:
 	type openssl.exports >> pkcs11-helper-1.dll.def
 !endif
 
-libpkcs11-helper-1.dll: pkcs11-helper-1.dll.def $(OBJS)
+libpkcs11-helper-1.dll: pkcs11-helper-1.dll.def $(OBJS) $(RES)
 	$(LINK32) @<<
 	$(LINK32_FLAGS)
 	/out:"libpkcs11-helper-1.dll" /def:pkcs11-helper-1.dll.def
 	kernel32.lib gdi32.lib $(OPENSSL_LIBS)
 	$(OBJS)
+	$(RES)
 <<
 	move libpkcs11-helper-1.lib pkcs11-helper.dll.lib
 
@@ -149,9 +156,13 @@ pkcs11-helper.lib: $(OBJS)
 <<
 
 clean:
-	-del /Q $(OBJS) libpkcs11-helper-1.dll *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.dll.def
+	-del /Q $(OBJS) $(RES) libpkcs11-helper-1.dll *.lib *.exp *.manifest *.idb *.pdb pkcs11-helper-1.dll.def
+
+.rc.res::
+	$(RC) $(CFLAGS) $<
 
 .c.obj::
-   $(CC) @<<
-   $(CFLAGS) $<
+	$(CC) @<<
+$(CCPARAMS) $(CFLAGS)
+$<
 <<

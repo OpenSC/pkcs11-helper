@@ -14,12 +14,12 @@
 *.idb
 *.manifest
 *.out
+*.in
 
 test-*
 *.[0-9].html
 
 configure
-Makefile.in
 config.log
 depcomp
 config.h
@@ -28,7 +28,6 @@ config.status
 config.guess
 config.sub
 stamp-h1
-config.h.in
 autom4te.cache
 missing
 aclocal.m4

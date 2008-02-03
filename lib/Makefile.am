@@ -83,6 +83,7 @@ libpkcs11_helper_la_SOURCES= \
 	pkcs11h-serialization.c \
 	pkcs11h-openssl.c
 libpkcs11_helper_la_LDFLAGS= \
+	$(AM_LDFLAGS) $(LTLIBRARY_EXTRA_LDFLAGS) \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \
 	-export-symbols pkcs11-helper.exports \
 	-no-undefined

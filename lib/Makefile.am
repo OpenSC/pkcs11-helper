@@ -132,10 +132,13 @@ endif
 clean-generic:
 	-rm -fr pkcs11-helper.exports
 
-LTRCCOMPILE = $(LIBTOOL) --mode=compile --tag=RC $(RC) \
-	$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-        $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+RCCOMPILE = $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS)
+LTRCCOMPILE = $(LIBTOOL) --mode=compile --tag=RC $(RCCOMPILE)
 
 .rc.lo:
 	$(LTRCCOMPILE) -i $< -o $@
+
+.rc.o:
+	$(RCCOMPILE) -i $< -o $@
 

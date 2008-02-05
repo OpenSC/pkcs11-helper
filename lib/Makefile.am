@@ -121,11 +121,11 @@ endif
 if WIN32
 mylibdir=$(libdir)
 if CYGWIN
-mylib_DATA=.libs/cygpkcs11-helper-1.dll.def
-.libs/cygpkcs11-helper-1.dll.def:	libpkcs11-helper.la
+mylib_DATA=.libs/cygpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def
+.libs/cygpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def:	libpkcs11-helper.la
 else
-mylib_DATA=.libs/libpkcs11-helper-1.dll.def
-.libs/libpkcs11-helper-1.dll.def:	libpkcs11-helper.la
+mylib_DATA=.libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def
+.libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def:	libpkcs11-helper.la
 endif
 endif
 

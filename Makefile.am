@@ -55,15 +55,13 @@ AUTOMAKE_OPTIONS=foreign dist-bzip2
 
 SUBDIRS=man include lib m4dir doc distro tests
 
-dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
+CLEANFILES=pkcs11-helper.spec
 
-EXTRA_DIST=config-w32-vc.h
+dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
+noinst_HEADERS=config-w32-vc.h
 
 #
 # pkcs11-helper.spec must be on root for invalid RPM
 #
 dist-hook:
-	ln -s distro/rpm/pkcs11-helper.spec $(distdir)/pkcs11-helper.spec
-
-clean-generic:
-	-rm pkcs11-helper.spec
+	$(LN_S) distro/rpm/pkcs11-helper.spec $(distdir)/pkcs11-helper.spec

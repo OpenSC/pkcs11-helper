@@ -49,13 +49,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+TESTS=test-basic
+noinst_PROGRAMS=test-basic
+
 INCLUDES= \
 	-I$(top_srcdir)/include
-DEPS= \
-	$(top_builddir)/lib/libpkcs11-helper.la
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=test-basic
-noinst_PROGRAMS=test-basic
 test_basic_SOURCES=test-basic.c

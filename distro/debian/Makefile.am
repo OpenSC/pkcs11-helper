@@ -49,9 +49,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+CLEANFILES=copyright
 BUILT_SOURCES=copyright
 
-EXTRA_DIST= \
+dist_noinst_DATA= \
 	changelog \
 	README.build \
 	compat \
@@ -65,6 +66,3 @@ EXTRA_DIST= \
 
 copyright:	copyright.m4
 	$(M4) copyright.m4 > $@
-
-clean-local:
-	-rm copyright

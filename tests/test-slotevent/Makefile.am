@@ -49,13 +49,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+TESTS=test-slotevent
+noinst_PROGRAMS=test-slotevent
+
 INCLUDES= \
 	-I$(top_srcdir)/include
-DEPS= \
-	$(top_builddir)/lib/libpkcs11-helper.la
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=test-slotevent
-noinst_PROGRAMS=test-slotevent
 test_slotevent_SOURCES=test-slotevent.c

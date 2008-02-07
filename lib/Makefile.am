@@ -49,9 +49,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-INCLUDES= \
-	-I$(top_srcdir)/include
-
 EXTRA_DIST= \
 	Makefile.w32-vc \
 	certificate.exports \
@@ -60,11 +57,17 @@ EXTRA_DIST= \
 	openssl.exports \
 	slotevent.exports \
 	token.exports
+CLEANFILES= \
+	pkcs11-helper.exports
 
 pkgconfig_DATA=libpkcs11-helper-1.pc
 
 lib_LTLIBRARIES=libpkcs11-helper.la
 BUILT_SOURCES=pkcs11-helper.exports
+
+INCLUDES= \
+	-I$(top_srcdir)/include
+
 nodist_libpkcs11_helper_la_SOURCES= \
 	pkcs11-helper.exports
 libpkcs11_helper_la_SOURCES= \
@@ -83,7 +86,7 @@ libpkcs11_helper_la_SOURCES= \
 	pkcs11h-serialization.c \
 	pkcs11h-openssl.c
 libpkcs11_helper_la_LDFLAGS= \
-	$(AM_LDFLAGS) $(LTLIBRARY_EXTRA_LDFLAGS) \
+	$(AM_LDFLAGS) \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \
 	-export-symbols pkcs11-helper.exports \
 	-no-undefined
@@ -128,9 +131,6 @@ mylib_DATA=.libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def
 .libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_CURRENT@.dll.def:	libpkcs11-helper.la
 endif
 endif
-
-clean-generic:
-	-rm -fr pkcs11-helper.exports
 
 RCCOMPILE = $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS)

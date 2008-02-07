@@ -49,13 +49,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+TESTS=test-certificate
+noinst_PROGRAMS=test-certificate
+
 INCLUDES= \
 	-I$(top_srcdir)/include
-DEPS= \
-	$(top_builddir)/lib/libpkcs11-helper.la
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
-TESTS=test-certificate
-noinst_PROGRAMS=test-certificate
 test_certificate_SOURCES=test-certificate.c

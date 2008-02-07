@@ -49,4 +49,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-EXTRA_DIST=pkcs11-helper.spec
+dist_noinst_DATA=pkcs11-helper.spec

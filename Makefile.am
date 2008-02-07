@@ -55,8 +55,6 @@ AUTOMAKE_OPTIONS=foreign dist-bzip2
 
 SUBDIRS=man include lib m4dir doc distro tests
 
-CLEANFILES=pkcs11-helper.spec
-
 dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 noinst_HEADERS=config-w32-vc.h
 

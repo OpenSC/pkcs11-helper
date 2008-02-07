@@ -49,18 +49,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+CLEANFILES=pkcs11-helper-1.8.html
+
 if WIN32
-
-pkcs11-helper-1.8.html:
-	$(MAN2HTML) < pkcs11-helper-1.8 > $@
-	
 nodist_html_DATA=pkcs11-helper-1.8.html
-
-EXTRA_DIST=pkcs11-helper-1.8
-
+dist_noinst_DATA=pkcs11-helper-1.8
+pkcs11-helper-1.8.html:	pkcs11-helper-1.8
+	$(MAN2HTML) < $^ > $@
 else
 dist_man_MANS=pkcs11-helper-1.8
 endif
-
-clean-generic:
-	-rm -f *.html

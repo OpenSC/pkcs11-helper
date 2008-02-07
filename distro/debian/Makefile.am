@@ -49,6 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+SUFFIXES=.m4
 CLEANFILES=copyright
 BUILT_SOURCES=copyright
 
@@ -64,5 +65,5 @@ dist_noinst_DATA= \
 	libpkcs11-helper1-dev.install \
 	libpkcs11-helper1.install
 
-copyright:	copyright.m4
-	$(M4) copyright.m4 > $@
+.m4:
+	$(M4) $^ > $@

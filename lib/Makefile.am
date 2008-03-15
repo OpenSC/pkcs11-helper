@@ -123,13 +123,8 @@ endif
 
 if WIN32
 mylibdir=$(libdir)
-if CYGWIN
-mylib_DATA=.libs/cygpkcs11-helper-@LIBPKCS11_HELPER_LT_MAJOR@.dll.def
-.libs/cygpkcs11-helper-@LIBPKCS11_HELPER_LT_MAJOR@.dll.def:	libpkcs11-helper.la
-else
-mylib_DATA=.libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_MAJOR@.dll.def
-.libs/libpkcs11-helper-@LIBPKCS11_HELPER_LT_MAJOR@.dll.def:	libpkcs11-helper.la
-endif
+mylib_DATA=.libs/@WIN_LIBPREFIX@pkcs11-helper-@LIBPKCS11_HELPER_LT_OLDEST@.dll.def
+.libs/@WIN_LIBPREFIX@pkcs11-helper-@LIBPKCS11_HELPER_LT_OLDEST@.dll.def:	libpkcs11-helper.la
 endif
 
 RCCOMPILE = $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \

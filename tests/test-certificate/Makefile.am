@@ -49,6 +49,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+
 TESTS=test-certificate
 noinst_PROGRAMS=test-certificate
 

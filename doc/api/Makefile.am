@@ -49,6 +49,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+
 dist_noinst_DATA=Doxyfile Doxyfile_footer.html *.dox *.gif
 
 if ENABLE_DOC

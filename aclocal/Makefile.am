@@ -51,4 +51,4 @@
 
 MAINTAINERCLEANFILES=Makefile.in
 
-dist_m4_DATA=pkcs11-helper-1.m4
+dist_noinst_DATA=vararg.m4 size_t.m4

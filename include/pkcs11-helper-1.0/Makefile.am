@@ -49,9 +49,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-myincdir=$(includedir)/pkcs11-helper-1.0
+MAINTAINERCLEANFILES=Makefile.in
 
-myinc_HEADERS= \
+pkcs11hinclude_HEADERS= \
 	pkcs11.h \
 	pkcs11h-def.h \
 	pkcs11h-engines.h \
@@ -62,26 +62,25 @@ noinst_HEADERS=
 # For win32 vc, add this into
 # dist as well
 #
-myinc_HEADERS+=pkcs11h-version.h
+pkcs11hinclude_HEADERS+=pkcs11h-version.h
 
 if ENABLE_PKCS11H_CERTIFICATE
-myinc_HEADERS+=pkcs11h-certificate.h
+pkcs11hinclude_HEADERS+=pkcs11h-certificate.h
 else
 noinst_HEADERS+=pkcs11h-certificate.h
 endif
 if ENABLE_PKCS11H_DATA
-myinc_HEADERS+=pkcs11h-data.h
+pkcs11hinclude_HEADERS+=pkcs11h-data.h
 else
 noinst_HEADERS+=pkcs11h-data.h
 endif
 if ENABLE_PKCS11H_OPENSSL
-myinc_HEADERS+=pkcs11h-openssl.h
+pkcs11hinclude_HEADERS+=pkcs11h-openssl.h
 else
 noinst_HEADERS+=pkcs11h-openssl.h
 endif
 if ENABLE_PKCS11H_TOKEN
-myinc_HEADERS+=pkcs11h-token.h
+pkcs11hinclude_HEADERS+=pkcs11h-token.h
 else
 noinst_HEADERS+=pkcs11h-token.h
 endif
-

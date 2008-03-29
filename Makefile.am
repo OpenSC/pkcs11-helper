@@ -49,11 +49,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# This option prevents autoreconf from overriding our COPYING and
-# INSTALL targets:
 AUTOMAKE_OPTIONS=foreign dist-bzip2
+ACLOCAL_AMFLAGS = -I aclocal
 
-SUBDIRS=man include lib m4dir doc distro tests
+MAINTAINERCLEANFILES = \
+	Makefile.in config.h.in config.h.in~ configure \
+	install-sh ltmain.sh missing mkinstalldirs \
+	compile depcomp config.log config.status \
+	config.guess config.sub acinclude.m4 aclocal.m4
+
+SUBDIRS=aclocal man include lib m4dir doc distro tests
 
 dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 noinst_HEADERS=config-w32-vc.h

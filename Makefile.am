@@ -52,7 +52,7 @@
 AUTOMAKE_OPTIONS=foreign dist-bzip2
 ACLOCAL_AMFLAGS = -I aclocal
 
-MAINTAINERCLEANFILES = \
+MAINTAINERCLEANFILES= \
 	Makefile.in config.h.in config.h.in~ configure \
 	install-sh ltmain.sh missing mkinstalldirs \
 	compile depcomp config.log config.status \

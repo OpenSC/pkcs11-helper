@@ -39,6 +39,7 @@ pkcs11h-version.h
 config-w32-vc.h
 pkcs11-helper.exports
 libpkcs11-helper-1.pc
+versioninfo.rc
 
 copyright
 pkcs11-helper.spec

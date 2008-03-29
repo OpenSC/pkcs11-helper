@@ -49,4 +49,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+
 dist_noinst_DATA=pkcs11-helper.spec

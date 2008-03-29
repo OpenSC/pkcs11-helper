@@ -49,6 +49,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+CLEANFILES=pkcs11-helper.exports
+
 EXTRA_DIST= \
 	Makefile.w32-vc \
 	certificate.exports \
@@ -57,13 +60,10 @@ EXTRA_DIST= \
 	openssl.exports \
 	slotevent.exports \
 	token.exports
-CLEANFILES= \
-	pkcs11-helper.exports
 
-pkgconfig_DATA=libpkcs11-helper-1.pc
-
-lib_LTLIBRARIES=libpkcs11-helper.la
 BUILT_SOURCES=pkcs11-helper.exports
+pkgconfig_DATA=libpkcs11-helper-1.pc
+lib_LTLIBRARIES=libpkcs11-helper.la
 
 INCLUDES= \
 	-I$(top_srcdir)/include

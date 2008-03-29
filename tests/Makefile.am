@@ -49,6 +49,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+
 SUBDIRS= \
 	test-basic \
 	test-certificate \

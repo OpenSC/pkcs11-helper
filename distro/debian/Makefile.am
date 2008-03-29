@@ -50,6 +50,7 @@
 #
 
 SUFFIXES=.m4
+MAINTAINERCLEANFILES=Makefile.in
 CLEANFILES=copyright
 BUILT_SOURCES=copyright
 

@@ -49,6 +49,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+MAINTAINERCLEANFILES=Makefile.in
+
 TESTS=test-basic
 noinst_PROGRAMS=test-basic
 

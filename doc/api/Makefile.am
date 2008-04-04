@@ -49,9 +49,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-dist_noinst_DATA=Doxyfile Doxyfile_footer.html *.dox *.gif
+dist_noinst_DATA=Doxyfile $(srcdir)/Doxyfile_footer.html $(srcdir)/*.dox $(srcdir)/*.gif
 
 if ENABLE_DOC
 
@@ -59,11 +59,11 @@ apidoc_DATA=api.out/html/*
 
 api.out/html/*: \
 		$(EXTRA_DIST) \
-		../../include/pkcs11-helper-1.0/*.h \
-		*.gif
+		$(top_srcdir)/include/pkcs11-helper-1.0/*.h \
+		$(srcdir)/*.gif
 	-rm -fr api.out
 	$(DOXYGEN)
-	cp *.gif api.out/html
+	cp "$(srcdir)"/*.gif api.out/html
 
 endif
 

@@ -49,7 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 SUBDIRS= \
 	test-basic \

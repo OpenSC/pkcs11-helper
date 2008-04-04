@@ -49,6 +49,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 dist_m4_DATA=pkcs11-helper-1.m4

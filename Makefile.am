@@ -49,14 +49,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-AUTOMAKE_OPTIONS=foreign dist-bzip2
+AUTOMAKE_OPTIONS=foreign dist-bzip2 1.10
 ACLOCAL_AMFLAGS = -I aclocal
 
 MAINTAINERCLEANFILES= \
-	Makefile.in config.h.in config.h.in~ configure \
-	install-sh ltmain.sh missing mkinstalldirs \
-	compile depcomp config.log config.status \
-	config.guess config.sub acinclude.m4 aclocal.m4
+	config.log config.status \
+	$(srcdir)/Makefile.in \
+	$(srcdir)/config.h.in $(srcdir)/config.h.in~ $(srcdir)/configure \
+	$(srcdir)/install-sh $(srcdir)/ltmain.sh $(srcdir)/missing \
+	$(srcdir)/depcomp $(srcdir)/aclocal.m4 \
+	$(srcdir)/config.guess $(srcdir)/config.sub \
+	$(srcdir)/pkcs11-helper.spec
 
 SUBDIRS=aclocal man include lib m4dir doc distro tests
 
@@ -67,4 +70,4 @@ noinst_HEADERS=config-w32-vc.h
 # pkcs11-helper.spec must be on root for invalid RPM
 #
 dist-hook:
-	$(LN_S) distro/rpm/pkcs11-helper.spec "$(distdir)/pkcs11-helper.spec"
+	$(LN_S) "distro/rpm/pkcs11-helper.spec" "$(distdir)/pkcs11-helper.spec"

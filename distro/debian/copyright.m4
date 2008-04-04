@@ -7,7 +7,7 @@ Upstream Author: Alon Bar-Lev <alon.barlev@gmail.com>
 
 Copyright: Copyright (c) 2005-2006 Alon Bar-Lev
 
-include(../../COPYING)
+include(top_srcdir/COPYING)
 
 On Debian GNU/Linux systems, the complete text of the GNU General
 Public License can be found in `/usr/share/common-licenses/GPL'. 

@@ -49,7 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 pkcs11hinclude_HEADERS= \
 	pkcs11.h \

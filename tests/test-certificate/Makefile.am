@@ -49,13 +49,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 TESTS=test-certificate
 noinst_PROGRAMS=test-certificate
 
 INCLUDES= \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include
 LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 

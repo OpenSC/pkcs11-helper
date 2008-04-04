@@ -49,7 +49,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 CLEANFILES=pkcs11-helper.exports
 
 EXTRA_DIST= \
@@ -66,7 +66,8 @@ pkgconfig_DATA=libpkcs11-helper-1.pc
 lib_LTLIBRARIES=libpkcs11-helper.la
 
 INCLUDES= \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include
 
 nodist_libpkcs11_helper_la_SOURCES= \
 	pkcs11-helper.exports
@@ -88,7 +89,7 @@ libpkcs11_helper_la_SOURCES= \
 libpkcs11_helper_la_LDFLAGS= \
 	$(AM_LDFLAGS) \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \
-	-export-symbols pkcs11-helper.exports \
+	-export-symbols "pkcs11-helper.exports" \
 	-no-undefined
 if WIN32
 libpkcs11_helper_la_SOURCES+=versioninfo.rc
@@ -97,28 +98,28 @@ EXTRA_DIST+=versioninfo.rc
 endif
 
 pkcs11-helper.exports: \
-		../config.h \
-		certificate.exports \
-		core.exports \
-		data.exports \
-		openssl.exports \
-		slotevent.exports \
-		token.exports
-	cat core.exports > pkcs11-helper.exports
+		$(top_builddir)/config.h \
+		$(srcdir)/certificate.exports \
+		$(srcdir)/core.exports \
+		$(srcdir)/data.exports \
+		$(srcdir)/openssl.exports \
+		$(srcdir)/slotevent.exports \
+		$(srcdir)/token.exports
+	cat "$(srcdir)/core.exports" > pkcs11-helper.exports
 if ENABLE_PKCS11H_CERTIFICATE
-	cat certificate.exports >> pkcs11-helper.exports
+	cat "$(srcdir)/certificate.exports" >> pkcs11-helper.exports
 endif
 if ENABLE_PKCS11H_DATA
-	cat data.exports >> pkcs11-helper.exports
+	cat "$(srcdir)/data.exports" >> pkcs11-helper.exports
 endif
 if ENABLE_PKCS11H_OPENSSL
-	cat openssl.exports >> pkcs11-helper.exports
+	cat "$(srcdir)/openssl.exports" >> pkcs11-helper.exports
 endif
 if ENABLE_PKCS11H_SLOTEVENT
-	cat slotevent.exports >> pkcs11-helper.exports
+	cat "$(srcdir)/slotevent.exports" >> pkcs11-helper.exports
 endif
 if ENABLE_PKCS11H_TOKEN
-	cat token.exports >> pkcs11-helper.exports
+	cat "$(srcdir)/token.exports" >> pkcs11-helper.exports
 endif
 
 if WIN32
@@ -132,8 +133,7 @@ RCCOMPILE = $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 LTRCCOMPILE = $(LIBTOOL) --mode=compile --tag=RC $(RCCOMPILE)
 
 .rc.lo:
-	$(LTRCCOMPILE) -i $< -o $@
+	$(LTRCCOMPILE) -i "$<" -o "$@"
 
 .rc.o:
-	$(RCCOMPILE) -i $< -o $@
-
+	$(RCCOMPILE) -i "$<" -o "$@"

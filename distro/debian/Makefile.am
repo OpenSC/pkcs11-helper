@@ -50,7 +50,7 @@
 #
 
 SUFFIXES=.m4
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 CLEANFILES=copyright
 BUILT_SOURCES=copyright
 
@@ -67,4 +67,4 @@ dist_noinst_DATA= \
 	libpkcs11-helper1.install
 
 .m4:
-	$(M4) $^ > $@
+	$(M4) -Dtop_srcdir="$(top_srcdir)" "$^" > "$@"

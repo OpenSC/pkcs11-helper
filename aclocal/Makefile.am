@@ -49,6 +49,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=Makefile.in
+MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 dist_noinst_DATA=vararg.m4 size_t.m4

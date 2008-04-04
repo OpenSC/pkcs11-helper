@@ -450,6 +450,7 @@ AC_CONFIG_FILES([
 	man/Makefile
 	doc/Makefile
 	doc/api/Makefile
+	doc/api/Doxyfile
 	lib/Makefile
 	lib/libpkcs11-helper-1.pc
 	lib/versioninfo.rc

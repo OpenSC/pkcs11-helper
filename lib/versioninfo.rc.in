@@ -1,6 +1,3 @@
-/* This file is processed by configure to create versioninfo.rc */
-
-#include <afxres.h>
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION @LIBPKCS11_HELPER_LT_CURRENT@,@LIBPKCS11_HELPER_LT_AGE@,@LIBPKCS11_HELPER_LT_REVISION@,0

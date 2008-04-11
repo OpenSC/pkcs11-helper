@@ -51,7 +51,12 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-SUBDIRS= \
+COMMON= \
 	test-basic \
 	test-certificate \
 	test-slotevent
+
+if ENABLE_TESTS
+SUBDIRS = $(COMMON)
+endif
+DIST_SUBDIRS = $(COMMON)

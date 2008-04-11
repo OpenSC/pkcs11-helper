@@ -49,10 +49,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
+MAINTAINERCLEANFILES=\
+	$(srcdir)/Makefile.in
+	$(srcdir)/versioninfo.rc
 CLEANFILES=pkcs11-helper.exports
 
-EXTRA_DIST= \
+dist_noinst_DATA= \
 	Makefile.w32-vc \
 	certificate.exports \
 	core.exports \
@@ -94,7 +96,7 @@ libpkcs11_helper_la_LDFLAGS= \
 if WIN32
 libpkcs11_helper_la_SOURCES+=versioninfo.rc
 else
-EXTRA_DIST+=versioninfo.rc
+dist_noinst_DATA+=versioninfo.rc
 endif
 
 pkcs11-helper.exports: \

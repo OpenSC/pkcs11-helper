@@ -205,6 +205,13 @@ AC_ARG_ENABLE(
 	[enable_crypto_engine_win32="yes"]
 )
 
+AC_ARG_ENABLE(
+	[tests],
+	[AC_HELP_STRING([--enable-tests], [enable tests])],
+	,
+	[enable_tests="no"]
+)
+
 AC_ARG_WITH(
 	[apidocdir],
 	[AC_HELP_STRING([--with-apidocdir], [put API documents at this directory, default HTMLDIR/api])],
@@ -440,6 +447,7 @@ AM_CONDITIONAL([ENABLE_PKCS11H_DATA], [test "${enable_data}" = "yes"])
 AM_CONDITIONAL([ENABLE_PKCS11H_CERTIFICATE], [test "${enable_certificate}" = "yes"])
 AM_CONDITIONAL([ENABLE_PKCS11H_SLOTEVENT], [test "${enable_slotevent}" = "yes"])
 AM_CONDITIONAL([ENABLE_PKCS11H_OPENSSL], [test "${enable_openssl}" = "yes"])
+AM_CONDITIONAL([ENABLE_TESTS], [test "${enable_tests}" = "yes"])
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h

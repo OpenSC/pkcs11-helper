@@ -59,7 +59,7 @@ MAINTAINERCLEANFILES= \
 	$(srcdir)/install-sh $(srcdir)/ltmain.sh $(srcdir)/missing \
 	$(srcdir)/depcomp $(srcdir)/aclocal.m4 \
 	$(srcdir)/config.guess $(srcdir)/config.sub \
-	$(srcdir)/pkcs11-helper.spec
+	$(srcdir)/pkcs11-helper.spec $(srcdir)/config-w32-vc.h
 
 SUBDIRS=aclocal man include lib m4dir doc distro tests
 

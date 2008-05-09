@@ -239,14 +239,17 @@ AC_LIBTOOL_WIN32_DLL
 AC_LIBTOOL_RC
 AC_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG
+AC_ARG_VAR([M4], [m4 utility])
 AC_CHECK_PROGS([M4], [m4])
 
 if test "${enable_doc}" = "yes"; then
+	AC_ARG_VAR([DOXYGEN], [doxygen utility])
 	AC_CHECK_PROGS([DOXYGEN], [doxygen])
 	test -z "${DOXYGEN}" && AC_MSG_ERROR([doxygen is required for docs])
 fi
 
 if test "${WIN32}" = "yes"; then
+	AC_ARG_VAR([MAN2HTML], [man2html utility])
 	AC_CHECK_PROGS([MAN2HTML], [man2html])
 	test -z "${MAN2HTML}" && AC_MSG_ERROR([man2html is required for win32])
 fi

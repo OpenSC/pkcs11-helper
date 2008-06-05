@@ -457,7 +457,7 @@ AC_CONFIG_FILES([
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
 	include/pkcs11-helper-1.0/pkcs11h-version.h
-	aclocal/Makefile
+	m4/Makefile
 	man/Makefile
 	doc/Makefile
 	doc/api/Makefile

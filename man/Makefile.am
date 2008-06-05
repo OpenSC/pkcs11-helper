@@ -56,7 +56,7 @@ if WIN32
 nodist_html_DATA=pkcs11-helper-1.8.html
 dist_noinst_DATA=pkcs11-helper-1.8
 pkcs11-helper-1.8.html:	pkcs11-helper-1.8
-	$(MAN2HTML) < $^ > $@
+	$(MAN2HTML) < "$^" > "$@"
 else
 dist_man_MANS=pkcs11-helper-1.8
 endif

@@ -49,15 +49,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-AC_PREREQ([2.60])
+AC_PREREQ(2.60)
 
 define([PACKAGE_VERSION_MAJOR], [1])
 define([PACKAGE_VERSION_MINOR], [06])
 define([PACKAGE_VERSION_FIX], [0])
 
-AC_INIT([pkcs11-helper], [PACKAGE_VERSION_MAJOR.PACKAGE_VERSION_MINOR-beta1])
+AC_INIT([pkcs11-helper],[PACKAGE_VERSION_MAJOR.PACKAGE_VERSION_MINOR-beta1])
 AC_CONFIG_AUX_DIR([.])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([lib/common.h])
 AM_INIT_AUTOMAKE([${PACKAGE_NAME}], [${PACKAGE_VERSION}])
 
@@ -78,7 +79,7 @@ AC_CANONICAL_HOST
 
 AC_ARG_WITH(
 	[cygwin-native],
-	[AC_HELP_STRING([--with-cygwin-native], [compile native win32])],
+	[AS_HELP_STRING([--with-cygwin-native],[compile native win32])],
 	,
 	[with_cygwin_native="no"]
 )
@@ -109,136 +110,138 @@ esac
 
 AC_ARG_ENABLE(
 	[doc],
-	[AC_HELP_STRING([--enable-doc], [enable documantation])],
+	[AS_HELP_STRING([--enable-doc],[enable documantation])],
 	,
 	[enable_doc="no"]
 )
 
 AC_ARG_ENABLE(
 	[debug],
-	[AC_HELP_STRING([--disable-debug], [disable debug support])],
+	[AS_HELP_STRING([--disable-debug],[disable debug support])],
 	,
 	[enable_debug="yes"]
 )
 
 AC_ARG_ENABLE(
 	[threading],
-	[AC_HELP_STRING([--disable-threading], [disable threading])],
+	[AS_HELP_STRING([--disable-threading],[disable threading])],
 	,
 	[enable_threading="yes"]
 )
 
 AC_ARG_ENABLE(
 	[token],
-	[AC_HELP_STRING([--disable-token], [disable token support])],
+	[AS_HELP_STRING([--disable-token],[disable token support])],
 	,
 	[enable_token="yes"]
 )
 
 AC_ARG_ENABLE(
 	[data],
-	[AC_HELP_STRING([--disable-data], [disable data objects support])],
+	[AS_HELP_STRING([--disable-data],[disable data objects support])],
 	,
 	[enable_data="yes"]
 )
 
 AC_ARG_ENABLE(
 	[certificate],
-	[AC_HELP_STRING([--disable-certificate], [disable certificate support])],
+	[AS_HELP_STRING([--disable-certificate],[disable certificate support])],
 	,
 	[enable_certificate="yes"]
 )
 
 AC_ARG_ENABLE(
 	[slotevent],
-	[AC_HELP_STRING([--disable-slotevent], [disable slotevent support])],
+	[AS_HELP_STRING([--disable-slotevent],[disable slotevent support])],
 	,
 	[enable_slotevent="yes"]
 )
 
 AC_ARG_ENABLE(
 	[openssl],
-	[AC_HELP_STRING([--disable-openssl], [disable openssl interface])],
+	[AS_HELP_STRING([--disable-openssl],[disable openssl interface])],
 	,
 	[enable_openssl="yes"]
 )
 
 AC_ARG_ENABLE(
 	[strict],
-	[AC_HELP_STRING([--enable-strict], [enable strict compiler warnings])],
+	[AS_HELP_STRING([--enable-strict],[enable strict compiler warnings])],
 	,
 	[enable_strict="no"]
 )
 
 AC_ARG_ENABLE(
 	[pedantic],
-	[AC_HELP_STRING([--enable-pedantic], [enable pedantic compiler warnings])],
+	[AS_HELP_STRING([--enable-pedantic],[enable pedantic compiler warnings])],
 	,
 	[enable_pedantic="no"]
 )
 
 AC_ARG_ENABLE(
 	[crypto-engine-openssl],
-	[AC_HELP_STRING([--disable-crypto-engine-openssl], [disable OpenSSL crypto engine)])],
+	[AS_HELP_STRING([--disable-crypto-engine-openssl],[disable OpenSSL crypto engine)])],
 	,
 	[enable_crypto_engine_openssl="yes"]
 )
 
 AC_ARG_ENABLE(
 	[crypto-engine-gnutls],
-	[AC_HELP_STRING([--disable-crypto-engine-gnutls], [disable GnuTLS crypto engine])],
+	[AS_HELP_STRING([--disable-crypto-engine-gnutls],[disable GnuTLS crypto engine])],
 	,
 	[enable_crypto_engine_gnutls="yes"]
 )
 
 AC_ARG_ENABLE(
 	[crypto-engine-nss],
-	[AC_HELP_STRING([--disable-crypto-engine-nss], [disable NSS crypto engine])],
+	[AS_HELP_STRING([--disable-crypto-engine-nss],[disable NSS crypto engine])],
 	,
 	[enable_crypto_engine_nss="yes"]
 )
 
 AC_ARG_ENABLE(
 	[crypto-engine-win32],
-	[AC_HELP_STRING([--disable-crypto-engine-win32], [disable win32 native crypto engine on win32 systems])],
+	[AS_HELP_STRING([--disable-crypto-engine-win32],[disable win32 native crypto engine on win32 systems])],
 	,
 	[enable_crypto_engine_win32="yes"]
 )
 
 AC_ARG_ENABLE(
 	[tests],
-	[AC_HELP_STRING([--enable-tests], [enable tests])],
+	[AS_HELP_STRING([--enable-tests],[enable tests])],
 	,
 	[enable_tests="no"]
 )
 
 AC_ARG_WITH(
 	[apidocdir],
-	[AC_HELP_STRING([--with-apidocdir], [put API documents at this directory, default HTMLDIR/api])],
+	[AS_HELP_STRING([--with-apidocdir],[put API documents at this directory, default HTMLDIR/api])],
 	[apidocdir="${with_apidocdir}"],
 	[apidocdir="\$(htmldir)/api"]
 )
 
 AC_ARG_WITH(
 	[test-provider],
-	[AC_HELP_STRING([--with-test-provider=lib], [specify providers for test phase])],
+	[AS_HELP_STRING([--with-test-provider=lib],[specify providers for test phase])],
 	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["${withval}"], [Test provider])],
 	[AC_DEFINE_UNQUOTED([TEST_PROVIDER], ["/usr/lib/pkcs11/provider.so"], [Test provider])]
 )
 
 AC_ARG_WITH(
 	[test-log-level],
-	[AC_HELP_STRING([--with-test-log-level=level], [specify log level for test phase])],
+	[AS_HELP_STRING([--with-test-log-level=level],[specify log level for test phase])],
 	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [${withval}], [Test log level])],
 	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [3], [Test log level])]
 )
 
 AC_PROG_CC
 AC_PROG_INSTALL
+PKG_PROG_PKG_CONFIG
 AC_LIBTOOL_WIN32_DLL
 AC_LIBTOOL_RC
 AC_PROG_LIBTOOL
-PKG_PROG_PKG_CONFIG
+#LT_INIT([win32-dll])
+#LT_LANG([Windows Resource])
 AC_ARG_VAR([M4], [m4 utility])
 AC_CHECK_PROGS([M4], [m4])
 
@@ -457,7 +460,6 @@ AC_CONFIG_FILES([
 	include/Makefile
 	include/pkcs11-helper-1.0/Makefile
 	include/pkcs11-helper-1.0/pkcs11h-version.h
-	m4/Makefile
 	man/Makefile
 	doc/Makefile
 	doc/api/Makefile

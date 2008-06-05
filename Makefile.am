@@ -59,9 +59,12 @@ MAINTAINERCLEANFILES= \
 	$(srcdir)/install-sh $(srcdir)/ltmain.sh $(srcdir)/missing \
 	$(srcdir)/depcomp $(srcdir)/aclocal.m4 \
 	$(srcdir)/config.guess $(srcdir)/config.sub \
+	$(srcdir)/aclocal/ltsugar.m4 $(srcdir)/aclocal/libtool.m4 \
+	$(srcdir)/aclocal/ltversion.m4 $(srcdir)/aclocal/lt~obsolete.m4 \
+	$(srcdir)/aclocal/ltoptions.m4 \
 	$(srcdir)/pkcs11-helper.spec $(srcdir)/config-w32-vc.h
 
-SUBDIRS=aclocal man include lib m4dir doc distro tests
+SUBDIRS=man include lib m4dir doc distro tests
 
 dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 noinst_HEADERS=config-w32-vc.h

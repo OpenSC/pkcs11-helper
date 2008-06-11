@@ -237,13 +237,22 @@ AC_ARG_WITH(
 AC_PROG_CC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
-AC_LIBTOOL_WIN32_DLL
-AC_LIBTOOL_RC
-AC_PROG_LIBTOOL
-#LT_INIT([win32-dll])
-#LT_LANG([Windows Resource])
 AC_ARG_VAR([M4], [m4 utility])
 AC_CHECK_PROGS([M4], [m4])
+
+ifdef(
+	[LT_INIT],
+	[
+		LT_INIT([win32-dll])
+		LT_LANG([Windows Resource])
+	],
+	[
+		AC_LIBTOOL_WIN32_DLL
+		AC_LIBTOOL_RC
+		AC_PROG_LIBTOOL
+	]
+)
+
 
 if test "${enable_doc}" = "yes"; then
 	AC_ARG_VAR([DOXYGEN], [doxygen utility])

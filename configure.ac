@@ -289,6 +289,39 @@ fi
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
 
+# Checks for header files.
+AC_HEADER_STDC
+AX_CPP_VARARG_MACRO_ISO
+AX_CPP_VARARG_MACRO_GCC
+AC_C_CONST
+AC_C_VOLATILE
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AX_SIZE_T_PRINTF
+AC_CHECK_HEADERS([ \
+	stdio.h \
+	stdlib.h \
+	stdargs.h \
+	malloc.h \
+	ctype.h \
+	string.h \
+	errno.h \
+	assert.h \
+	time.h \
+])
+if test "${WIN32}" != "yes"; then
+	AC_CHECK_HEADERS([ \
+		signal.h \
+		dlfcn.h \
+		unistd.h \
+		sys/time.h \
+		pthread.h \
+	])
+fi
+
 AC_MSG_CHECKING([OpenSSL interface])
 if test "${enable_openssl}" = "yes"; then
 	if test "${have_openssl}" != "yes"; then
@@ -353,39 +386,6 @@ if test "${enable_crypto_engine_nss}" = "yes"; then
 	fi
 else
 	AC_MSG_RESULT([no])
-fi
-
-# Checks for header files.
-AC_HEADER_STDC
-AX_CPP_VARARG_MACRO_ISO
-AX_CPP_VARARG_MACRO_GCC
-AC_C_CONST
-AC_C_VOLATILE
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
-AX_SIZE_T_PRINTF
-AC_CHECK_HEADERS([ \
-	stdio.h \
-	stdlib.h \
-	stdargs.h \
-	malloc.h \
-	ctype.h \
-	string.h \
-	errno.h \
-	assert.h \
-	time.h \
-])
-if test "${WIN32}" != "yes"; then
-	AC_CHECK_HEADERS([ \
-		signal.h \
-		dlfcn.h \
-		unistd.h \
-		sys/time.h \
-		pthread.h \
-	])
 fi
 
 if test "${enable_pedantic}" = "yes"; then

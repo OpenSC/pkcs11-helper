@@ -1,9 +1,9 @@
 pkcs11-helper
-Copyright (c) 2006 Alon Bar-Lev <alon.barlev@gmail.com>
+Copyright (c) 2006-2008 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
-????-??-?? - Version 1.06
+2008-07-31 - Version 1.06
 
  * Some MinGW build fixups.
 

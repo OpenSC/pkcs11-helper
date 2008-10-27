@@ -87,7 +87,7 @@ AC_ARG_WITH(
 test -z "${WIN32}" && WIN32="no"
 test -z "${CYGWIN}" && CYGWIN="no"
 case "${host}" in
- 	*-mingw32*|*-winnt*)
+ 	*-mingw*|*-winnt*)
 		WIN32="yes"
 		WIN_LIBPREFIX="lib"
 	;;

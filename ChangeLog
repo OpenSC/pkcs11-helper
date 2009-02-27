@@ -3,6 +3,10 @@ Copyright (c) 2006-2008 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
+2009-02-27 - Version 1.07
+
+ * Minor Win64 fixup.
+
 2008-07-31 - Version 1.06
 
  * Some MinGW build fixups.

@@ -474,7 +474,7 @@ ___pkcs11h_thread_start (void *p) {
 	___pkcs11h_thread_data_t *_data = (___pkcs11h_thread_data_t *)p;
 	unsigned ret;
 
-	ret = (unsigned)(_data->start (_data->data) - (void*)0);
+	ret = (unsigned)((char*)_data->start (_data->data) - (char*)0);
 
 	_pkcs11h_mem_free ((void *)&_data);
 

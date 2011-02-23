@@ -6,6 +6,8 @@ $Id$
 2011-02-23 - Version 1.08
 
  * Do not attempt to logout if uninitialized, thanks to Jan Just Keijser.
+ * Use OpenSSL engine's rsa_priv_enc instead of rsa_sign, thanks to Markus
+   Friedl.
 
 2009-02-27 - Version 1.07
 

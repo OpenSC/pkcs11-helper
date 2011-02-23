@@ -96,13 +96,12 @@ __pkcs11h_openssl_dec (
 );
 static
 int
-__pkcs11h_openssl_sign (
-	IN int type,
-	IN unsigned char *m,
-	IN unsigned int m_len,
-	OUT unsigned char *sigret,
-	OUT unsigned int *siglen,
-	IN OUT RSA *rsa
+__pkcs11h_openssl_enc (
+	IN int flen,
+	IN unsigned char *from,
+	OUT unsigned char *to,
+	IN OUT RSA *rsa,
+	IN int padding
 );
 #else
 static
@@ -116,13 +115,12 @@ __pkcs11h_openssl_dec (
 );
 static
 int
-__pkcs11h_openssl_sign (
-	IN int type,
-	IN const unsigned char *m,
-	IN unsigned int m_len,
-	OUT unsigned char *sigret,
-	OUT unsigned int *siglen,
-	IN OUT const RSA *rsa
+__pkcs11h_openssl_enc (
+	IN int flen,
+	IN const unsigned char *from,
+	OUT unsigned char *to,
+	IN OUT RSA *rsa,
+	IN int padding
 );
 #endif
 static
@@ -223,6 +221,8 @@ __pkcs11h_openssl_dec (
 			rv = CKR_MECHANISM_INVALID;
 		break;
 	}
+	if (rv == CKR_MECHANISM_INVALID)
+		goto cleanup;
 
 	if ((rv = pkcs11h_certificate_lockSession (certificate)) != CKR_OK) {
 		goto cleanup;
@@ -270,108 +270,45 @@ cleanup:
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 static
 int
-__pkcs11h_openssl_sign (
-	IN int type,
-	IN unsigned char *m,
-	IN unsigned int m_len,
-	OUT unsigned char *sigret,
-	OUT unsigned int *siglen,
-	IN OUT RSA *rsa
+__pkcs11h_openssl_enc (
+	IN int flen,
+	IN unsigned char *from,
+	OUT unsigned char *to,
+	IN OUT RSA *rsa,
+	IN int padding
 ) {
 #else
 static
 int
-__pkcs11h_openssl_sign (
-	IN int type,
-	IN const unsigned char *m,
-	IN unsigned int m_len,
-	OUT unsigned char *sigret,
-	OUT unsigned int *siglen,
-	IN OUT const RSA *rsa
+__pkcs11h_openssl_enc (
+	IN int flen,
+	IN const unsigned char *from,
+	OUT unsigned char *to,
+	IN OUT RSA *rsa,
+	IN int padding
 ) {
 #endif
 	pkcs11h_certificate_t certificate = __pkcs11h_openssl_get_pkcs11h_certificate (rsa);
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_RV rv = CKR_FUNCTION_FAILED;
+	size_t tlen = (size_t)flen;
 
-	int myrsa_size = 0;
-	size_t size_temp;
-	
-	unsigned char *enc_alloc = NULL;
-	unsigned char *enc = NULL;
-	int enc_len = 0;
-
-	_PKCS11H_ASSERT (m!=NULL);
-	_PKCS11H_ASSERT (sigret!=NULL);
-	_PKCS11H_ASSERT (siglen!=NULL);
+	_PKCS11H_ASSERT (from!=NULL);
+	_PKCS11H_ASSERT (to!=NULL);
+	_PKCS11H_ASSERT (rsa!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_sign entered - type=%d, m=%p, m_len=%u, signret=%p, *siglen=%u, rsa=%p",
-		type,
-		m,
-		m_len,
-		sigret,
-		sigret != NULL ? *siglen : 0,
-		(void *)rsa
+		"PKCS#11: __pkcs11h_openssl_dec entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
+		flen,
+		from,
+		to,
+		(void *)rsa,
+		padding
 	);
 
-	myrsa_size = RSA_size (rsa);
-
-	if (type == NID_md5_sha1) {
-		enc = (unsigned char *)m;
-		enc_len = m_len;
-	}
-	else {
-		X509_SIG sig;
-		ASN1_TYPE parameter;
-		X509_ALGOR algor;
-		ASN1_OCTET_STRING digest;
-		unsigned char *p = NULL;
-
-		if ((rv = _pkcs11h_mem_malloc ((void*)&enc, myrsa_size+1)) != CKR_OK) {
-			goto cleanup;
-		}
-
-		enc_alloc = enc;
-		sig.algor = &algor;
-
-		if ((sig.algor->algorithm = OBJ_nid2obj (type)) == NULL) {
-			rv = CKR_FUNCTION_FAILED;
-			goto cleanup;
-		}
-	
-		if (sig.algor->algorithm->length == 0) {
-			rv = CKR_KEY_SIZE_RANGE;
-			goto cleanup;
-		}
-	
-		parameter.type = V_ASN1_NULL;
-		parameter.value.ptr = NULL;
-
-		sig.algor->parameter = &parameter;
-
-		sig.digest = &digest;
-		sig.digest->data = (unsigned char *)m;
-		sig.digest->length = m_len;
-	
-		if ((enc_len=i2d_X509_SIG (&sig, NULL)) < 0) {
-			rv = CKR_FUNCTION_FAILED;
-			goto cleanup;
-		}
-
-		/*
-		 * d_X509_SIG increments pointer!
-		 */
-		p = enc;
-		if ((enc_len=i2d_X509_SIG (&sig, &p)) < 0) {
-			rv = CKR_FUNCTION_FAILED;
-			goto cleanup;
-		}
-	}
-
-	if (enc_len > (myrsa_size - RSA_PKCS1_PADDING_SIZE)) {
-		rv = CKR_KEY_SIZE_RANGE;
+	if (padding != RSA_PKCS1_PADDING) {
+		rv = CKR_MECHANISM_INVALID;
 		goto cleanup;
 	}
 
@@ -385,23 +322,20 @@ __pkcs11h_openssl_sign (
 		"PKCS#11: Performing signature"
 	);
 
-	size_temp = myrsa_size;
-
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
 			CKM_RSA_PKCS,
-			enc,
-			enc_len,
-			sigret,
-			&size_temp
+			from,
+			flen,
+			to,
+			&tlen
 		)) != CKR_OK
 	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform signature %ld:'%s'", rv, pkcs11h_getMessage (rv));
 		goto cleanup;
 	}
 
-	*siglen = (unsigned int)size_temp;
 	rv = CKR_OK;
 
 cleanup:
@@ -411,18 +345,14 @@ cleanup:
 		session_locked = FALSE;
 	}
 
-	if (enc_alloc != NULL) {
-		_pkcs11h_mem_free ((void *)&enc_alloc);
-	}
-	
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_sign - return rv=%lu-'%s'",
+		"PKCS#11: __pkcs11h_openssl_dec - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
 
-	return rv == CKR_OK ? 1 : -1; 
+	return rv == CKR_OK ? (int)tlen : -1; 
 }
 
 static
@@ -580,7 +510,7 @@ pkcs11h_openssl_createSession (
 
 	openssl_session->smart_rsa.name = "pkcs11";
 	openssl_session->smart_rsa.rsa_priv_dec = __pkcs11h_openssl_dec;
-	openssl_session->smart_rsa.rsa_sign = __pkcs11h_openssl_sign;
+	openssl_session->smart_rsa.rsa_priv_enc = __pkcs11h_openssl_enc;
 	openssl_session->smart_rsa.finish = __pkcs11h_openssl_finish;
 	openssl_session->smart_rsa.flags  = RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY;
 	openssl_session->certificate = certificate;

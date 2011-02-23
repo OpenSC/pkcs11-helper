@@ -1099,6 +1099,8 @@ pkcs11h_logout (void) {
 		}
 	}
 
+cleanup:
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_logout return rv=%lu-'%s'",

@@ -1,6 +1,6 @@
 # pkcs11-helper-1.m4 - Macros to locate and utilise pkcs11-helper.     -*- Autoconf -*-
 #
-# Copyright (c) 2005-2008 Alon Bar-Lev <alon.barlev@gmail.com>
+# Copyright (c) 2005-2011 Alon Bar-Lev <alon.barlev@gmail.com>
 # All rights reserved.
 #
 # This software is available to you under a choice of one of two

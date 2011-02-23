@@ -1,6 +1,6 @@
 pkcs11-helper -- PKCS#11 simplification.
 
-Copyright (c) 2005-2008 Alon Bar-Lev <alon.barlev@gmail.com>
+Copyright (c) 2005-2011 Alon Bar-Lev <alon.barlev@gmail.com>
 
 ABOUT
 	PKCS#11 is published standard. PKCS#11 is the de-facto standard to access cryptographic

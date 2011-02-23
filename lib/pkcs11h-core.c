@@ -1072,6 +1072,10 @@ pkcs11h_logout (void) {
 		"PKCS#11: pkcs11h_logout entry"
 	);
 
+	if (_g_pkcs11h_data == NULL || !_g_pkcs11h_data->initialized) {
+		goto cleanup;
+	}
+
 	for (
 		current_session = _g_pkcs11h_data->sessions;
 		current_session != NULL;

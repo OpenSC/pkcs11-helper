@@ -299,7 +299,7 @@ __pkcs11h_openssl_enc (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_dec entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
+		"PKCS#11: __pkcs11h_openssl_enc entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
 		flen,
 		from,
 		to,
@@ -347,7 +347,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_dec - return rv=%lu-'%s'",
+		"PKCS#11: __pkcs11h_openssl_enc - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);

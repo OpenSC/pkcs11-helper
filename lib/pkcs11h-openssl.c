@@ -291,7 +291,7 @@ __pkcs11h_openssl_enc (
 	pkcs11h_certificate_t certificate = __pkcs11h_openssl_get_pkcs11h_certificate (rsa);
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	size_t tlen = (size_t)flen;
+	size_t tlen;
 
 	_PKCS11H_ASSERT (from!=NULL);
 	_PKCS11H_ASSERT (to!=NULL);
@@ -311,6 +311,8 @@ __pkcs11h_openssl_enc (
 		rv = CKR_MECHANISM_INVALID;
 		goto cleanup;
 	}
+
+	tlen = (size_t)RSA_size(rsa);
 
 	if ((rv = pkcs11h_certificate_lockSession (certificate)) != CKR_OK) {
 		goto cleanup;

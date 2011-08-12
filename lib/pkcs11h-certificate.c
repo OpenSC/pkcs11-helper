@@ -961,16 +961,17 @@ __pkcs11h_certificate_doPrivateOperation (
 			rv
 		);
 
+		if (rv == CKR_BUFFER_TOO_SMALL && op != __pkcs11h_private_op_unwrap) {
+			certificate->operation_active = TRUE;
+		}
+
 		if (target != NULL) {
 			if (rv != CKR_OK) {
 				goto retry;
 			}
 		}
 		else {
-			if (
-				rv == CKR_OK ||
-				rv == CKR_BUFFER_TOO_SMALL
-			) {
+			if (rv == CKR_OK) {
 				if (op != __pkcs11h_private_op_unwrap) {
 					certificate->operation_active = TRUE;
 				}
@@ -994,6 +995,10 @@ __pkcs11h_certificate_doPrivateOperation (
 		}
 
 		if (!op_succeed) {
+			if (rv == CKR_BUFFER_TOO_SMALL) {
+				goto cleanup;
+			}
+
 			/*
 			 * OpenSC workaround
 			 * It still allows C_FindObjectsInit when

@@ -3,6 +3,10 @@ Copyright (c) 2005-2011 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
+????-??-?? - Version 1.09
+
+ * Do not retry if CKR_BUFFER_TOO_SMALL and none NULL target.
+
 2011-02-23 - Version 1.08
 
  * Do not attempt to logout if uninitialized, thanks to Jan Just Keijser.

@@ -6,6 +6,7 @@ $Id$
 ????-??-?? - Version 1.09
 
  * Do not retry if CKR_BUFFER_TOO_SMALL and none NULL target.
+ * Fixup OpenSSL engine's rsa_priv_enc to use RSA size output buffer.
 
 2011-02-23 - Version 1.08
 

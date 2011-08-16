@@ -52,7 +52,7 @@
 AC_PREREQ(2.60)
 
 define([PACKAGE_VERSION_MAJOR], [1])
-define([PACKAGE_VERSION_MINOR], [9])
+define([PACKAGE_VERSION_MINOR], [09])
 define([PACKAGE_VERSION_FIX], [0])
 define([PACKAGE_SUFFIX], [])
 

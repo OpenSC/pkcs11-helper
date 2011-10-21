@@ -1591,14 +1591,14 @@ pkcs11h_certificate_signAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_SIGN) != 0
 	) {
 		switch (
-			pkcs11h_certificate_sign (
+			(rv = pkcs11h_certificate_sign (
 				certificate,
 				mech_type,
 				source,
 				source_size,
 				target,
 				p_target_size
-			)
+			))
 		) {
 			case CKR_OK:
 				acked = TRUE;
@@ -1618,14 +1618,14 @@ pkcs11h_certificate_signAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_RECOVER) != 0
 	) {
 		switch (
-			pkcs11h_certificate_signRecover (
+			(rv = pkcs11h_certificate_signRecover (
 				certificate,
 				mech_type,
 				source,
 				source_size,
 				target,
 				p_target_size
-			)
+			))
 		) {
 			case CKR_OK:
 				acked = TRUE;

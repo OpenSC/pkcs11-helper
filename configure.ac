@@ -208,10 +208,10 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
-	[crypto-engine-win32],
-	[AS_HELP_STRING([--disable-crypto-engine-win32],[disable win32 native crypto engine on win32 systems])],
+	[crypto-engine-cryptoapi],
+	[AS_HELP_STRING([--disable-crypto-engine-cryptoapi],[disable cryptoapi native crypto engine on windows systems])],
 	,
-	[enable_crypto_engine_win32="yes"]
+	[enable_crypto_engine_cryptoapi="yes"]
 )
 
 AC_ARG_ENABLE(
@@ -358,9 +358,9 @@ else
 fi
 
 AC_MSG_CHECKING([Win32 crypto engine])
-if test "${WIN32}" = "yes" -a "${enable_crypto_engine_win32}" = "yes"; then
+if test "${WIN32}" = "yes" -a "${enable_crypto_engine_cryptoapi}" = "yes"; then
 	AC_MSG_RESULT([yes])
-	AC_DEFINE([ENABLE_PKCS11H_ENGINE_WIN32], [1], [Enable win32 crypto engine])
+	AC_DEFINE([ENABLE_PKCS11H_ENGINE_CRYPTOAPI], [1], [Enable cryptoapi crypto engine])
 else
 	AC_MSG_RESULT([no])
 fi
@@ -470,12 +470,27 @@ if test "${enable_openssl}" = "yes"; then
 	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], [1], [Enable openssl interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
 fi
-if test \
-	"${enable_crypto_engine_openssl}" = "yes" -o \
-	"${enable_crypto_engine_gnutls}" = "yes" -o \
-	"${enable_crypto_engine_nss}" = "yes" -o \
-	"${enable_crypto_engine_polarssl}" = "yes" -o \
-	"${enable_crypto_engine_win32}" = "yes"; then
+if test "${enable_crypto_engine_openssl}" = "yes"; then
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_openssl"
+fi
+if test "${enable_crypto_engine_nss}" = "yes"; then
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_nss"
+fi
+if test "${enable_crypto_engine_polarssl}" = "yes"; then
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_polarssl"
+fi
+if test "${enable_crypto_engine_cryptoapi}" = "yes"; then
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_cryptoapi"
+fi
+if test "${enable_crypto_engine_gnutls}" = "yes"; then
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_gnutls"
+fi
+if test -n "${crypto_engine}"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
 

@@ -88,7 +88,12 @@ extern "C" {
 #define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_OPENSSL	(1<< 0)
 /** Engine GNUTLS is enabled. */
 #define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_GNUTLS	(1<< 1)
-/** Engine GNUTLS is enabled. */
+/** Engine CryptoAPI is enabled. */
+#define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_CRYPTOAPI	(1<< 2)
+/**
+ * Engine CryptoAPI is enabled.
+ * @deprecated
+ */
 #define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_WIN32	(1<< 2)
 /** Debugging (logging) is enabled. */
 #define PKCS11H_FEATURE_MASK_DEBUG			(1<< 3)

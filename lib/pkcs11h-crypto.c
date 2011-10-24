@@ -56,20 +56,20 @@
 #include "_pkcs11h-sys.h"
 #include "_pkcs11h-crypto.h"
 
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32;
+#if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_cryptoapi;
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
-extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl;
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl;
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_NSS)
-extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss;
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss;
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
-extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_polarssl;
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_polarssl;
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-extern pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls;
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls;
 #endif
 
 pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
@@ -91,8 +91,8 @@ pkcs11h_engine_setCrypto (
 	/*_PKCS11H_ASSERT (engine!=NULL); Not required */
 
 	if (engine == PKCS11H_ENGINE_CRYPTO_AUTO) {
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
+#if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
+		_engine = &_g_pkcs11h_crypto_engine_cryptoapi;
 #elif defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 		_engine = &_g_pkcs11h_crypto_engine_openssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_NSS)
@@ -107,8 +107,8 @@ pkcs11h_engine_setCrypto (
 #endif
 	}
 	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
+#if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
+		_engine = &_g_pkcs11h_crypto_engine_cryptoapi;
 #elif defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
 		_engine = &_g_pkcs11h_crypto_engine_polarssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
@@ -118,9 +118,9 @@ pkcs11h_engine_setCrypto (
 		goto cleanup;
 #endif
 	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
-		_engine = &_g_pkcs11h_crypto_engine_win32;
+	else if (engine == PKCS11H_ENGINE_CRYPTO_CRYPTOAPI) {
+#if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
+		_engine = &_g_pkcs11h_crypto_engine_cryptoapi;
 #else
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;

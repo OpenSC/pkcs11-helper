@@ -56,7 +56,7 @@
 #include "_pkcs11h-sys.h"
 #include "_pkcs11h-crypto.h"
 
-#if defined(ENABLE_PKCS11H_ENGINE_WIN32)
+#if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
 #include <wincrypt.h>
 #if !defined(CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT)
 #define CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT	0x02
@@ -94,20 +94,20 @@ typedef BOOL (WINAPI *__CryptVerifyCertificateSignatureEx_t) (
 	void* pvReserved
 );
 
-typedef struct __crypto_win32_data_s {
+typedef struct __crypto_cryptoapi_data_s {
 	HMODULE handle;
 	__CertCreateCertificateContext_t p_CertCreateCertificateContext;
 	__CertFreeCertificateContext_t p_CertFreeCertificateContext;
 	CertNameToStrW_t p_CertNameToStrW;
 	__CryptVerifyCertificateSignatureEx_t p_CryptVerifyCertificateSignatureEx;
-} *__crypto_win32_data_t;
+} *__crypto_cryptoapi_data_t;
 
 static
 int
-__pkcs11h_crypto_win32_uninitialize (
+__pkcs11h_crypto_cryptoapi_uninitialize (
 	IN void * const global_data
 ) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
+	__crypto_cryptoapi_data_t data = (__crypto_cryptoapi_data_t)global_data;
 
 	_PKCS11H_ASSERT (global_data!=NULL);
 
@@ -116,21 +116,21 @@ __pkcs11h_crypto_win32_uninitialize (
 		data->handle = NULL;
 	}
 
-	memset (data, 0, sizeof (struct __crypto_win32_data_s));
+	memset (data, 0, sizeof (struct __crypto_cryptoapi_data_s));
 
 	return 1;
 }
 
 static
 int
-__pkcs11h_crypto_win32_initialize (
+__pkcs11h_crypto_cryptoapi_initialize (
 	IN void * const global_data
 ) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
+	__crypto_cryptoapi_data_t data = (__crypto_cryptoapi_data_t)global_data;
 
 	_PKCS11H_ASSERT (global_data!=NULL);
 
-	__pkcs11h_crypto_win32_uninitialize (data);
+	__pkcs11h_crypto_cryptoapi_uninitialize (data);
 
 	data->handle = LoadLibraryA ("crypt32.dll");
 	if (data->handle == NULL) {
@@ -160,7 +160,7 @@ __pkcs11h_crypto_win32_initialize (
 		data->p_CertNameToStrW == NULL ||
 		data->p_CryptVerifyCertificateSignatureEx == NULL
 	) {
-		__pkcs11h_crypto_win32_uninitialize (data);
+		__pkcs11h_crypto_cryptoapi_uninitialize (data);
 		return 0;
 	}
 
@@ -169,13 +169,13 @@ __pkcs11h_crypto_win32_initialize (
 
 static
 int
-__pkcs11h_crypto_win32_certificate_get_expiration (
+__pkcs11h_crypto_cryptoapi_certificate_get_expiration (
 	IN void * const global_data,
 	IN const unsigned char * const blob,
 	IN const size_t blob_size,
 	OUT time_t * const expiration
 ) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
+	__crypto_cryptoapi_data_t data = (__crypto_cryptoapi_data_t)global_data;
 	PCCERT_CONTEXT cert = NULL;
 	PKCS11H_BOOL ok = FALSE;
 	SYSTEMTIME ust, st;
@@ -226,14 +226,14 @@ cleanup:
 
 static
 int
-__pkcs11h_crypto_win32_certificate_get_dn (
+__pkcs11h_crypto_cryptoapi_certificate_get_dn (
 	IN void * const global_data,
 	IN const unsigned char * const blob,
 	IN const size_t blob_size,
 	OUT char * const dn,
 	IN const size_t dn_max
 ) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
+	__crypto_cryptoapi_data_t data = (__crypto_cryptoapi_data_t)global_data;
 	PCCERT_CONTEXT cert = NULL;
 	PKCS11H_BOOL ok = TRUE;
 	DWORD wsize;
@@ -308,14 +308,14 @@ cleanup:
 
 static
 int
-__pkcs11h_crypto_win32_certificate_is_issuer (
+__pkcs11h_crypto_cryptoapi_certificate_is_issuer (
 	IN void * const global_data,
 	IN const unsigned char * const issuer_blob,
 	IN const size_t issuer_blob_size,
 	IN const unsigned char * const cert_blob,
 	IN const size_t cert_blob_size
 ) {
-	__crypto_win32_data_t data = (__crypto_win32_data_t)global_data;
+	__crypto_cryptoapi_data_t data = (__crypto_cryptoapi_data_t)global_data;
 	PCCERT_CONTEXT cert_issuer = NULL;
 	PCCERT_CONTEXT cert_cert = NULL;
 	PKCS11H_BOOL issuer = FALSE;
@@ -369,14 +369,14 @@ cleanup:
 	return issuer != FALSE;
 }
 
-static struct __crypto_win32_data_s s_win32_data = { NULL };
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
-	&s_win32_data,
-	__pkcs11h_crypto_win32_initialize,
-	__pkcs11h_crypto_win32_uninitialize,
-	__pkcs11h_crypto_win32_certificate_get_expiration,
-	__pkcs11h_crypto_win32_certificate_get_dn,
-	__pkcs11h_crypto_win32_certificate_is_issuer
+static struct __crypto_cryptoapi_data_s s_cryptoapi_data = { NULL };
+const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_cryptoapi = {
+	&s_cryptoapi_data,
+	__pkcs11h_crypto_cryptoapi_initialize,
+	__pkcs11h_crypto_cryptoapi_uninitialize,
+	__pkcs11h_crypto_cryptoapi_certificate_get_expiration,
+	__pkcs11h_crypto_cryptoapi_certificate_get_dn,
+	__pkcs11h_crypto_cryptoapi_certificate_is_issuer
 };
 
-#endif				/* ENABLE_PKCS11H_ENGINE_WIN32 */
+#endif				/* ENABLE_PKCS11H_ENGINE_CRYPTOAPI */

@@ -287,7 +287,7 @@ cleanup:
 	return is_issuer;
 }
 
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
+const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls = {
 	NULL,
 	__pkcs11h_crypto_gnutls_initialize,
 	__pkcs11h_crypto_gnutls_uninitialize,

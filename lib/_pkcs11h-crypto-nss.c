@@ -236,7 +236,7 @@ cleanup:
 }
 
 static int s_nss_data = 0;
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss = {
+const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss = {
 	&s_nss_data,
 	__pkcs11h_crypto_nss_initialize,
 	__pkcs11h_crypto_nss_uninitialize,

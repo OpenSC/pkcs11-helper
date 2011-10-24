@@ -300,7 +300,7 @@ cleanup:
 	return is_issuer;
 }
 
-static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl = {
+const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl = {
 	NULL,
 	__pkcs11h_crypto_openssl_initialize,
 	__pkcs11h_crypto_openssl_uninitialize,

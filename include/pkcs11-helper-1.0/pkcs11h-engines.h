@@ -204,7 +204,12 @@ typedef struct pkcs11h_crypto_engine_s {
 #define PKCS11H_ENGINE_CRYPTO_OPENSSL	((pkcs11h_engine_crypto_t *)1)
 /** Select GnuTLS. */
 #define PKCS11H_ENGINE_CRYPTO_GNUTLS	((pkcs11h_engine_crypto_t *)2)
-/** Select Win32. */
+/** Select CryptoAPI. */
+#define PKCS11H_ENGINE_CRYPTO_CRYPTOAPI	((pkcs11h_engine_crypto_t *)3)
+/**
+ * Select CryptoAPI.
+ * @deprecated
+ */
 #define PKCS11H_ENGINE_CRYPTO_WIN32	((pkcs11h_engine_crypto_t *)3)
 /** Select NSS. */
 #define PKCS11H_ENGINE_CRYPTO_NSS	((pkcs11h_engine_crypto_t *)4)

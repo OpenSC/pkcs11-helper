@@ -6,6 +6,11 @@ $Id$
 ????-??-?? - Version 1.10
 
  * PolarSSL crypto engine by Adriaan de Jong
+ * build: --disable-crypto-engine-win32 renamed to --disable-crypto-engine-cryptoapi 
+ * api: PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_WIN32 renamed to
+   PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_CRYPTOAPI.
+ * api: PKCS11H_ENGINE_CRYPTO_WIN32 renamed to
+   PKCS11H_ENGINE_CRYPTO_CRYPTOAPI
 
 2011-08-16 - Version 1.09
 

@@ -70,6 +70,11 @@
 #include <cert.h>
 #endif
 
+#if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+#include <polarssl/x509.h>
+#include <polarssl/version.h>
+#endif
+
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 #include <wincrypt.h>
 #if !defined(CRYPT_VERIFY_CERT_SIGN_SUBJECT_CERT)
@@ -1112,6 +1117,169 @@ static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_win32 = {
 
 #endif				/* ENABLE_PKCS11H_ENGINE_WIN32 */
 
+#if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+
+static
+int
+__pkcs11h_crypto_polarssl_initialize (
+	IN void * const global_data
+) {
+	(void)global_data;
+
+	return TRUE;
+}
+
+static
+int
+__pkcs11h_crypto_polarssl_uninitialize (
+	IN void * const global_data
+) {
+	(void)global_data;
+
+	return TRUE;
+}
+
+static
+int
+__pkcs11h_crypto_polarssl_certificate_get_expiration (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT time_t * const expiration
+) {
+	x509_cert x509;
+
+	(void)global_data;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (expiration!=NULL);
+
+	*expiration = (time_t)0;
+
+	memset(&x509, 0, sizeof(x509));
+	if (0 != x509parse_crt (&x509, blob, blob_size)) {
+		goto cleanup;
+	}
+
+	if (0 == x509parse_time_expired(&x509.valid_to)) {
+		struct tm tm1;
+
+		memset (&tm1, 0, sizeof (tm1));
+		tm1.tm_year = x509.valid_to.year - 1900;
+		tm1.tm_mon  = x509.valid_to.mon  - 1;
+		tm1.tm_mday = x509.valid_to.day;
+		tm1.tm_hour = x509.valid_to.hour - 1;
+		tm1.tm_min  = x509.valid_to.min  - 1;
+		tm1.tm_sec  = x509.valid_to.sec  - 1;
+
+		*expiration = mktime (&tm1);
+		*expiration += (int)(mktime (localtime (expiration)) - mktime (gmtime (expiration)));
+	}
+
+cleanup:
+
+	x509_free(&x509);
+
+	return *expiration != (time_t)0;
+}
+
+static
+int
+__pkcs11h_crypto_polarssl_certificate_get_dn (
+	IN void * const global_data,
+	IN const unsigned char * const blob,
+	IN const size_t blob_size,
+	OUT char * const dn,
+	IN const size_t dn_max
+) {
+	x509_cert x509;
+	int ret = FALSE;
+
+	(void)global_data;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (blob!=NULL);
+	_PKCS11H_ASSERT (dn!=NULL);
+	_PKCS11H_ASSERT (dn_max>0);
+
+	dn[0] = '\x0';
+
+	memset(&x509, 0, sizeof(x509));
+	if (0 != x509parse_crt (&x509, blob, blob_size)) {
+		goto cleanup;
+	}
+
+	if (-1 == x509parse_dn_gets(dn, dn_max, &x509.subject)) {
+		goto cleanup;
+	}
+
+	ret = TRUE;
+
+cleanup:
+
+	x509_free(&x509);
+
+	return ret;
+}
+
+static
+int
+__pkcs11h_crypto_polarssl_certificate_is_issuer (
+	IN void * const global_data,
+	IN const unsigned char * const issuer_blob,
+	IN const size_t issuer_blob_size,
+	IN const unsigned char * const cert_blob,
+	IN const size_t cert_blob_size
+) {
+	x509_cert x509_issuer;
+	x509_cert x509_cert;
+	int verify_flags = 0;
+
+	PKCS11H_BOOL is_issuer = FALSE;
+
+	(void)global_data;
+
+	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
+	_PKCS11H_ASSERT (issuer_blob!=NULL);
+	_PKCS11H_ASSERT (cert_blob!=NULL);
+
+	memset(&x509_issuer, 0, sizeof(x509_issuer));
+	if (0 != x509parse_crt (&x509_issuer, issuer_blob, issuer_blob_size)) {
+		goto cleanup;
+	}
+
+	memset(&x509_cert, 0, sizeof(x509_cert));
+	if (0 != x509parse_crt (&x509_cert, cert_blob, cert_blob_size)) {
+		goto cleanup;
+	}
+
+#if (POLARSSL_VERSION_MAJOR == 0)
+	if ( 0 == x509parse_verify(&x509_cert, &x509_issuer, NULL, NULL,
+		&verify_flags ))
+#else
+	if ( 0 == x509parse_verify(&x509_cert, &x509_issuer, NULL, NULL,
+		&verify_flags, NULL, NULL ))
+#endif
+
+cleanup:
+	x509_free(&x509_cert);
+	x509_free(&x509_issuer);
+
+	return is_issuer;
+}
+
+static const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_polarssl = {
+	NULL,
+	__pkcs11h_crypto_polarssl_initialize,
+	__pkcs11h_crypto_polarssl_uninitialize,
+	__pkcs11h_crypto_polarssl_certificate_get_expiration,
+	__pkcs11h_crypto_polarssl_certificate_get_dn,
+	__pkcs11h_crypto_polarssl_certificate_is_issuer
+};
+
+#endif				/* ENABLE_PKCS11H_ENGINE_POLARSSL */
+
 pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine = {
 	NULL,
 	NULL,
@@ -1137,6 +1305,8 @@ pkcs11h_engine_setCrypto (
 		_engine = &_g_pkcs11h_crypto_engine_openssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_NSS)
 		_engine = &_g_pkcs11h_crypto_engine_nss;
+#elif defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+		_engine = &_g_pkcs11h_crypto_engine_polarssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
@@ -1145,22 +1315,15 @@ pkcs11h_engine_setCrypto (
 #endif
 	}
 	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
-#if defined(_WIN32)
 #if defined(ENABLE_PKCS11H_ENGINE_WIN32)
 		_engine = &_g_pkcs11h_crypto_engine_win32;
+#elif defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+		_engine = &_g_pkcs11h_crypto_engine_polarssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;
-#endif
-#else
-#if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
-		_engine = &_g_pkcs11h_crypto_engine_gnutls;
-#else
-		rv = CKR_ATTRIBUTE_VALUE_INVALID;
-		goto cleanup;
-#endif
 #endif
 	}
 	else if (engine == PKCS11H_ENGINE_CRYPTO_WIN32) {
@@ -1190,6 +1353,14 @@ pkcs11h_engine_setCrypto (
 	else if (engine == PKCS11H_ENGINE_CRYPTO_NSS) {
 #if defined(ENABLE_PKCS11H_ENGINE_NSS)
 		_engine = &_g_pkcs11h_crypto_engine_nss;
+#else
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+#endif
+	}
+	else if (engine == PKCS11H_ENGINE_CRYPTO_POLARSSL) {
+#if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+		_engine = &_g_pkcs11h_crypto_engine_polarssl;
 #else
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;

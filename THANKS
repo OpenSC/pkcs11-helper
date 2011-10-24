@@ -26,6 +26,9 @@ Eddy Nigg
 Sandro Wefel
  - For maintaining Debian packaging.
 
+PolarSSL crypto engine by Adriaan de Jong
+ - For PolarSSL support.
+
 Apologies to anyone I have missed.
 
 Alon Bar-Lev <alon.barlev@gmail.com>

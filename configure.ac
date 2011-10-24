@@ -201,6 +201,13 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[crypto-engine-polarssl],
+	[AS_HELP_STRING([--disable-crypto-engine-polarssl],[disable PolarSSL crypto engine])],
+	,
+	[enable_crypto_engine_polarssl="yes"]
+)
+
+AC_ARG_ENABLE(
 	[crypto-engine-win32],
 	[AS_HELP_STRING([--disable-crypto-engine-win32],[disable win32 native crypto engine on win32 systems])],
 	,
@@ -288,6 +295,22 @@ fi
 
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
+
+AC_ARG_VAR([POLARSSL_CFLAGS], [C compiler flags for PolarSSL])
+AC_ARG_VAR([POLARSSL_LIBS], [linker flags for PolarSSL])
+if test -z "${POLARSSL_LIBS}"; then
+	AC_CHECK_LIB(
+		[polarssl],
+		[x509parse_crt],
+		[
+			POLARSSL_LIBS="-lpolarssl"
+			have_polarssl="yes"
+		],
+		[have_polarssl="no"]
+	)
+else
+	have_polarssl="yes"
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -388,6 +411,20 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+AC_MSG_CHECKING([PolarSSL crypto engine])
+if test "${enable_crypto_engine_polarssl}" = "yes"; then
+	if test "${have_polarssl}" = "yes"; then
+		AC_MSG_RESULT([yes])
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_POLARSSL], [1], [Enable PolarSSL crypto engine])
+		CFLAGS="${CFLAGS} ${POLARSSL_CFLAGS}"
+		LIBS="${LIBS} ${POLARSSL_LIBS}"
+	else
+		AC_MSG_RESULT([no])
+	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
 if test "${enable_pedantic}" = "yes"; then
 	enable_strict="yes"
 	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_BSD_SOURCE -D_POSIX_SOURCE"
@@ -437,6 +474,7 @@ if test \
 	"${enable_crypto_engine_openssl}" = "yes" -o \
 	"${enable_crypto_engine_gnutls}" = "yes" -o \
 	"${enable_crypto_engine_nss}" = "yes" -o \
+	"${enable_crypto_engine_polarssl}" = "yes" -o \
 	"${enable_crypto_engine_win32}" = "yes"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi

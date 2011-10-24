@@ -78,6 +78,9 @@ libpkcs11_helper_la_SOURCES= \
 	_pkcs11h-mem.h pkcs11h-mem.c \
 	_pkcs11h-sys.h pkcs11h-sys.c \
 	_pkcs11h-crypto.h pkcs11h-crypto.c \
+	_pkcs11h-crypto-openssl.c _pkcs11h-crypto-nss.c \
+	_pkcs11h-crypto-gnutls.c _pkcs11h-crypto-polarssl.c \
+	_pkcs11h-crypto-cryptoapi.c \
 	_pkcs11h-threading.h pkcs11h-threading.c \
 	_pkcs11h-util.h pkcs11h-util.c \
 	_pkcs11h-session.h pkcs11h-session.c \

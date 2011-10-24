@@ -16,6 +16,12 @@
 *.out
 *.in
 
+ltsugar.m4
+libtool.m4
+ltversion.m4
+lt~obsolete.m4
+ltoptions.m4
+
 test-*
 *.[0-9].html
 

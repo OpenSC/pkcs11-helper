@@ -110,6 +110,7 @@ OBJS =  \
 	pkcs11h-core.obj \
 	pkcs11h-certificate.obj \
 	pkcs11h-crypto.obj \
+	_pkcs11h-crypto-cryptoapi.obj \
 	pkcs11h-data.obj \
 	pkcs11h-mem.obj \
 	pkcs11h-openssl.obj \

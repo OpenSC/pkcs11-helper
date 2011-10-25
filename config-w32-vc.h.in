@@ -17,7 +17,7 @@
 /* #undef ENABLE_PKCS11H_ENGINE_OPENSSL */
 
 /* Use win32 crypto engine */
-#define ENABLE_PKCS11H_ENGINE_WIN32 1
+#define ENABLE_PKCS11H_ENGINE_CRYPTOAPI 1
 
 /* Enable openssl interface */
 /* #undef ENABLE_PKCS11H_OPENSSL */

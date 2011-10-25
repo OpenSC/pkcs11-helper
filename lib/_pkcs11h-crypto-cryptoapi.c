@@ -51,6 +51,7 @@
 
 #include "common.h"
 
+#include "_pkcs11h-sys.h"
 #include "_pkcs11h-crypto.h"
 
 #if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
@@ -366,7 +367,7 @@ cleanup:
 	return issuer != FALSE;
 }
 
-static struct __crypto_cryptoapi_data_s s_cryptoapi_data = { NULL };
+static struct __crypto_cryptoapi_data_s s_cryptoapi_data;
 const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_cryptoapi = {
 	&s_cryptoapi_data,
 	__pkcs11h_crypto_cryptoapi_initialize,

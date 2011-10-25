@@ -51,9 +51,6 @@
 
 #include "common.h"
 
-#include <pkcs11-helper-1.0/pkcs11h-core.h>
-#include "_pkcs11h-util.h"
-#include "_pkcs11h-sys.h"
 #include "_pkcs11h-crypto.h"
 
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)

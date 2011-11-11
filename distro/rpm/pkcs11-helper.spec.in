@@ -1,27 +1,28 @@
+# doc support
+%bcond_with doc
+
 %define		name		@PACKAGE@
 %define		version		@VERSION@
 %define		release		2
 %define		prefix		/usr
-%define		with_doc	0
 
 Summary:	pkcs11-helper is a helper library for the use with smart cards and the PKCS#11 API
 Name:		%{name}
 Version:	%{version}
-Release:	%{release}%{dist}
+Release:	%{release}
 License:	GPL-2/BSD
 Vendor:		The OpenSC Project, http://www.opensc-project.org
-Packager:	Eddy Nigg <eddy_nigg@startcom.org>
+Packager:	Alon Bar-Lev <alon.barlev@gmail.com>
 Group:		System/Crypto
 Url:		http://www.opensc-project.org/pkcs11-helper
 Source:		http://www.opensc-project.org/files/pkcs11-helper/%{name}-%{version}.tar.bz2
 BuildRoot:	/var/tmp/%{name}-%{version}-%{release}
-%if %{?with_doc}
+%if %{with doc}
 BuildRequires:	doxygen
 %endif
 BuildRequires:	openssl-devel >= 0.9.7a
 Requires:	openssl >= 0.9.7a
 Provides:	%{name} = %{version}
-
 %description
 pkcs11-helper allows using multiple PKCS#11 providers at the same 
 time, selecting keys by id, label or certificate subject, handling 
@@ -34,29 +35,28 @@ Summary:	pkcs11-helper development files
 Group:		Development/Libraries
 Requires:	%{name} >= %{version}
 Requires:	pkgconfig
-
 %description devel
 pkcs11-helper development files.
 
 %prep
+rm -rf "${RPM_BUILD_ROOT}"
 %setup -q
 
 %build
 %configure -q \
 	--disable-rpath \
-%if %{?with_doc}
+%if %{with doc}
 	--enable-doc
 %endif
 
 make %{?_smp_mflags}
 
 %install
-if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
-
+rm -rf "${RPM_BUILD_ROOT}"
 %makeinstall 
 
 %clean
-if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
+rm -rf "${RPM_BUILD_ROOT}"
 
 %files
 %defattr(-,root,root)
@@ -70,11 +70,14 @@ if [ -d $RPM_BUILD_ROOT ]; then rm -rf $RPM_BUILD_ROOT; fi
 %{_includedir}/*
 %{_libdir}/pkgconfig/*
 %{_datadir}/aclocal/*
-%if %{?with_doc}
+%if %{with doc}
 %{_docdir}/%{name}/api/*
 %endif
 
 %changelog
+* Fri Nov 11 2011 Aon Bar-Lev <alon.barlev@gmail.com>
+- Cleanups.
+
 * Mon Feb 15 2007 Aon Bar-Lev <alon.barlev@gmail.com>
 - Modify docs location.
 

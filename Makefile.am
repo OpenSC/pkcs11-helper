@@ -68,9 +68,3 @@ SUBDIRS=man include lib m4dir doc distro tests
 
 dist_doc_DATA=README COPYING.GPL COPYING.BSD COPYING
 noinst_HEADERS=config-w32-vc.h
-
-#
-# pkcs11-helper.spec must be on root for invalid RPM
-#
-dist-hook:
-	$(LN_S) "distro/rpm/pkcs11-helper.spec" "$(distdir)/pkcs11-helper.spec"

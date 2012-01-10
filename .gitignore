@@ -15,6 +15,8 @@
 *.manifest
 *.out
 *.in
+*.lo
+*.la
 
 ltsugar.m4
 libtool.m4
@@ -50,3 +52,4 @@ versioninfo.rc
 copyright
 pkcs11-helper.spec
 
+doc/api/Doxyfile

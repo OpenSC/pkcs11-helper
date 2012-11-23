@@ -163,7 +163,7 @@ _pkcs11h_util_escapeString (
 
 	while (*s != '\x0') {
 
-		if (*s == '\\' || strchr (invalid_chars, *s) || !isgraph (*s)) {
+		if (*s == '\\' || strchr (invalid_chars, (unsigned char)*s) || !isgraph (*s)) {
 			if (t != NULL) {
 				if (n+4 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;

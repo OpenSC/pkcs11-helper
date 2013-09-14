@@ -57,6 +57,13 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
+#if !defined(OPENSSL_NO_EC) && defined(ENABLE_PKCS11H_OPENSSL_EC)
+#define __ENABLE_EC
+#ifdef ENABLE_PKCS11H_OPENSSL_EC_HACK
+#include <ecs_locl.h>
+#endif
+#endif
+
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #if !defined(RSA_PKCS1_PADDING_SIZE)
 #define RSA_PKCS1_PADDING_SIZE 11
@@ -88,6 +95,10 @@ static struct {
 #ifndef OPENSSL_NO_DSA
 	DSA_METHOD dsa;
 	int dsa_index;
+#endif
+#ifdef __ENABLE_EC
+	ECDSA_METHOD *ecdsa;
+	int ecdsa_index;
 #endif
 } __openssl_methods;
 
@@ -585,6 +596,174 @@ cleanup:
 
 #endif
 
+#ifdef __ENABLE_EC
+
+static
+pkcs11h_certificate_t
+__pkcs11h_openssl_ecdsa_get_pkcs11h_certificate (
+	IN EC_KEY *ec
+) {
+	pkcs11h_openssl_session_t session = NULL;
+
+	_PKCS11H_ASSERT (ec!=NULL);
+
+	session = (pkcs11h_openssl_session_t)ECDSA_get_ex_data (ec, __openssl_methods.ecdsa_index);
+
+	_PKCS11H_ASSERT (session!=NULL);
+	_PKCS11H_ASSERT (session->certificate!=NULL);
+
+	return session->certificate;
+}
+
+static
+ECDSA_SIG *
+__pkcs11h_openssl_ecdsa_do_sign(
+	IN const unsigned char *dgst,
+	IN int dlen,
+	IN const BIGNUM *inv,
+	IN const BIGNUM *r,
+	OUT EC_KEY *ec
+) {
+	pkcs11h_certificate_t certificate = __pkcs11h_openssl_ecdsa_get_pkcs11h_certificate (ec);
+	unsigned char *sigbuf = NULL;
+	size_t siglen;
+	ECDSA_SIG *sig = NULL;
+	ECDSA_SIG *ret = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_ecdsa_do_sign - entered dgst=%p, dlen=%d, inv=%p, r=%p, ec=%p",
+		(void *)dgst,
+		dlen,
+		(void *)inv,
+		(void *)r,
+		(void *)ec
+	);
+
+	_PKCS11H_ASSERT (dgst!=NULL);
+	_PKCS11H_ASSERT (inv==NULL);
+	_PKCS11H_ASSERT (r==NULL);
+	_PKCS11H_ASSERT (ec!=NULL);
+	_PKCS11H_ASSERT (certificate!=NULL);
+
+	if (
+		(rv = pkcs11h_certificate_signAny (
+			certificate,
+			CKM_ECDSA,
+			dgst,
+			(size_t)dlen,
+			NULL,
+			&siglen
+		)) != CKR_OK
+	) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform signature %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		goto cleanup;
+	}
+
+	if ((rv = _pkcs11h_mem_malloc ((void *)&sigbuf, siglen)) != CKR_OK) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot cannot allocate signature buffer");
+		goto cleanup;
+	}
+
+	if (
+		(rv = pkcs11h_certificate_signAny (
+			certificate,
+			CKM_ECDSA,
+			dgst,
+			(size_t)dlen,
+			sigbuf,
+			&siglen
+		)) != CKR_OK
+	) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform signature %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		goto cleanup;
+	}
+
+	if ((sig = ECDSA_SIG_new ()) == NULL) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot allocate ECDSA_SIG");
+		goto cleanup;
+	}
+
+	if (BN_bin2bn (&sigbuf[0], siglen/2, sig->r) == NULL) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert ecdsa r");
+		goto cleanup;
+	}
+
+	if (BN_bin2bn (&sigbuf[siglen/2], siglen/2, sig->s) == NULL) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert ecdsa s");
+		goto cleanup;
+	}
+
+	ret = sig;
+	sig = NULL;
+
+cleanup:
+
+	if (sigbuf != NULL) {
+		_pkcs11h_mem_free ((void *)&sigbuf);
+	}
+
+	if (sig != NULL) {
+		ECDSA_SIG_free (sig);
+		sig = NULL;
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_ecdsa_do_sign - return sig=%p",
+		(void *)sig
+	);
+
+	return ret;
+}
+
+static
+PKCS11H_BOOL
+__pkcs11h_openssl_session_setECDSA(
+	IN const pkcs11h_openssl_session_t openssl_session,
+	IN EVP_PKEY * evp
+) {
+	PKCS11H_BOOL ret = FALSE;
+	EC_KEY *ec = NULL;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_session_setECDSA - entered openssl_session=%p, evp=%p",
+		(void *)openssl_session,
+		(void *)evp
+	);
+
+	if (
+		(ec = EVP_PKEY_get1_EC_KEY (evp)) == NULL
+	) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot get EC key");
+		goto cleanup;
+	}
+
+	ECDSA_set_method (ec, __openssl_methods.ecdsa);
+	ECDSA_set_ex_data (ec, __openssl_methods.ecdsa_index, openssl_session);
+
+	ret = TRUE;
+
+cleanup:
+
+	if (ec != NULL) {
+		EC_KEY_free (ec);
+		ec = NULL;
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_session_setECDSA - return ret=%d",
+		ret
+	);
+
+	return ret;
+}
+
+#endif
+
 PKCS11H_BOOL
 _pkcs11h_openssl_initialize (void) {
 	_PKCS11H_DEBUG (
@@ -617,6 +796,21 @@ _pkcs11h_openssl_initialize (void) {
 		__pkcs11h_openssl_ex_data_free
 	);
 #endif
+#ifdef __ENABLE_EC
+	if (__openssl_methods.ecdsa != NULL) {
+		ECDSA_METHOD_free(__openssl_methods.ecdsa);
+	}
+	__openssl_methods.ecdsa = ECDSA_METHOD_new ((ECDSA_METHOD *)ECDSA_get_default_method ());
+	ECDSA_METHOD_set_name(__openssl_methods.ecdsa, "pkcs11h");
+	ECDSA_METHOD_set_sign(__openssl_methods.ecdsa, __pkcs11h_openssl_ecdsa_do_sign);
+	__openssl_methods.ecdsa_index = ECDSA_get_ex_new_index (
+		0,
+		"pkcs11h",
+		NULL,
+		__pkcs11h_openssl_ex_data_dup,
+		__pkcs11h_openssl_ex_data_free
+	);
+#endif
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_initialize - return"
@@ -630,6 +824,12 @@ _pkcs11h_openssl_terminate (void) {
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_terminate"
 	);
+#ifdef __ENABLE_EC
+	if (__openssl_methods.ecdsa != NULL) {
+		ECDSA_METHOD_free(__openssl_methods.ecdsa);
+		__openssl_methods.ecdsa = NULL;
+	}
+#endif
 	return TRUE;
 }
 
@@ -942,6 +1142,13 @@ pkcs11h_openssl_session_getEVP (
 #ifndef OPENSSL_NO_RSA
 	else if (evp->type == EVP_PKEY_DSA) {
 		if (!__pkcs11h_openssl_session_setDSA(openssl_session, evp)) {
+			goto cleanup;
+		}
+	}
+#endif
+#ifdef __ENABLE_EC
+	else if (evp->type == EVP_PKEY_EC) {
+		if (!__pkcs11h_openssl_session_setECDSA(openssl_session, evp)) {
 			goto cleanup;
 		}
 	}

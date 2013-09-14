@@ -7,6 +7,7 @@ $Id$
 
  * openssl: support generic pkey.
  * openssl: add dsa support.
+ * openssl: add ecdsa support, thanks for Sanaullah for testing.
 
 2012-02-29 - Version 1.10
 

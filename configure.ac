@@ -293,6 +293,58 @@ if test "${have_openssl}" = "no"; then
 	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
 fi
 
+if test "${have_openssl}" = "yes"; then
+	old_LIBS="${LIBS}"
+	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_CHECK_FUNC(
+		[ECDSA_METHOD_new],
+		[
+			openssl_ec="yes"
+			AC_DEFINE([ENABLE_PKCS11H_OPENSSL_EC], [1], [Enable openssl EC])
+		],
+		[
+			openssl_ec="hack"
+			old_CFLAGS="${CFLAGS}"
+			old_CPPFLAGS="${CPPFLAGS}"
+			CPPFLAGS="${CPPFLAGS} -I."
+			CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
+			AC_CHECK_HEADER(
+				[ecs_locl.h],
+				[
+					AC_DEFINE([ENABLE_PKCS11H_OPENSSL_EC], [1], [Enable openssl EC])
+					AC_DEFINE([ENABLE_PKCS11H_OPENSSL_EC_HACK], [1], [Enable openssl EC])
+					AC_DEFINE_UNQUOTED(
+						[ECDSA_METHOD_new(ecdsa)],
+						[(ECDSA_METHOD *)memmove(malloc(sizeof(ECDSA_METHOD)), ecdsa, sizeof(ECDSA_METHOD))],
+						[emulation],
+					)
+					AC_DEFINE_UNQUOTED(
+						[ECDSA_METHOD_free(ecdsa)],
+						[free(ecdsa)],
+						[emulation],
+					)
+					AC_DEFINE_UNQUOTED(
+						[ECDSA_METHOD_set_name(ecdsa, n)],
+						[ecdsa->name = n],
+						[emulation],
+					)
+					AC_DEFINE_UNQUOTED(
+						[ECDSA_METHOD_set_sign(ecdsa, s)],
+						[ecdsa->ecdsa_do_sign = s],
+						[emulation],
+					)
+				],
+				[openssl_ec="none"]
+			)
+			CPPFLAGS="${old_CPPFLAGS}"
+			CFLAGS="${old_CFLAGS}"
+		],
+	)
+	LIBS="${old_LIBS}"
+	AC_MSG_CHECKING([for OpenSSL ec support])
+	AC_MSG_RESULT([${openssl_ec}])
+fi
+
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
 

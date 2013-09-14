@@ -90,7 +90,8 @@ libpkcs11_helper_la_SOURCES= \
 	_pkcs11h-core.h pkcs11h-core.c \
 	pkcs11h-data.c \
 	pkcs11h-serialization.c \
-	pkcs11h-openssl.c
+	_pkcs11h-openssl.h pkcs11h-openssl.c \
+	$(NULL)
 libpkcs11_helper_la_LDFLAGS= \
 	$(AM_LDFLAGS) \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \

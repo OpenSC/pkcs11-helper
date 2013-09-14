@@ -154,6 +154,16 @@ pkcs11h_openssl_session_getRSA (
 );
 
 /**
+ * @brief Returns an EVP_PKEY out of the openssl_session object.
+ * @param openssl_session	OpenSSL session reference.
+ * @return EVP_PKEY.
+ */
+EVP_PKEY *
+pkcs11h_openssl_session_getEVP (
+	IN const pkcs11h_openssl_session_t openssl_session
+);
+
+/**
  * @brief Returns an X509 object out of the openssl_session object.
  * @param openssl_session	OpenSSL session reference.
  * @return X509.

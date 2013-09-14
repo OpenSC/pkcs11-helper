@@ -66,6 +66,7 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-session.h"
 #include "_pkcs11h-slotevent.h"
+#include "_pkcs11h-openssl.h"
 
 /*======================================================================*
  * COMMON INTERNAL INTERFACE
@@ -340,6 +341,18 @@ pkcs11h_initialize (void) {
 	data->max_retries = _PKCS11H_DEFAULT_MAX_LOGIN_RETRY;
 	data->allow_protected_auth = TRUE;
 	data->pin_cache_period = _PKCS11H_DEFAULT_PIN_CACHE_PERIOD;
+
+#if defined(ENABLE_PKCS11H_OPENSSL)
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Initializing openssl"
+	);
+
+	if (!_pkcs11h_openssl_initialize()) {
+		goto cleanup;
+	}
+#endif
+
 	data->initialized = TRUE;
 
 	_g_pkcs11h_data = data;
@@ -392,6 +405,14 @@ pkcs11h_terminate (void) {
 
 	if (_g_pkcs11h_data != NULL) {
 		_pkcs11h_provider_t current_provider = NULL;
+
+#if defined(ENABLE_PKCS11H_OPENSSL)
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Terminating openssl"
+		);
+		_pkcs11h_openssl_terminate();
+#endif
 
 		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,

@@ -3,6 +3,10 @@ Copyright (c) 2005-2011 Alon Bar-Lev <alon.barlev@gmail.com>
 
 $Id$
 
+????-??-?? - Version 1.11
+
+ * openssl: support generic pkey.
+
 2012-02-29 - Version 1.10
 
  * PolarSSL crypto engine by Adriaan de Jong

@@ -66,7 +66,7 @@
 
 /**
  * @example test-certificate.c
- * 
+ *
  * The following example shows some basic usage of the certificate interface.
  */
 
@@ -190,7 +190,7 @@ pkcs11h_certificate_freeCertificate (
  * @see pkcs11h_certificate_freeCertificate().
  * @remarks
  * The certificate id object may not specify the certificate blob.
- */	
+ */
 CK_RV
 pkcs11h_certificate_create (
 	IN const pkcs11h_certificate_id_t certificate_id,

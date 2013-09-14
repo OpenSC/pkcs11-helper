@@ -120,7 +120,7 @@ cleanup:
 			goto cleanup;
 		}
 		mutex_locked = TRUE;
-		
+
 		if (
 			(rv = _pkcs11h_mem_malloc (
 				(void *)&entry,
@@ -276,7 +276,7 @@ _pkcs1h_threading_mutexLockAll (void) {
 
 	while (!all_mutexes_locked) {
 		PKCS11H_BOOL ok = TRUE;
-		
+
 		for (
 			entry = __s_pkcs11h_threading_mutex_list.head;
 			entry != NULL && ok;
@@ -438,10 +438,10 @@ _pkcs11h_threading_condWait (
 			rv = CKR_FUNCTION_FAILED;
 			goto cleanup;
 		}
-		
+
 		timeout.tv_sec = now.tv_sec + milli/1000;
 		timeout.tv_nsec = now.tv_usec*1000 + milli%1000;
-		
+
 		if (pthread_cond_timedwait (&cond->cond, &cond->mut, &timeout)) {
 			rv = CKR_FUNCTION_FAILED;
 			goto cleanup;

@@ -260,11 +260,11 @@ __pkcs11h_crypto_cryptoapi_certificate_get_dn (
 	) {
 		goto cleanup;
 	}
-	
+
 	if ((wstr = (WCHAR *)_g_pkcs11h_sys_engine.malloc (wsize * sizeof (WCHAR))) == NULL) {
 		goto cleanup;
 	}
-			
+
 	if (
 		(wsize = data->p_CertNameToStrW (
 			X509_ASN_ENCODING,

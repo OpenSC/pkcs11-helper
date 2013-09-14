@@ -364,7 +364,7 @@ cleanup:
 			has_mutex_cache = FALSE;
 		}
 		if (has_mutex_session) {
-			_pkcs11h_threading_mutexFree (&data->mutexes.session); 
+			_pkcs11h_threading_mutexFree (&data->mutexes.session);
 			has_mutex_session = FALSE;
 		}
 #endif
@@ -464,7 +464,7 @@ pkcs11h_terminate (void) {
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Marking as uninitialized"
 		);
-		
+
 		_g_pkcs11h_data->initialized = FALSE;
 
 		while (_g_pkcs11h_data->providers != NULL) {
@@ -475,9 +475,9 @@ pkcs11h_terminate (void) {
 		}
 
 #if defined(ENABLE_PKCS11H_THREADING)
-		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.global); 
+		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.global);
 		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.cache);
-		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.session); 
+		_pkcs11h_threading_mutexFree (&_g_pkcs11h_data->mutexes.session);
 #endif
 
 		_g_pkcs11h_crypto_engine.uninitialize (_g_pkcs11h_crypto_engine.global_data);
@@ -710,7 +710,7 @@ pkcs11h_addProvider (
 	provider->slot_event_method = slot_event_method;
 	provider->slot_poll_interval = slot_poll_interval;
 	provider->cert_is_private = cert_is_private;
-		
+
 #if defined(_WIN32)
 	provider->handle = LoadLibraryA (provider_location);
 #else
@@ -736,7 +736,7 @@ pkcs11h_addProvider (
 		"C_GetFunctionList"
 	);
 	memmove (
-		&gfl, 
+		&gfl,
 		&p,
 		sizeof (void *)
 	);
@@ -921,7 +921,7 @@ pkcs11h_removeProvider (
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_slotevent_notify ();
-	
+
 	/*
 	 * Wait until manager join this thread
 	 * this happens saldom so I can poll
@@ -947,7 +947,7 @@ pkcs11h_removeProvider (
 	rv = CKR_OK;
 
 cleanup:
-	
+
 #if defined(ENABLE_PKCS11H_THREADING)
 	for (
 		current_session = _g_pkcs11h_data->sessions;
@@ -1133,7 +1133,7 @@ _pkcs11h_log (
 	if (
 		_g_pkcs11h_data != NULL &&
 		_g_pkcs11h_data->initialized
-	) { 
+	) {
 		if (__PKCS11H_MSG_LEVEL_TEST (flags)) {
 			if (_g_pkcs11h_data->hooks.log == NULL) {
 				__pkcs11h_hooks_default_log (
@@ -1225,7 +1225,7 @@ __pkcs11h_hooks_default_pin_prompt (
 		user_data,
 		token->display
 	);
-	
+
 	return FALSE;
 }
 

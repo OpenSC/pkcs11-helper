@@ -175,7 +175,7 @@ _pkcs11h_certificate_isBetterCertificate (
 		"PKCS#11: _pkcs11h_certificate_isBetterCertificate return is_better=%d",
 		is_better ? 1 : 0
 	);
-	
+
 	return is_better;
 }
 
@@ -245,7 +245,7 @@ __pkcs11h_certificate_loadCertificate (
 
 	_PKCS11H_ASSERT (certificate!=NULL);
 	_PKCS11H_ASSERT (certificate->id!=NULL);
-	
+
 	/* Must be after assert */
 	cert_filter[1].pValue = certificate->id->attrCKA_ID;
 	cert_filter[1].ulValueLen = certificate->id->attrCKA_ID_size;
@@ -353,7 +353,7 @@ __pkcs11h_certificate_loadCertificate (
 	rv = CKR_OK;
 
 cleanup:
-	
+
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
 		_pkcs11h_threading_mutexRelease (&certificate->session->mutex);
@@ -589,7 +589,7 @@ cleanup:
 		mutex_locked = FALSE;
 	}
 #endif
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_certificate_getKeyAttributes return rv=%lu-'%s'",
@@ -660,7 +660,7 @@ _pkcs11h_certificate_resetSession (
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (certificate!=NULL);
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_certificate_resetSession entry certificate=%p, public_only=%d, session_mutex_locked=%d",
@@ -796,7 +796,7 @@ __pkcs11h_certificate_doPrivateOperation (
 	CK_OBJECT_CLASS class = CKO_SECRET_KEY;
 	CK_KEY_TYPE keytype = CKK_GENERIC_SECRET;
 	CK_ATTRIBUTE wrap_attrs[] = {
-		{CKA_CLASS, &class, sizeof (class)}, 
+		{CKA_CLASS, &class, sizeof (class)},
 		{CKA_KEY_TYPE, &keytype, sizeof (keytype)},
 		{CKA_EXTRACTABLE, &wrap_attrs_true, sizeof (wrap_attrs_true)}
 /* OpenSC fail!	{CKA_TOKEN, &wrap_attrs_false, sizeof (wrap_attrs_false)} */
@@ -805,7 +805,7 @@ __pkcs11h_certificate_doPrivateOperation (
 		{CKA_VALUE, target, 0}
 	};
 	CK_OBJECT_HANDLE wrap_key = _PKCS11H_INVALID_OBJECT_HANDLE;
-	
+
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL login_retry = FALSE;
 	PKCS11H_BOOL op_succeed = FALSE;
@@ -1050,7 +1050,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		*p_target_size
 	);
-	
+
 	return rv;
 }
 
@@ -1149,7 +1149,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		(void *)*to
 	);
-	
+
 	return rv;
 }
 
@@ -1203,7 +1203,7 @@ cleanup:
 		rv,
 		pkcs11h_getMessage (rv)
 	);
-	
+
 	return rv;
 }
 
@@ -1355,7 +1355,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		*p_target_size
 	);
-	
+
 	return rv;
 }
 
@@ -1612,7 +1612,7 @@ pkcs11h_certificate_signAny (
 				goto cleanup;
 		}
 	}
-	
+
 	if (
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_RECOVER) != 0
@@ -1648,7 +1648,7 @@ pkcs11h_certificate_signAny (
 	rv = CKR_OK;
 
 cleanup:
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_signAny return rv=%lu-'%s', *p_target_size="P_Z"",
@@ -1726,7 +1726,7 @@ pkcs11h_certificate_decryptAny (
 				goto cleanup;
 		}
 	}
-	
+
 	if (
 		!acked &&
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_UNWRAP) != 0
@@ -1762,7 +1762,7 @@ pkcs11h_certificate_decryptAny (
 	rv = CKR_OK;
 
 cleanup:
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_certificate_decryptAny return rv=%lu-'%s', *p_target_size="P_Z"",
@@ -1900,7 +1900,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		(void *)*p_certificate
 	);
-	
+
 	return rv;
 }
 
@@ -1995,7 +1995,7 @@ pkcs11h_certificate_getCertificateBlob (
 #endif
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t certifiate_blob_size_max = 0;
-	
+
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
@@ -2064,7 +2064,7 @@ pkcs11h_certificate_getCertificateBlob (
 			rv = CKR_BUFFER_TOO_SMALL;
 			goto cleanup;
 		}
-	
+
 		memmove (
 			certificate_blob,
 			certificate->id->certificate_blob,
@@ -2174,7 +2174,7 @@ pkcs11h_certificate_ensureCertificateAccess (
 		) {
 			goto cleanup;
 		}
-	
+
 		validCert = TRUE;
 	}
 
@@ -2197,7 +2197,7 @@ cleanup:
 		rv,
 		pkcs11h_getMessage (rv)
 	);
-	
+
 	return rv;
 }
 
@@ -2304,7 +2304,7 @@ cleanup:
 		rv,
 		pkcs11h_getMessage (rv)
 	);
-	
+
 	return rv;
 }
 
@@ -2332,7 +2332,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 		user_data,
 		mask_prompt
 	);
-	
+
 	/* THREADS: NO NEED TO LOCK, GLOBAL CACHE IS LOCKED */
 #if defined(ENABLE_PKCS11H_THREADING)
 	if ((rv = _pkcs11h_threading_mutexLock (&session->mutex)) != CKR_OK) {
@@ -2367,11 +2367,11 @@ _pkcs11h_certificate_enumSessionCertificates (
 		) {
 			goto retry;
 		}
-			
+
 		for (i=0;i < objects_found;i++) {
 			pkcs11h_certificate_id_t certificate_id = NULL;
 			pkcs11h_certificate_id_list_t new_element = NULL;
-			
+
 			CK_ATTRIBUTE attrs[] = {
 				{CKA_ID, NULL, 0},
 				{CKA_VALUE, NULL, 0}
@@ -2451,7 +2451,7 @@ _pkcs11h_certificate_enumSessionCertificates (
 
 		op_succeed = TRUE;
 		rv = CKR_OK;
-	
+
 	retry:
 
 		if (objects != NULL) {
@@ -2794,7 +2794,7 @@ cleanup:
 		rv,
 		pkcs11h_getMessage (rv)
 	);
-	
+
 	return rv;
 }
 
@@ -3045,7 +3045,7 @@ cleanup:
 		rv,
 		pkcs11h_getMessage (rv)
 	);
-	
+
 	return rv;
 }
 

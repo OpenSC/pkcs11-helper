@@ -112,7 +112,7 @@ struct _pkcs11h_provider_s {
 	PKCS11H_BOOL enabled;
 	char reference[1024];
 	char manufacturerID[sizeof (((CK_TOKEN_INFO *)NULL)->manufacturerID)+1];
-	
+
 #if defined(_WIN32)
 	HANDLE handle;
 #else

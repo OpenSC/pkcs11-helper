@@ -62,7 +62,7 @@ _pkcs11h_util_fixupFixedString (
 
 	_PKCS11H_ASSERT (source!=NULL);
 	_PKCS11H_ASSERT (target!=NULL);
-	
+
 	p = target+length;
 	memmove (target, source, length);
 	*p = '\0';

@@ -130,7 +130,7 @@ __pkcs11h_slotevent_provider (
 	if (
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_TRIGGER
-	) { 
+	) {
 		_PKCS11H_DEBUG (
 			PKCS11H_LOG_DEBUG1,
 			"PKCS#11: Setup slotevent provider='%s' checking trigger",
@@ -163,7 +163,7 @@ __pkcs11h_slotevent_provider (
 	if (
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_POLL
-	) { 
+	) {
 		PKCS11H_BOOL had_sleep = TRUE;
 
 		_PKCS11H_DEBUG (
@@ -210,7 +210,7 @@ __pkcs11h_slotevent_provider (
 	if (
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_AUTO ||
 		provider->slot_event_method == PKCS11H_SLOTEVENT_METHOD_FETCH
-	) { 
+	) {
 		unsigned long last_checksum = 0;
 		PKCS11H_BOOL is_first_time = TRUE;
 
@@ -271,7 +271,7 @@ __pkcs11h_slotevent_provider (
 					);
 				}
 			}
-			
+
 			if (is_first_time) {
 				is_first_time = FALSE;
 			}
@@ -295,7 +295,7 @@ __pkcs11h_slotevent_provider (
 			if (slots != NULL) {
 				_pkcs11h_mem_free ((void *)&slots);
 			}
-			
+
 			if (rv != CKR_OK) {
 				goto cleanup;
 			}
@@ -451,7 +451,7 @@ _pkcs11h_slotevent_init (void) {
 		if ((rv = _pkcs11h_threading_condInit (&_g_pkcs11h_data->slotevent.cond_event)) != CKR_OK) {
 			goto cleanup;
 		}
-		
+
 		if (
 			(rv = _pkcs11h_threading_threadStart (
 				&_g_pkcs11h_data->slotevent.thread,
@@ -461,7 +461,7 @@ _pkcs11h_slotevent_init (void) {
 		) {
 			goto cleanup;
 		}
-		
+
 		_g_pkcs11h_data->slotevent.initialized = TRUE;
 	}
 
@@ -481,7 +481,7 @@ cleanup:
 
 CK_RV
 _pkcs11h_slotevent_notify (void) {
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_notify entry"
@@ -512,7 +512,7 @@ _pkcs11h_slotevent_terminate_force (void) {
 
 CK_RV
 _pkcs11h_slotevent_terminate (void) {
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_slotevent_terminate entry"

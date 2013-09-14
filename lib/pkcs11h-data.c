@@ -74,7 +74,7 @@ _pkcs11h_data_getObject (
 	CK_OBJECT_HANDLE *objects = NULL;
 	CK_ULONG objects_found = 0;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	
+
 	_PKCS11H_ASSERT (session!=NULL);
 	_PKCS11H_ASSERT (application!=NULL);
 	_PKCS11H_ASSERT (label!=NULL);
@@ -219,7 +219,7 @@ pkcs11h_data_get (
 
 		op_succeed = TRUE;
 		rv = CKR_OK;
-	
+
 	retry:
 
 		if (!op_succeed) {
@@ -372,7 +372,7 @@ pkcs11h_data_put (
 		) {
 			goto retry;
 		}
-	
+
 		op_succeed = TRUE;
 		rv = CKR_OK;
 
@@ -785,7 +785,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		(void *)*p_data_id_list
 	);
-	
+
 	return rv;
 }
 

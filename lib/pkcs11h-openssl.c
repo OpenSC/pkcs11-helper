@@ -127,13 +127,13 @@ static
 pkcs11h_openssl_session_t
 __pkcs11h_openssl_get_openssl_session (
 	IN OUT const RSA *rsa
-);  
+);
 
 static
 pkcs11h_certificate_t
 __pkcs11h_openssl_get_pkcs11h_certificate (
 	IN OUT const RSA *rsa
-);  
+);
 
 static
 pkcs11h_openssl_session_t
@@ -141,7 +141,7 @@ __pkcs11h_openssl_get_openssl_session (
 	IN OUT const RSA *rsa
 ) {
 	pkcs11h_openssl_session_t session;
-		
+
 	_PKCS11H_ASSERT (rsa!=NULL);
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 	session = (pkcs11h_openssl_session_t)RSA_get_app_data ((RSA *)rsa);
@@ -159,7 +159,7 @@ __pkcs11h_openssl_get_pkcs11h_certificate (
 	IN OUT const RSA *rsa
 ) {
 	pkcs11h_openssl_session_t session = __pkcs11h_openssl_get_openssl_session (rsa);
-	
+
 	_PKCS11H_ASSERT (session!=NULL);
 	_PKCS11H_ASSERT (session->certificate!=NULL);
 
@@ -264,7 +264,7 @@ cleanup:
 		pkcs11h_getMessage (rv)
 	);
 
-	return rv == CKR_OK ? (int)tlen : -1; 
+	return rv == CKR_OK ? (int)tlen : -1;
 }
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
@@ -354,7 +354,7 @@ cleanup:
 		pkcs11h_getMessage (rv)
 	);
 
-	return rv == CKR_OK ? (int)tlen : -1; 
+	return rv == CKR_OK ? (int)tlen : -1;
 }
 
 static
@@ -371,7 +371,7 @@ __pkcs11h_openssl_finish (
 	);
 
 	RSA_set_app_data (rsa, NULL);
-	
+
 	if (openssl_session->orig_finish != NULL) {
 		openssl_session->orig_finish (rsa);
 
@@ -398,7 +398,7 @@ __pkcs11h_openssl_finish (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: __pkcs11h_openssl_finish - return"
 	);
-	
+
 	return 1;
 }
 
@@ -467,7 +467,7 @@ cleanup:
 			x509 = NULL;
 		}
 	}
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_openssl_getX509 - return rv=%ld-'%s', x509=%p",
@@ -525,7 +525,7 @@ cleanup:
 	if (!ok) {
 		_pkcs11h_mem_free ((void *)&openssl_session);
 	}
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_openssl_createSession - return openssl_session=%p",
@@ -560,7 +560,7 @@ pkcs11h_openssl_freeSession (
 ) {
 	_PKCS11H_ASSERT (openssl_session!=NULL);
 	_PKCS11H_ASSERT (openssl_session->reference_count>0);
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_openssl_freeSession - entry openssl_session=%p, count=%d",
@@ -569,7 +569,7 @@ pkcs11h_openssl_freeSession (
 	);
 
 	openssl_session->reference_count--;
-	
+
 	if (openssl_session->reference_count == 0) {
 		if (openssl_session->cleanup_hook != NULL) {
 			openssl_session->cleanup_hook (openssl_session->certificate);
@@ -583,7 +583,7 @@ pkcs11h_openssl_freeSession (
 			pkcs11h_certificate_freeCertificate (openssl_session->certificate);
 			openssl_session->certificate = NULL;
 		}
-		
+
 		_pkcs11h_mem_free ((void *)&openssl_session);
 	}
 
@@ -611,7 +611,7 @@ pkcs11h_openssl_session_getRSA (
 		"PKCS#11: pkcs11h_openssl_session_getRSA - entry openssl_session=%p",
 		(void *)openssl_session
 	);
-	
+
 	/*
 	 * Dup x509 so RSA will not hold session x509
 	 */
@@ -624,7 +624,7 @@ pkcs11h_openssl_session_getRSA (
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot get public key");
 		goto cleanup;
 	}
-	
+
 	if (pubkey->type != EVP_PKEY_RSA) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Invalid public key algorithm");
 		goto cleanup;
@@ -640,7 +640,7 @@ pkcs11h_openssl_session_getRSA (
 	RSA_set_method (rsa, &openssl_session->smart_rsa);
 	RSA_set_app_data (rsa, openssl_session);
 	openssl_session->reference_count++;
-	
+
 #ifdef BROKEN_OPENSSL_ENGINE
 	if (!rsa->engine) {
 		rsa->engine = ENGINE_get_default_RSA ();
@@ -649,7 +649,7 @@ pkcs11h_openssl_session_getRSA (
 	ENGINE_set_RSA(ENGINE_get_default_RSA (), &openssl_session->smart_rsa);
 	_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: OpenSSL engine support is broken! Workaround enabled");
 #endif
-		
+
 	rsa->flags |= RSA_FLAG_SIGN_VER;
 	openssl_session->initialized = TRUE;
 
@@ -677,7 +677,7 @@ cleanup:
 		X509_free (x509);
 		x509 = NULL;
 	}
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_openssl_session_getRSA - return rsa=%p",
@@ -693,7 +693,7 @@ pkcs11h_openssl_session_getX509 (
 ) {
 	X509 *x509 = NULL;
 	PKCS11H_BOOL ok = FALSE;
-	
+
 	_PKCS11H_ASSERT (openssl_session!=NULL);
 
 	_PKCS11H_DEBUG (
@@ -705,7 +705,7 @@ pkcs11h_openssl_session_getX509 (
 	if (
 		openssl_session->x509 == NULL &&
 		(openssl_session->x509 = pkcs11h_openssl_getX509 (openssl_session->certificate)) == NULL
-	) {	
+	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot get certificate object");
 		goto cleanup;
 	}
@@ -725,7 +725,7 @@ cleanup:
 			x509 = NULL;
 		}
 	}
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_openssl_session_getX509 - return x509=%p",

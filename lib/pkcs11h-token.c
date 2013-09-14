@@ -124,7 +124,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		(void *)*to
 	);
-	
+
 	return rv;
 }
 
@@ -151,10 +151,10 @@ _pkcs11h_token_getTokenId (
 ) {
 	pkcs11h_token_id_t token_id;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	
+
 	_PKCS11H_ASSERT (info!=NULL);
 	_PKCS11H_ASSERT (p_token_id!=NULL);
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_token_getTokenId entry p_token_id=%p",
@@ -276,7 +276,7 @@ pkcs11h_token_logout (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_logout entry token_id=%p\n", 
+		"PKCS#11: pkcs11h_token_logout entry token_id=%p\n",
 		(void *)token_id
 	);
 
@@ -348,7 +348,7 @@ pkcs11h_token_login (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_login entry token_id=%p, readonly=%d\n", 
+		"PKCS#11: pkcs11h_token_login entry token_id=%p, readonly=%d\n",
 		(void *)token_id,
 		readonly ? 1 : 0
 	);
@@ -696,7 +696,7 @@ pkcs11h_token_enumTokenIds (
 					(rv = pkcs11h_token_duplicateTokenId (
 						&entry->token_id,
 						session->token_id
-					)) != CKR_OK 
+					)) != CKR_OK
 				) {
 					goto retry12;
 				}
@@ -742,7 +742,7 @@ cleanup:
 		pkcs11h_getMessage (rv),
 		(void *)p_token_id_list
 	);
-	
+
 	return rv;
 }
 

@@ -112,7 +112,7 @@ __pkcs11h_crypto_gnutls_certificate_get_expiration (
 		cert = NULL;
 		goto cleanup;
 	}
-	
+
 	datum.data = (unsigned char *)blob;
 	datum.size = blob_size;
 

@@ -276,7 +276,7 @@ _pkcs11h_session_findObjects (
 	_PKCS11H_ASSERT (!(filter==NULL && filter_attrs!=0) || filter!=NULL);
 	_PKCS11H_ASSERT (p_objects!=NULL);
 	_PKCS11H_ASSERT (p_objects_found!=NULL);
-	
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_session_findObjects entry session=%p, filter=%p, filter_attrs=%ld, p_objects=%p, p_objects_found=%p",
@@ -309,9 +309,9 @@ _pkcs11h_session_findObjects (
 			&objects_found
 		)) == CKR_OK &&
 		objects_found > 0
-	) { 
+	) {
 		CK_OBJECT_HANDLE *temp = NULL;
-		
+
 		/*
 		 * Begin workaround
 		 *
@@ -327,7 +327,7 @@ _pkcs11h_session_findObjects (
 		}
 		oLast = objects_buffer[0];
 		/* End workaround */
-		
+
 		if (
 			(rv = _pkcs11h_mem_malloc (
 				(void *)&temp,
@@ -366,7 +366,7 @@ _pkcs11h_session_findObjects (
 		);
 		should_FindObjectsFinal = FALSE;
 	}
-	
+
 	*p_objects = objects;
 	*p_objects_found = objects_size;
 	objects = NULL;
@@ -462,7 +462,7 @@ _pkcs11h_session_getSessionByTokenId (
 
 		session->reference_count = 1;
 		session->session_handle = _PKCS11H_INVALID_SESSION_HANDLE;
-		
+
 		session->pin_cache_period = _g_pkcs11h_data->pin_cache_period;
 
 		if (
@@ -633,7 +633,7 @@ _pkcs11h_session_reset (
 			) {
 				continue;
 			}
-		
+
 			if (
 				(rv = _pkcs11h_session_getSlotList (
 					current_provider,
@@ -739,7 +739,7 @@ _pkcs11h_session_reset (
 				"PKCS#11: Calling token_prompt hook for '%s'",
 				session->token_id->display
 			);
-	
+
 			canceled = !_g_pkcs11h_data->hooks.token_prompt (
 				_g_pkcs11h_data->hooks.token_prompt_data,
 				user_data,
@@ -794,7 +794,7 @@ _pkcs11h_session_getObjectById (
 	CK_OBJECT_HANDLE *objects = NULL;
 	CK_ULONG objects_found = 0;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	
+
 	/*_PKCS11H_ASSERT (session!=NULL); NOT NEEDED*/
 	_PKCS11H_ASSERT (id!=NULL);
 	_PKCS11H_ASSERT (p_handle!=NULL);
@@ -1000,7 +1000,7 @@ _pkcs11h_session_login (
 
 		while (
 			!login_succeeded &&
-			retry_count < _g_pkcs11h_data->max_retries 
+			retry_count < _g_pkcs11h_data->max_retries
 		) {
 			CK_UTF8CHAR_PTR utfPIN = NULL;
 			CK_ULONG lPINLength = 0;

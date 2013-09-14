@@ -83,7 +83,7 @@ _pkcs11h_hooks_token_prompt (
 		}
 	}
 
-	return fRet; 
+	return fRet;
 }
 
 static
@@ -133,7 +133,7 @@ sign_test (const pkcs11h_certificate_t cert) {
 	};
 
 	CK_RV rv;
-					 
+
 	unsigned char *blob;
 	size_t blob_size;
 

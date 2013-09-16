@@ -74,14 +74,14 @@ struct pkcs11h_openssl_session_s {
 	PKCS11H_BOOL initialized;
 	X509 *x509;
 	RSA_METHOD smart_rsa;
-	int (*orig_finish)(RSA *rsa);
+	int (*rsa_orig_finish)(RSA *rsa);
 	pkcs11h_certificate_t certificate;
 	pkcs11h_hook_openssl_cleanup_t cleanup_hook;
 };
 
 static
 pkcs11h_openssl_session_t
-__pkcs11h_openssl_get_openssl_session (
+__pkcs11h_openssl_rsa_get_openssl_session (
 	IN const RSA *rsa
 ) {
 	pkcs11h_openssl_session_t session;
@@ -99,10 +99,10 @@ __pkcs11h_openssl_get_openssl_session (
 
 static
 pkcs11h_certificate_t
-__pkcs11h_openssl_get_pkcs11h_certificate (
+__pkcs11h_openssl_rsa_get_pkcs11h_certificate (
 	IN const RSA *rsa
 ) {
-	pkcs11h_openssl_session_t session = __pkcs11h_openssl_get_openssl_session (rsa);
+	pkcs11h_openssl_session_t session = __pkcs11h_openssl_rsa_get_openssl_session (rsa);
 
 	_PKCS11H_ASSERT (session!=NULL);
 	_PKCS11H_ASSERT (session->certificate!=NULL);
@@ -113,7 +113,7 @@ __pkcs11h_openssl_get_pkcs11h_certificate (
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 static
 int
-__pkcs11h_openssl_dec (
+__pkcs11h_openssl_rsa_dec (
 	IN int flen,
 	IN unsigned char *from,
 	OUT unsigned char *to,
@@ -123,7 +123,7 @@ __pkcs11h_openssl_dec (
 #else
 static
 int
-__pkcs11h_openssl_dec (
+__pkcs11h_openssl_rsa_dec (
 	IN int flen,
 	IN const unsigned char *from,
 	OUT unsigned char *to,
@@ -131,7 +131,7 @@ __pkcs11h_openssl_dec (
 	IN int padding
 ) {
 #endif
-	pkcs11h_certificate_t certificate = __pkcs11h_openssl_get_pkcs11h_certificate (rsa);
+	pkcs11h_certificate_t certificate = __pkcs11h_openssl_rsa_get_pkcs11h_certificate (rsa);
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_MECHANISM_TYPE mech = CKM_RSA_PKCS;
 	CK_RV rv = CKR_FUNCTION_FAILED;
@@ -143,7 +143,7 @@ __pkcs11h_openssl_dec (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_dec entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
+		"PKCS#11: __pkcs11h_openssl_rsa_dec entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
 		flen,
 		from,
 		to,
@@ -203,7 +203,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_dec - return rv=%lu-'%s'",
+		"PKCS#11: __pkcs11h_openssl_rsa_dec - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -214,7 +214,7 @@ cleanup:
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 static
 int
-__pkcs11h_openssl_enc (
+__pkcs11h_openssl_rsa_enc (
 	IN int flen,
 	IN unsigned char *from,
 	OUT unsigned char *to,
@@ -224,7 +224,7 @@ __pkcs11h_openssl_enc (
 #else
 static
 int
-__pkcs11h_openssl_enc (
+__pkcs11h_openssl_rsa_enc (
 	IN int flen,
 	IN const unsigned char *from,
 	OUT unsigned char *to,
@@ -232,7 +232,7 @@ __pkcs11h_openssl_enc (
 	IN int padding
 ) {
 #endif
-	pkcs11h_certificate_t certificate = __pkcs11h_openssl_get_pkcs11h_certificate (rsa);
+	pkcs11h_certificate_t certificate = __pkcs11h_openssl_rsa_get_pkcs11h_certificate (rsa);
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t tlen;
@@ -243,7 +243,7 @@ __pkcs11h_openssl_enc (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_enc entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
+		"PKCS#11: __pkcs11h_openssl_rsa_enc entered - flen=%d, from=%p, to=%p, rsa=%p, padding=%d",
 		flen,
 		from,
 		to,
@@ -293,7 +293,7 @@ cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_enc - return rv=%lu-'%s'",
+		"PKCS#11: __pkcs11h_openssl_rsa_enc - return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)
 	);
@@ -303,21 +303,21 @@ cleanup:
 
 static
 int
-__pkcs11h_openssl_finish (
+__pkcs11h_openssl_rsa_finish (
 	IN OUT RSA *rsa
 ) {
-	pkcs11h_openssl_session_t openssl_session = __pkcs11h_openssl_get_openssl_session (rsa);
+	pkcs11h_openssl_session_t openssl_session = __pkcs11h_openssl_rsa_get_openssl_session (rsa);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_finish - entered rsa=%p",
+		"PKCS#11: __pkcs11h_openssl_rsa_finish - entered rsa=%p",
 		(void *)rsa
 	);
 
 	RSA_set_ex_data (rsa, 0, NULL);
 
-	if (openssl_session->orig_finish != NULL) {
-		openssl_session->orig_finish (rsa);
+	if (openssl_session->rsa_orig_finish != NULL) {
+		openssl_session->rsa_orig_finish (rsa);
 
 #ifdef BROKEN_OPENSSL_ENGINE
 		{
@@ -340,7 +340,7 @@ __pkcs11h_openssl_finish (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_finish - return"
+		"PKCS#11: __pkcs11h_openssl_rsa_finish - return"
 	);
 
 	return 1;
@@ -451,12 +451,12 @@ pkcs11h_openssl_createSession (
 
 	memmove (&openssl_session->smart_rsa, def, sizeof(RSA_METHOD));
 
-	openssl_session->orig_finish = def->finish;
+	openssl_session->rsa_orig_finish = def->finish;
 
 	openssl_session->smart_rsa.name = "pkcs11";
-	openssl_session->smart_rsa.rsa_priv_dec = __pkcs11h_openssl_dec;
-	openssl_session->smart_rsa.rsa_priv_enc = __pkcs11h_openssl_enc;
-	openssl_session->smart_rsa.finish = __pkcs11h_openssl_finish;
+	openssl_session->smart_rsa.rsa_priv_dec = __pkcs11h_openssl_rsa_dec;
+	openssl_session->smart_rsa.rsa_priv_enc = __pkcs11h_openssl_rsa_enc;
+	openssl_session->smart_rsa.finish = __pkcs11h_openssl_rsa_finish;
 	openssl_session->smart_rsa.flags  = RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY;
 	openssl_session->certificate = certificate;
 	openssl_session->reference_count = 1;

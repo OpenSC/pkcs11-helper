@@ -82,15 +82,15 @@ struct pkcs11h_openssl_session_s {
 static
 pkcs11h_openssl_session_t
 __pkcs11h_openssl_get_openssl_session (
-	IN OUT const RSA *rsa
+	IN const RSA *rsa
 ) {
 	pkcs11h_openssl_session_t session;
 
 	_PKCS11H_ASSERT (rsa!=NULL);
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
-	session = (pkcs11h_openssl_session_t)RSA_get_app_data ((RSA *)rsa);
+	session = (pkcs11h_openssl_session_t)RSA_get_ex_data ((RSA *)rsa, 0);
 #else
-	session = (pkcs11h_openssl_session_t)RSA_get_app_data (rsa);
+	session = (pkcs11h_openssl_session_t)RSA_get_ex_data (rsa, 0);
 #endif
 	_PKCS11H_ASSERT (session!=NULL);
 
@@ -100,7 +100,7 @@ __pkcs11h_openssl_get_openssl_session (
 static
 pkcs11h_certificate_t
 __pkcs11h_openssl_get_pkcs11h_certificate (
-	IN OUT const RSA *rsa
+	IN const RSA *rsa
 ) {
 	pkcs11h_openssl_session_t session = __pkcs11h_openssl_get_openssl_session (rsa);
 
@@ -314,7 +314,7 @@ __pkcs11h_openssl_finish (
 		(void *)rsa
 	);
 
-	RSA_set_app_data (rsa, NULL);
+	RSA_set_ex_data (rsa, 0, NULL);
 
 	if (openssl_session->orig_finish != NULL) {
 		openssl_session->orig_finish (rsa);
@@ -581,7 +581,7 @@ pkcs11h_openssl_session_getRSA (
 	}
 
 	RSA_set_method (rsa, &openssl_session->smart_rsa);
-	RSA_set_app_data (rsa, openssl_session);
+	RSA_set_ex_data (rsa, 0, openssl_session);
 	openssl_session->reference_count++;
 
 #ifdef BROKEN_OPENSSL_ENGINE

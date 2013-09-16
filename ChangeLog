@@ -6,6 +6,7 @@ $Id$
 ????-??-?? - Version 1.11
 
  * openssl: support generic pkey.
+ * openssl: add dsa support.
 
 2012-02-29 - Version 1.10
 

@@ -80,62 +80,6 @@ struct pkcs11h_openssl_session_s {
 };
 
 static
-int
-__pkcs11h_openssl_finish (
-	IN OUT RSA *rsa
-);
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-static
-int
-__pkcs11h_openssl_dec (
-	IN int flen,
-	IN unsigned char *from,
-	OUT unsigned char *to,
-	IN OUT RSA *rsa,
-	IN int padding
-);
-static
-int
-__pkcs11h_openssl_enc (
-	IN int flen,
-	IN unsigned char *from,
-	OUT unsigned char *to,
-	IN OUT RSA *rsa,
-	IN int padding
-);
-#else
-static
-int
-__pkcs11h_openssl_dec (
-	IN int flen,
-	IN const unsigned char *from,
-	OUT unsigned char *to,
-	IN OUT RSA *rsa,
-	IN int padding
-);
-static
-int
-__pkcs11h_openssl_enc (
-	IN int flen,
-	IN const unsigned char *from,
-	OUT unsigned char *to,
-	IN OUT RSA *rsa,
-	IN int padding
-);
-#endif
-static
-pkcs11h_openssl_session_t
-__pkcs11h_openssl_get_openssl_session (
-	IN OUT const RSA *rsa
-);
-
-static
-pkcs11h_certificate_t
-__pkcs11h_openssl_get_pkcs11h_certificate (
-	IN OUT const RSA *rsa
-);
-
-static
 pkcs11h_openssl_session_t
 __pkcs11h_openssl_get_openssl_session (
 	IN OUT const RSA *rsa

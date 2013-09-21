@@ -453,7 +453,7 @@ pkcs11h_openssl_createSession (
 
 	openssl_session->rsa_orig_finish = def->finish;
 
-	openssl_session->smart_rsa.name = "pkcs11";
+	openssl_session->smart_rsa.name = "pkcs11h";
 	openssl_session->smart_rsa.rsa_priv_dec = __pkcs11h_openssl_rsa_dec;
 	openssl_session->smart_rsa.rsa_priv_enc = __pkcs11h_openssl_rsa_enc;
 	openssl_session->smart_rsa.finish = __pkcs11h_openssl_rsa_finish;

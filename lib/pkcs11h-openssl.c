@@ -83,36 +83,87 @@ struct pkcs11h_openssl_session_s {
 static struct {
 #ifndef OPENSSL_NO_RSA
 	RSA_METHOD rsa;
-	int (*rsa_orig_finish)(RSA *rsa);
+	int rsa_index;
 #endif
 } __openssl_methods;
+
+static
+int
+__pkcs11h_openssl_ex_data_dup (
+	CRYPTO_EX_DATA *to,
+	CRYPTO_EX_DATA *from,
+	void *from_d,
+	int idx,
+	long argl,
+	void *argp
+) {
+	pkcs11h_openssl_session_t openssl_session;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_ex_data_dup entered - to=%p, from=%p, from_d=%p, idx=%d, argl=%ld, argp=%p",
+		(void *)to,
+		(void *)from,
+		from_d,
+		idx,
+		argl,
+		argp
+	);
+
+	_PKCS11H_ASSERT (from_d!=NULL);
+
+	if ((openssl_session = *(pkcs11h_openssl_session_t *)from_d) != NULL) {
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG2,
+			"PKCS#11: __pkcs11h_openssl_ex_data_dup session refcount=%d",
+			openssl_session->reference_count
+		);
+		openssl_session->reference_count++;
+	}
+
+	return 1;
+}
+
+static
+void
+__pkcs11h_openssl_ex_data_free (
+	void *parent,
+	void *ptr,
+	CRYPTO_EX_DATA *ad,
+	int idx,
+	long argl,
+	void *argp
+) {
+	pkcs11h_openssl_session_t openssl_session = (pkcs11h_openssl_session_t)ptr;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_ex_data_free entered - parent=%p, ptr=%p, ad=%p, idx=%d, argl=%ld, argp=%p",
+		parent,
+		ptr,
+		(void *)ad,
+		idx,
+		argl,
+		argp
+	);
+
+	if (openssl_session != NULL) {
+		pkcs11h_openssl_freeSession (openssl_session);
+	}
+}
 
 #ifndef OPENSSL_NO_RSA
 
 static
-pkcs11h_openssl_session_t
-__pkcs11h_openssl_rsa_get_openssl_session (
-	IN const RSA *rsa
-) {
-	pkcs11h_openssl_session_t session;
-
-	_PKCS11H_ASSERT (rsa!=NULL);
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
-	session = (pkcs11h_openssl_session_t)RSA_get_ex_data ((RSA *)rsa, 0);
-#else
-	session = (pkcs11h_openssl_session_t)RSA_get_ex_data (rsa, 0);
-#endif
-	_PKCS11H_ASSERT (session!=NULL);
-
-	return session;
-}
-
-static
 pkcs11h_certificate_t
 __pkcs11h_openssl_rsa_get_pkcs11h_certificate (
-	IN const RSA *rsa
+	IN RSA *rsa
 ) {
-	pkcs11h_openssl_session_t session = __pkcs11h_openssl_rsa_get_openssl_session (rsa);
+	pkcs11h_openssl_session_t session = NULL;
+
+	_PKCS11H_ASSERT (rsa!=NULL);
+
+	session = (pkcs11h_openssl_session_t)RSA_get_ex_data (rsa, __openssl_methods.rsa_index);
 
 	_PKCS11H_ASSERT (session!=NULL);
 	_PKCS11H_ASSERT (session->certificate!=NULL);
@@ -312,51 +363,6 @@ cleanup:
 }
 
 static
-int
-__pkcs11h_openssl_rsa_finish (
-	IN OUT RSA *rsa
-) {
-	pkcs11h_openssl_session_t openssl_session = __pkcs11h_openssl_rsa_get_openssl_session (rsa);
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_rsa_finish - entered rsa=%p",
-		(void *)rsa
-	);
-
-	RSA_set_ex_data (rsa, 0, NULL);
-
-	if (__openssl_methods.rsa_orig_finish != NULL) {
-		__openssl_methods.rsa_orig_finish (rsa);
-
-#ifdef BROKEN_OPENSSL_ENGINE
-		{
-			/* We get called TWICE here, once for
-			 * releasing the key and also for
-			 * releasing the engine.
-			 * To prevent endless recursion, FIRST
-			 * clear rsa->engine, THEN call engine->finish
-			 */
-			ENGINE *e = rsa->engine;
-			rsa->engine = NULL;
-			if (e) {
-				ENGINE_finish(e);
-			}
-		}
-#endif
-	}
-
-	pkcs11h_openssl_freeSession (openssl_session);
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_rsa_finish - return"
-	);
-
-	return 1;
-}
-
-static
 PKCS11H_BOOL
 __pkcs11h_openssl_session_setRSA(
 	IN const pkcs11h_openssl_session_t openssl_session,
@@ -380,7 +386,7 @@ __pkcs11h_openssl_session_setRSA(
 	}
 
 	RSA_set_method (rsa, &__openssl_methods.rsa);
-	RSA_set_ex_data (rsa, 0, openssl_session);
+	RSA_set_ex_data (rsa, __openssl_methods.rsa_index, openssl_session);
 
 	rsa->flags |= RSA_FLAG_SIGN_VER;
 
@@ -420,17 +426,18 @@ _pkcs11h_openssl_initialize (void) {
 		"PKCS#11: _pkcs11h_openssl_initialize - entered"
 	);
 #ifndef OPENSSL_NO_RSA
-{
-	const RSA_METHOD *defrsa;
-	defrsa = RSA_get_default_method ();
-	memmove (&__openssl_methods.rsa, defrsa, sizeof(RSA_METHOD));
-	__openssl_methods.rsa_orig_finish = defrsa->finish;
+	memmove (&__openssl_methods.rsa, RSA_get_default_method (), sizeof(RSA_METHOD));
 	__openssl_methods.rsa.name = "pkcs11h";
 	__openssl_methods.rsa.rsa_priv_dec = __pkcs11h_openssl_rsa_dec;
 	__openssl_methods.rsa.rsa_priv_enc = __pkcs11h_openssl_rsa_enc;
-	__openssl_methods.rsa.finish = __pkcs11h_openssl_rsa_finish;
 	__openssl_methods.rsa.flags  = RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY;
-}
+	__openssl_methods.rsa_index = RSA_get_ex_new_index (
+		0,
+		"pkcs11h",
+		NULL,
+		__pkcs11h_openssl_ex_data_dup,
+		__pkcs11h_openssl_ex_data_free
+	);
 #endif
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,

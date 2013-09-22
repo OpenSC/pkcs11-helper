@@ -444,7 +444,6 @@ pkcs11h_openssl_createSession (
 			sizeof (struct pkcs11h_openssl_session_s)) != CKR_OK
 	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot allocate memory");
-		ok = FALSE;
 		goto cleanup;
 	}
 

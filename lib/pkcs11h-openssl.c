@@ -70,7 +70,10 @@ typedef const unsigned char *__pkcs11_openssl_d2i_t;
 #endif
 
 struct pkcs11h_openssl_session_s {
-	int reference_count;
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_mutex_t reference_count_lock;
+#endif
+	volatile int reference_count;
 	PKCS11H_BOOL initialized;
 	X509 *x509;
 	RSA_METHOD smart_rsa;
@@ -429,6 +432,7 @@ pkcs11h_openssl_createSession (
 ) {
 	const RSA_METHOD *def;
 	pkcs11h_openssl_session_t openssl_session = NULL;
+	CK_RV rv;
 	PKCS11H_BOOL ok = FALSE;
 
 	_PKCS11H_DEBUG (
@@ -460,6 +464,13 @@ pkcs11h_openssl_createSession (
 	openssl_session->smart_rsa.flags  = RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY;
 	openssl_session->certificate = certificate;
 	openssl_session->reference_count = 1;
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexInit(&openssl_session->reference_count_lock)) != CKR_OK) {
+		_PKCS11H_LOG (PKCS11H_LOG_ERROR, "PKCS#11: Cannot initialize mutex %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		goto cleanup;
+	}
+#endif
 
 	ok = TRUE;
 
@@ -501,8 +512,9 @@ void
 pkcs11h_openssl_freeSession (
 	IN const pkcs11h_openssl_session_t openssl_session
 ) {
+	CK_RV rv;
+
 	_PKCS11H_ASSERT (openssl_session!=NULL);
-	_PKCS11H_ASSERT (openssl_session->reference_count>0);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -511,9 +523,24 @@ pkcs11h_openssl_freeSession (
 		openssl_session->reference_count
 	);
 
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock(&openssl_session->reference_count_lock)) != CKR_OK) {
+		_PKCS11H_LOG (PKCS11H_LOG_ERROR, "PKCS#11: Cannot lock mutex %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		goto cleanup;
+	}
+#endif
 	openssl_session->reference_count--;
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_threading_mutexRelease(&openssl_session->reference_count_lock);
+#endif
+
+	_PKCS11H_ASSERT (openssl_session->reference_count>=0);
 
 	if (openssl_session->reference_count == 0) {
+#if defined(ENABLE_PKCS11H_THREADING)
+		_pkcs11h_threading_mutexFree(&openssl_session->reference_count_lock);
+#endif
+
 		if (openssl_session->cleanup_hook != NULL) {
 			openssl_session->cleanup_hook (openssl_session->certificate);
 		}
@@ -529,6 +556,8 @@ pkcs11h_openssl_freeSession (
 
 		_pkcs11h_mem_free ((void *)&openssl_session);
 	}
+
+cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -582,7 +611,14 @@ pkcs11h_openssl_session_getRSA (
 
 	RSA_set_method (rsa, &openssl_session->smart_rsa);
 	RSA_set_ex_data (rsa, 0, openssl_session);
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_threading_mutexLock(&openssl_session->reference_count_lock);
+#endif
 	openssl_session->reference_count++;
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_threading_mutexRelease(&openssl_session->reference_count_lock);
+#endif
 
 #ifdef BROKEN_OPENSSL_ENGINE
 	if (!rsa->engine) {

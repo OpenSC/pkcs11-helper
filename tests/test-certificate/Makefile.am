@@ -54,7 +54,7 @@ MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 TESTS=test-certificate
 noinst_PROGRAMS=test-certificate
 
-INCLUDES= \
+AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include
 LDADD= \

@@ -67,7 +67,7 @@ BUILT_SOURCES=pkcs11-helper.exports
 pkgconfig_DATA=libpkcs11-helper-1.pc
 lib_LTLIBRARIES=libpkcs11-helper.la
 
-INCLUDES= \
+AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include
 

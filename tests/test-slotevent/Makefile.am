@@ -54,7 +54,7 @@ MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 TESTS=test-slotevent
 noinst_PROGRAMS=test-slotevent
 
-INCLUDES= \
+AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include
 LDADD= \

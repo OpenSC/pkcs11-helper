@@ -5,6 +5,7 @@ $Id$
 
 ????-??-?? - Version 1.12
 
+ * polarssl: support polarssl-1.3, thanks to Steffan Karger.
 
 2013-10-11 - Version 1.11
 

@@ -54,6 +54,7 @@
 #include "_pkcs11h-crypto.h"
 
 #if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
+#include <polarssl/compat-1.2.h>
 #include <polarssl/x509.h>
 #include <polarssl/version.h>
 

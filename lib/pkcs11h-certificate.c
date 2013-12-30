@@ -2383,7 +2383,24 @@ _pkcs11h_certificate_enumSessionCertificates (
 					objects[i],
 					attrs,
 					sizeof (attrs) / sizeof (CK_ATTRIBUTE)
-				)) != CKR_OK ||
+				)) != CKR_OK
+			) {
+				goto retry1;
+			}
+
+			/*
+			 * skip objects without CKA_ID as we
+			 * won't be able to retrieve them.
+			 */
+			if (
+				attrs[0].pValue == NULL ||
+				attrs[0].ulValueLen == 0
+			) {
+				rv = CKR_OK;
+				goto retry1;
+			}
+
+			if (
 				(rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK ||
 				(rv = pkcs11h_token_duplicateTokenId (
 					&certificate_id->token_id,

@@ -6,6 +6,7 @@ $Id$
 ????-??-?? - Version 1.12
 
  * polarssl: support polarssl-1.3, thanks to Steffan Karger.
+ * certificate: ignore certificate object without CKA_ID.
 
 2013-10-11 - Version 1.11
 

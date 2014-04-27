@@ -893,7 +893,7 @@ pkcs11h_openssl_getX509 (
 cleanup:
 
 	if (certificate_blob != NULL) {
-		pkcs11h_mem_free((void *)&certificate_blob);
+		_pkcs11h_mem_free((void *)&certificate_blob);
 	}
 
 	if (rv != CKR_OK) {

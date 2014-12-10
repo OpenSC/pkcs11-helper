@@ -57,6 +57,8 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
+#include <p11-kit/uri.h>
+
 #define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|:;,.+-"
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
@@ -150,8 +152,8 @@ cleanup:
 	return rv;
 }
 
-CK_RV
-pkcs11h_token_deserializeTokenId (
+static CK_RV
+pkcs11h_token_legacy_deserializeTokenId (
 	OUT pkcs11h_token_id_t *p_token_id,
 	IN const char * const sz
 ) {
@@ -166,18 +168,6 @@ pkcs11h_token_deserializeTokenId (
 	char *_sz = NULL;
 	int e;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-
-	_PKCS11H_ASSERT (p_token_id!=NULL);
-	_PKCS11H_ASSERT (sz!=NULL);
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_deserializeTokenId entry p_token_id=%p, sz='%s'",
-		(void *)p_token_id,
-		sz
-	);
-
-	*p_token_id = NULL;
 
 	if (
 		(rv = _pkcs11h_mem_strdup (
@@ -283,6 +273,109 @@ cleanup:
 	return rv;
 #undef __PKCS11H_TARGETS_NUMBER
 }
+CK_RV
+pkcs11h_token_deserializeTokenId (
+	OUT pkcs11h_token_id_t *p_token_id,
+	IN const char * const sz
+) {
+#define __PKCS11H_TARGETS_NUMBER 4
+	struct {
+		char *p;
+		size_t s;
+	} targets[__PKCS11H_TARGETS_NUMBER];
+
+	pkcs11h_token_id_t token_id = NULL;
+	P11KitUri *uri = NULL;
+	char *_sz = NULL;
+	int e;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+	CK_TOKEN_INFO *tokinfo;
+
+	_PKCS11H_ASSERT (p_token_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_deserializeTokenId entry p_token_id=%p, sz='%s'",
+		(void *)p_token_id,
+		sz
+	);
+
+	*p_token_id = NULL;
+
+	if (strncmp (sz, "pkcs11:", 7))
+		return pkcs11h_token_legacy_deserializeTokenId(p_token_id, sz);
+
+	uri = p11_kit_uri_new ();
+	if (!uri)
+		goto cleanup;
+
+	if (p11_kit_uri_parse (sz, P11_KIT_URI_FOR_TOKEN, uri) !=
+	    P11_KIT_URI_OK) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+	}
+
+	tokinfo = p11_kit_uri_get_token_info (uri);
+
+	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	_pkcs11h_util_fixupFixedString (
+		token_id->manufacturerID,
+		(char *)tokinfo->manufacturerID,
+		sizeof (tokinfo->manufacturerID)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->model,
+		(char *)tokinfo->model,
+		sizeof (tokinfo->model)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->serialNumber,
+		(char *)tokinfo->serialNumber,
+		sizeof (tokinfo->serialNumber)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->label,
+		(char *)tokinfo->label,
+		sizeof (tokinfo->label)
+	);
+
+	strncpy (
+		token_id->display,
+		token_id->label,
+		sizeof (token_id->display)
+	);
+
+	*p_token_id = token_id;
+	token_id = NULL;
+
+	rv = CKR_OK;
+
+cleanup:
+	if (uri != NULL) {
+		p11_kit_uri_free (uri);
+	}
+	if (_sz != NULL) {
+		_pkcs11h_mem_free ((void *)&_sz);
+	}
+
+	if (token_id != NULL) {
+		pkcs11h_token_freeTokenId (token_id);
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_deserializeTokenId return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+#undef __PKCS11H_TARGETS_NUMBER
+}
 
 #endif				/* ENABLE_PKCS11H_TOKEN || ENABLE_PKCS11H_CERTIFICATE */
 
@@ -360,8 +453,8 @@ cleanup:
 	return rv;
 }
 
-CK_RV
-pkcs11h_certificate_deserializeCertificateId (
+static CK_RV
+pkcs11h_certificate_legacy_deserializeCertificateId (
 	OUT pkcs11h_certificate_id_t * const p_certificate_id,
 	IN const char * const sz
 ) {
@@ -369,18 +462,6 @@ pkcs11h_certificate_deserializeCertificateId (
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	char *p = NULL;
 	char *_sz = NULL;
-
-	_PKCS11H_ASSERT (p_certificate_id!=NULL);
-	_PKCS11H_ASSERT (sz!=NULL);
-
-	*p_certificate_id = NULL;
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_deserializeCertificateId entry p_certificate_id=%p, sz='%s'",
-		(void *)p_certificate_id,
-		sz
-	);
 
 	if (
 		(rv = _pkcs11h_mem_strdup (
@@ -443,6 +524,131 @@ cleanup:
 
 	if (_sz != NULL) {
 		_pkcs11h_mem_free ((void *)&_sz);
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_certificate_legacy_deserializeCertificateId return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+
+}
+
+CK_RV
+pkcs11h_certificate_deserializeCertificateId (
+	OUT pkcs11h_certificate_id_t * const p_certificate_id,
+	IN const char * const sz
+) {
+	pkcs11h_certificate_id_t certificate_id = NULL;
+	pkcs11h_token_id_t token_id = NULL;
+	P11KitUri *uri = NULL;
+	CK_TOKEN_INFO *tokinfo;
+	CK_ATTRIBUTE *attr;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+	char *p = NULL;
+	char *_sz = NULL;
+
+	_PKCS11H_ASSERT (p_certificate_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
+
+	*p_certificate_id = NULL;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_certificate_deserializeCertificateId entry p_certificate_id=%p, sz='%s'",
+		(void *)p_certificate_id,
+		sz
+	);
+
+	if (strncmp(sz, "pkcs11:", 7))
+		return pkcs11h_certificate_legacy_deserializeCertificateId (p_certificate_id, sz);
+
+	uri = p11_kit_uri_new ();
+	if (!uri)
+		goto cleanup;
+
+	if (p11_kit_uri_parse (sz, P11_KIT_URI_FOR_ANY, uri) !=
+	    P11_KIT_URI_OK) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+	}
+
+	tokinfo = p11_kit_uri_get_token_info(uri);
+
+	if ((rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK) {
+		goto cleanup;
+	}
+	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	certificate_id->token_id = token_id;
+
+	_pkcs11h_util_fixupFixedString (
+		token_id->manufacturerID,
+		(char *)tokinfo->manufacturerID,
+		sizeof (tokinfo->manufacturerID)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->model,
+		(char *)tokinfo->model,
+		sizeof (tokinfo->model)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->serialNumber,
+		(char *)tokinfo->serialNumber,
+		sizeof (tokinfo->serialNumber)
+	);
+	_pkcs11h_util_fixupFixedString (
+		token_id->label,
+		(char *)tokinfo->label,
+		sizeof (tokinfo->label)
+	);
+	strncpy (
+		token_id->display,
+		token_id->label,
+		sizeof (token_id->display)
+	);
+
+	attr = p11_kit_uri_get_attribute (uri, CKA_ID);
+	if (!attr) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+	}
+
+	certificate_id->attrCKA_ID_size = attr->ulValueLen;
+
+	if (
+		(rv = _pkcs11h_mem_malloc (
+			(void *)&certificate_id->attrCKA_ID,
+			certificate_id->attrCKA_ID_size)
+		) != CKR_OK
+	) {
+		goto cleanup;
+	}
+
+	memcpy(certificate_id->attrCKA_ID, attr->pValue, attr->ulValueLen);
+
+	*p_certificate_id = certificate_id;
+	certificate_id = NULL;
+	token_id = NULL;
+	rv = CKR_OK;
+
+cleanup:
+	if (uri != NULL) {
+		p11_kit_uri_free(uri);
+	}
+
+	if (certificate_id != NULL) {
+		pkcs11h_certificate_freeCertificateId (certificate_id);
+		certificate_id = NULL;
+	}
+	if (token_id != NULL) {
+		pkcs11h_token_freeTokenId (token_id);
+		token_id = NULL;
 	}
 
 	_PKCS11H_DEBUG (

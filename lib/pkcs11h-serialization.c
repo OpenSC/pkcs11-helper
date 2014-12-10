@@ -60,6 +60,26 @@
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
 
+#define URI_SCHEME "pkcs11:"
+
+#define token_field_ofs(field) ((unsigned long)&(((struct pkcs11h_token_id_s *)0)->field))
+#define token_field_size(field) sizeof((((struct pkcs11h_token_id_s *)0)->field))
+#define token_field(name, field) { name "=", sizeof(name), \
+				   token_field_ofs(field), token_field_size(field) }
+
+static struct {
+	const char const *name;
+	size_t namelen;
+	unsigned long field_ofs;
+	size_t field_size;
+} __token_fields[] = {
+	token_field ("model", model),
+	token_field ("token", label),
+	token_field ("manufacturer", manufacturerID ),
+	token_field ("serial", serialNumber ),
+	{ NULL },
+};
+
 CK_RV
 pkcs11h_token_serializeTokenId (
 	OUT char * const sz,
@@ -149,9 +169,147 @@ cleanup:
 	return rv;
 }
 
+static
 CK_RV
-pkcs11h_token_deserializeTokenId (
-	OUT pkcs11h_token_id_t *p_token_id,
+__parse_token_uri_attr (
+	const char *uri,
+	size_t urilen,
+	char *tokstr,
+	size_t toklen,
+	size_t *parsed_len
+) {
+	size_t orig_toklen = toklen;
+	CK_RV rv = CKR_OK;
+
+	while (urilen && toklen > 1) {
+		if (*uri == '%') {
+			size_t size = 1;
+
+			if (urilen < 3) {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto done;
+			}
+
+			rv = _pkcs11h_util_hexToBinary ((unsigned char *)tokstr,
+							uri + 1, &size);
+			if (rv != CKR_OK) {
+				goto done;
+			}
+
+			uri += 2;
+			urilen -= 2;
+		} else {
+			*tokstr = *uri;
+		}
+		tokstr++;
+		uri++;
+		toklen--;
+		urilen--;
+		tokstr[0] = 0;
+	}
+
+	if (urilen) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+	} else if (parsed_len) {
+		*parsed_len = orig_toklen - toklen;
+	}
+
+ done:
+	return rv;
+}
+
+static
+CK_RV
+__parse_pkcs11_uri (
+	OUT pkcs11h_token_id_t token_id,
+	OUT pkcs11h_certificate_id_t certificate_id,
+	IN const char * const sz
+) {
+	const char *end, *p;
+	CK_RV rv = CKR_OK;
+
+	_PKCS11H_ASSERT (token_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
+
+	if (strncmp (sz, URI_SCHEME, strlen (URI_SCHEME)))
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	end = sz + strlen (URI_SCHEME) - 1;
+	while (rv == CKR_OK && end[0] && end[1]) {
+		int i;
+
+		p = end + 1;
+	        end = strchr (p, ';');
+		if (!end)
+			end = p + strlen(p);
+
+		for (i = 0; __token_fields[i].name; i++) {
+			/* Parse the token=, label=, manufacturer= and serial= fields */
+			if (!strncmp(p, __token_fields[i].name, __token_fields[i].namelen)) {
+				char *field = ((char *)token_id) + __token_fields[i].field_ofs;
+
+				p += __token_fields[i].namelen;
+				rv = __parse_token_uri_attr (p, end - p, field,
+							     __token_fields[i].field_size,
+							     NULL);
+				if (rv != CKR_OK) {
+					goto cleanup;
+				}
+
+				goto matched;
+			}
+		}
+		if (certificate_id && !strncmp(p, "id=", 3)) {
+			p += 3;
+
+			rv = _pkcs11h_mem_malloc ((void *)&certificate_id->attrCKA_ID,
+						  end - p + 1);
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
+
+			rv = __parse_token_uri_attr (p, end - p,
+						     (char *)certificate_id->attrCKA_ID,
+						     end - p + 1,
+						     &certificate_id->attrCKA_ID_size);
+			if (rv != CKR_OK) {
+				goto cleanup;
+			}
+
+			goto matched;
+		}
+
+		/* We don't parse object= because the match code doesn't support
+		   matching by label. */
+
+		/* Failed to parse PKCS#11 URI element. */
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+		matched:
+		    ;
+	}
+cleanup:
+	/* The matching code doesn't support support partial matches; it needs
+	 * *all* of manufacturer, model, serial and label attributes to be
+	 * defined. So reject partial URIs early instead of letting it do the
+	 * wrong thing. We can maybe improve this later. */
+	if (!token_id->model[0] || !token_id->label[0] ||
+	    !token_id->manufacturerID[0] || !token_id->serialNumber[0]) {
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	/* For a certificate ID we need CKA_ID */
+	if (certificate_id && !certificate_id->attrCKA_ID_size) {
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	return rv;
+}
+
+static
+CK_RV
+__pkcs11h_token_legacy_deserializeTokenId (
+	OUT pkcs11h_token_id_t token_id,
 	IN const char * const sz
 ) {
 #define __PKCS11H_TARGETS_NUMBER 4
@@ -160,23 +318,10 @@ pkcs11h_token_deserializeTokenId (
 		size_t s;
 	} targets[__PKCS11H_TARGETS_NUMBER];
 
-	pkcs11h_token_id_t token_id = NULL;
 	char *p1 = NULL;
 	char *_sz = NULL;
 	int e;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-
-	_PKCS11H_ASSERT (p_token_id!=NULL);
-	_PKCS11H_ASSERT (sz!=NULL);
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_token_deserializeTokenId entry p_token_id=%p, sz='%s'",
-		(void *)p_token_id,
-		sz
-	);
-
-	*p_token_id = NULL;
 
 	if (
 		(rv = _pkcs11h_mem_strdup (
@@ -188,10 +333,6 @@ pkcs11h_token_deserializeTokenId (
 	}
 
 	p1 = _sz;
-
-	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
-		goto cleanup;
-	}
 
 	targets[0].p = token_id->manufacturerID;
 	targets[0].s = sizeof (token_id->manufacturerID);
@@ -251,6 +392,51 @@ pkcs11h_token_deserializeTokenId (
 		p1 = p2+1;
 	}
 
+	rv = CKR_OK;
+
+cleanup:
+
+	if (_sz != NULL) {
+		_pkcs11h_mem_free ((void *)&_sz);
+	}
+
+	return rv;
+#undef __PKCS11H_TARGETS_NUMBER
+}
+
+CK_RV
+pkcs11h_token_deserializeTokenId (
+	OUT pkcs11h_token_id_t *p_token_id,
+	IN const char * const sz
+) {
+	pkcs11h_token_id_t token_id = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_ASSERT (p_token_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_token_deserializeTokenId entry p_token_id=%p, sz='%s'",
+		(void *)p_token_id,
+		sz
+	);
+
+	*p_token_id = NULL;
+
+	if ((rv = _pkcs11h_token_newTokenId (&token_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	if (!strncmp (sz, URI_SCHEME, strlen (URI_SCHEME))) {
+		rv = __parse_pkcs11_uri(token_id, NULL, sz);
+	} else {
+		rv = __pkcs11h_token_legacy_deserializeTokenId(token_id, sz);
+	}
+	if (rv != CKR_OK) {
+		goto cleanup;
+	}
+
 	strncpy (
 		token_id->display,
 		token_id->label,
@@ -263,11 +449,6 @@ pkcs11h_token_deserializeTokenId (
 	rv = CKR_OK;
 
 cleanup:
-
-	if (_sz != NULL) {
-		_pkcs11h_mem_free ((void *)&_sz);
-	}
-
 	if (token_id != NULL) {
 		pkcs11h_token_freeTokenId (token_id);
 	}
@@ -280,7 +461,6 @@ cleanup:
 	);
 
 	return rv;
-#undef __PKCS11H_TARGETS_NUMBER
 }
 
 #endif				/* ENABLE_PKCS11H_TOKEN || ENABLE_PKCS11H_CERTIFICATE */
@@ -359,28 +539,16 @@ cleanup:
 	return rv;
 }
 
+static
 CK_RV
-pkcs11h_certificate_deserializeCertificateId (
-	OUT pkcs11h_certificate_id_t * const p_certificate_id,
+__pkcs11h_certificate_legacy_deserializeCertificateId (
+	OUT pkcs11h_certificate_id_t certificate_id,
 	IN const char * const sz
 ) {
-	pkcs11h_certificate_id_t certificate_id = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	char *p = NULL;
 	char *_sz = NULL;
 	size_t id_hex_len;
-
-	_PKCS11H_ASSERT (p_certificate_id!=NULL);
-	_PKCS11H_ASSERT (sz!=NULL);
-
-	*p_certificate_id = NULL;
-
-	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_deserializeCertificateId entry p_certificate_id=%p, sz='%s'",
-		(void *)p_certificate_id,
-		sz
-	);
 
 	if (
 		(rv = _pkcs11h_mem_strdup (
@@ -392,10 +560,6 @@ pkcs11h_certificate_deserializeCertificateId (
 	}
 
 	p = _sz;
-
-	if ((rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK) {
-		goto cleanup;
-	}
 
 	if ((p = strrchr (_sz, '/')) == NULL) {
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
@@ -435,19 +599,62 @@ pkcs11h_certificate_deserializeCertificateId (
 		goto cleanup;
 	}
 
+	rv = CKR_OK;
+
+cleanup:
+
+	if (_sz != NULL) {
+		_pkcs11h_mem_free ((void *)&_sz);
+	}
+
+	return rv;
+
+}
+
+CK_RV
+pkcs11h_certificate_deserializeCertificateId (
+	OUT pkcs11h_certificate_id_t * const p_certificate_id,
+	IN const char * const sz
+) {
+	pkcs11h_certificate_id_t certificate_id = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_ASSERT (p_certificate_id!=NULL);
+	_PKCS11H_ASSERT (sz!=NULL);
+
+	*p_certificate_id = NULL;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_certificate_deserializeCertificateId entry p_certificate_id=%p, sz='%s'",
+		(void *)p_certificate_id,
+		sz
+	);
+
+	if ((rv = _pkcs11h_certificate_newCertificateId (&certificate_id)) != CKR_OK) {
+		goto cleanup;
+	}
+	if ((rv = _pkcs11h_token_newTokenId (&certificate_id->token_id)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	if (!strncmp(sz, URI_SCHEME, strlen (URI_SCHEME))) {
+		rv = __parse_pkcs11_uri (certificate_id->token_id, certificate_id, sz);
+	} else {
+		rv = __pkcs11h_certificate_legacy_deserializeCertificateId (certificate_id, sz);
+	}
+	if (rv != CKR_OK) {
+		goto cleanup;
+	}
+
 	*p_certificate_id = certificate_id;
 	certificate_id = NULL;
 	rv = CKR_OK;
 
 cleanup:
-
 	if (certificate_id != NULL) {
 		pkcs11h_certificate_freeCertificateId (certificate_id);
 		certificate_id = NULL;
-	}
-
-	if (_sz != NULL) {
-		_pkcs11h_mem_free ((void *)&_sz);
 	}
 
 	_PKCS11H_DEBUG (

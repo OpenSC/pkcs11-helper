@@ -368,6 +368,7 @@ pkcs11h_certificate_deserializeCertificateId (
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	char *p = NULL;
 	char *_sz = NULL;
+	size_t id_hex_len;
 
 	_PKCS11H_ASSERT (p_certificate_id!=NULL);
 	_PKCS11H_ASSERT (sz!=NULL);
@@ -413,7 +414,12 @@ pkcs11h_certificate_deserializeCertificateId (
 		goto cleanup;
 	}
 
-	certificate_id->attrCKA_ID_size = strlen (p)/2;
+	id_hex_len = strlen (p);
+	if (id_hex_len & 1) {
+		rv = CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
+	}
+	certificate_id->attrCKA_ID_size = id_hex_len/2;
 
 	if (
 		(rv = _pkcs11h_mem_malloc (

@@ -80,28 +80,106 @@ static struct {
 	{ NULL },
 };
 
+#define               P11_URL_VERBATIM      "abcdefghijklmnopqrstuvwxyz" \
+                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                                            "0123456789_-."
+
+static
+int
+__token_attr_escape(char *uri, char *attr, size_t attrlen)
+{
+	int len = 0, i;
+
+	for (i = 0; i < attrlen; i++) {
+		if ((attr[i] != '\x0') && strchr(P11_URL_VERBATIM, attr[i])) {
+			if (uri) {
+				*(uri++) = attr[i];
+			}
+			len++;
+		} else {
+			if (uri) {
+				sprintf(uri, "%%%02x", (unsigned char)attr[i]);
+				uri += 3;
+			}
+			len += 3;
+		}
+	}
+	return len;
+}
+
+static
+CK_RV
+__generate_pkcs11_uri (
+	OUT char * const sz,
+	IN OUT size_t *max,
+	IN const pkcs11h_certificate_id_t certificate_id,
+	IN const pkcs11h_token_id_t token_id
+) {
+	size_t _max;
+	char *p = sz;
+	int i;
+
+	_PKCS11H_ASSERT (max!=NULL);
+	_PKCS11H_ASSERT (token_id!=NULL);
+
+	_max = strlen(URI_SCHEME);
+	for (i = 0; __token_fields[i].name; i++) {
+		char *field = ((char *)token_id) + __token_fields[i].field_ofs;
+
+		_max += __token_fields[i].namelen;
+		_max += __token_attr_escape (NULL, field, strlen(field));
+		_max++; /* For a semicolon or trailing NUL */
+	}
+	if (certificate_id) {
+		_max += strlen (";id=");
+		_max += __token_attr_escape (NULL,
+					     (char *)certificate_id->attrCKA_ID,
+					     certificate_id->attrCKA_ID_size);
+	}
+
+	if (!sz) {
+		*max = _max;
+		return CKR_OK;
+	}
+
+	if (sz && *max < _max)
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	p += sprintf(p, URI_SCHEME);
+	for (i = 0; __token_fields[i].name; i++) {
+		char *field = ((char *)token_id) + __token_fields[i].field_ofs;
+
+		p += sprintf (p, "%s", __token_fields[i].name);
+		p += __token_attr_escape (p, field, strlen(field));
+		*(p++) = ';';
+	}
+	if (certificate_id) {
+		p += sprintf (p, "id=");
+		p += __token_attr_escape (p,
+					  (char *)certificate_id->attrCKA_ID,
+					  certificate_id->attrCKA_ID_size);
+	} else {
+		/* Remove the unneeded trailing semicolon */
+		p--;
+	}
+	*(p++) = 0;
+
+	*max = _max;
+
+	return CKR_OK;
+}
+
 CK_RV
 pkcs11h_token_serializeTokenId (
 	OUT char * const sz,
 	IN OUT size_t *max,
 	IN const pkcs11h_token_id_t token_id
 ) {
-	const char *sources[5];
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	size_t n;
-	int e;
 
 	/*_PKCS11H_ASSERT (sz!=NULL); Not required*/
 	_PKCS11H_ASSERT (max!=NULL);
 	_PKCS11H_ASSERT (token_id!=NULL);
-
-	{ /* Must be after assert */
-		sources[0] = token_id->manufacturerID;
-		sources[1] = token_id->model;
-		sources[2] = token_id->serialNumber;
-		sources[3] = token_id->label;
-		sources[4] = NULL;
-	}
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -111,51 +189,7 @@ pkcs11h_token_serializeTokenId (
 		(void *)token_id
 	);
 
-	n = 0;
-	for (e=0;sources[e] != NULL;e++) {
-		size_t t;
-		if (
-			(rv = _pkcs11h_util_escapeString (
-				NULL,
-				sources[e],
-				&t,
-				__PKCS11H_SERIALIZE_INVALID_CHARS
-			)) != CKR_OK
-		) {
-			goto cleanup;
-		}
-		n+=t;
-	}
-
-	if (sz != NULL) {
-		if (*max < n) {
-			rv = CKR_ATTRIBUTE_VALUE_INVALID;
-			goto cleanup;
-		}
-
-		n = 0;
-		for (e=0;sources[e] != NULL;e++) {
-			size_t t = *max-n;
-			if (
-				(rv = _pkcs11h_util_escapeString (
-					sz+n,
-					sources[e],
-					&t,
-					__PKCS11H_SERIALIZE_INVALID_CHARS
-				)) != CKR_OK
-			) {
-				goto cleanup;
-			}
-			n+=t;
-			sz[n-1] = '/';
-		}
-		sz[n-1] = '\x0';
-	}
-
-	*max = n;
-	rv = CKR_OK;
-
-cleanup:
+	rv = __generate_pkcs11_uri(sz, max, NULL, token_id);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -474,9 +508,6 @@ pkcs11h_certificate_serializeCertificateId (
 	IN const pkcs11h_certificate_id_t certificate_id
 ) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	size_t saved_max = 0;
-	size_t n = 0;
-	size_t _max = 0;
 
 	/*_PKCS11H_ASSERT (sz!=NULL); Not required */
 	_PKCS11H_ASSERT (max!=NULL);
@@ -490,42 +521,7 @@ pkcs11h_certificate_serializeCertificateId (
 		(void *)certificate_id
 	);
 
-	if (sz != NULL) {
-		saved_max = n = *max;
-	}
-	*max = 0;
-
-	if (
-		(rv = pkcs11h_token_serializeTokenId (
-			sz,
-			&n,
-			certificate_id->token_id
-		)) != CKR_OK
-	) {
-		goto cleanup;
-	}
-
-	_max = n + certificate_id->attrCKA_ID_size*2 + 1;
-
-	if (sz != NULL) {
-		if (saved_max < _max) {
-			rv = CKR_ATTRIBUTE_VALUE_INVALID;
-			goto cleanup;
-		}
-
-		sz[n-1] = '/';
-		rv = _pkcs11h_util_binaryToHex (
-			sz+n,
-			saved_max-n,
-			certificate_id->attrCKA_ID,
-			certificate_id->attrCKA_ID_size
-		);
-	}
-
-	*max = _max;
-	rv = CKR_OK;
-
-cleanup:
+	rv = __generate_pkcs11_uri(sz, max, certificate_id, certificate_id->token_id);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,

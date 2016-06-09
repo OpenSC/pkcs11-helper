@@ -352,16 +352,41 @@ AC_ARG_VAR([POLARSSL_CFLAGS], [C compiler flags for PolarSSL])
 AC_ARG_VAR([POLARSSL_LIBS], [linker flags for PolarSSL])
 if test -z "${POLARSSL_LIBS}"; then
 	AC_CHECK_LIB(
-		[polarssl],
-		[x509parse_crt],
+		[mbedtls],
+		[mbedtls_x509_crt_parse],
 		[
-			POLARSSL_LIBS="-lpolarssl"
+			POLARSSL_LIBS="-lmbedtls -lmbedx509 -lmbedcrypto"
 			have_polarssl="yes"
 		],
-		[have_polarssl="no"]
+		[AC_CHECK_LIB(
+			[polarssl],
+			[x509_crt_parse],
+			[
+				POLARSSL_LIBS="-lpolarssl"
+				have_polarssl="yes"
+			],
+			[have_polarssl="no"]
+		)]
 	)
 else
 	have_polarssl="yes"
+fi
+
+if test "${have_polarssl}" = "yes"; then
+	old_CFLAGS="${CFLAGS}"
+	old_CPPFLAGS="${CPPFLAGS}"
+	CFLAGS="${CFLAGS} ${POLARSSL_CFLAGS}"
+	CPPFLAGS="${CPPFLAGS} ${POLARSSL_CFLAGS}"
+	AC_CHECK_HEADER(
+		[mbedtls/version.h],
+		[
+			have_mbedtls="yes"
+			AC_DEFINE([HAVE_LIBMBEDTLS], [1], [Using mbed TLS 2.x])
+		],
+		[have_mbedtls="no"]
+	)
+	CFLAGS="${old_CFLAGS}"
+	CPPFLAGS="${old_CPPFLAGS}"
 fi
 
 # Checks for header files.

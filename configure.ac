@@ -202,9 +202,16 @@ AC_ARG_ENABLE(
 
 AC_ARG_ENABLE(
 	[crypto-engine-polarssl],
-	[AS_HELP_STRING([--disable-crypto-engine-polarssl],[disable PolarSSL crypto engine])],
+	[AS_HELP_STRING([--disable-crypto-engine-polarssl],[disable mbed TLS crypto engine])],
 	,
-	[enable_crypto_engine_polarssl="yes"]
+	[enable_crypto_engine_mbedtls="yes"]
+)
+
+AC_ARG_ENABLE(
+	[crypto-engine-mbedtls],
+	[AS_HELP_STRING([--disable-crypto-engine-mbedtls],[disable mbed TLS crypto engine])],
+	,
+	[enable_crypto_engine_mbedtls="yes"]
 )
 
 AC_ARG_ENABLE(
@@ -348,20 +355,47 @@ fi
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
 
-AC_ARG_VAR([POLARSSL_CFLAGS], [C compiler flags for PolarSSL])
-AC_ARG_VAR([POLARSSL_LIBS], [linker flags for PolarSSL])
-if test -z "${POLARSSL_LIBS}"; then
+AC_ARG_VAR([MBEDTLS_CFLAGS], [C compiler flags for mbed TLS])
+AC_ARG_VAR([MBEDTLS_LIBS], [linker flags for mbed TLS])
+if test -z "${MBEDTLS_LIBS}"; then
 	AC_CHECK_LIB(
-		[polarssl],
-		[x509parse_crt],
+		[mbedx509],
+		[mbedtls_x509_crt_init],
 		[
-			POLARSSL_LIBS="-lpolarssl"
-			have_polarssl="yes"
+			AC_CHECK_HEADERS(
+				[mbedtls/x509_crt.h],
+				,
+				[AC_MSG_ERROR([Cannot find mbed TLS headers])]
+			)
+			MBEDTLS_LIBS="-lmbedx509 -lmbedtls -lmbedcrypto"
+			have_mbedtls="yes"
 		],
-		[have_polarssl="no"]
+		[AC_CHECK_LIB(
+			[polarssl],
+			[x509_crt_parse],
+			[
+				AC_CHECK_HEADERS(
+					[polarssl/x509_crt.h],
+					,
+					[AC_MSG_ERROR([Cannot find PolarSSL headers])]
+				)
+				MBEDTLS_LIBS="-lpolarssl"
+				have_mbedtls="yes"
+			],
+			[have_mbedtls="no"]
+		)],
+		[-lmbedtls -lmbedcrypto]
 	)
 else
-	have_polarssl="yes"
+	have_mbedtls="yes"
+fi
+
+if test -n "${MBEDTLS_CFLAGS}" -a "${have_mbedtls}" = "yes"; then
+	old_CFLAGS="${CFLAGS}"
+	CFLAGS="${CFLAGS} ${MBEDTLS_CFLAGS}"
+	AC_CHECK_HEADERS([mbedtls/x509_crt.h])
+	AC_CHECK_HEADERS([polarssl/x509_crt.h])
+	CFLAGS="${old_CFLAGS}"
 fi
 
 # Checks for header files.
@@ -463,13 +497,13 @@ else
 	AC_MSG_RESULT([no])
 fi
 
-AC_MSG_CHECKING([PolarSSL crypto engine])
-if test "${enable_crypto_engine_polarssl}" = "yes"; then
-	if test "${have_polarssl}" = "yes"; then
+AC_MSG_CHECKING([mbed TLS crypto engine])
+if test "${enable_crypto_engine_mbedtls}" = "yes"; then
+	if test "${have_mbedtls}" = "yes"; then
 		AC_MSG_RESULT([yes])
-		AC_DEFINE([ENABLE_PKCS11H_ENGINE_POLARSSL], [1], [Enable PolarSSL crypto engine])
-		CFLAGS="${CFLAGS} ${POLARSSL_CFLAGS}"
-		LIBS="${LIBS} ${POLARSSL_LIBS}"
+		AC_DEFINE([ENABLE_PKCS11H_ENGINE_MBEDTLS], [1], [Enable mbed TLS crypto engine])
+		CFLAGS="${CFLAGS} ${MBEDTLS_CFLAGS}"
+		LIBS="${LIBS} ${MBEDTLS_LIBS}"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -530,9 +564,9 @@ if test "${enable_crypto_engine_nss}" = "yes"; then
 	crypto_engine=1
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_nss"
 fi
-if test "${enable_crypto_engine_polarssl}" = "yes"; then
+if test "${enable_crypto_engine_mbedtls}" = "yes"; then
 	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_polarssl"
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_mbedtls"
 fi
 if test "${enable_crypto_engine_cryptoapi}" = "yes"; then
 	crypto_engine=1

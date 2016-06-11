@@ -109,8 +109,10 @@ extern "C" {
 #define PKCS11H_FEATURE_MASK_SLOTEVENT			(1<< 8)
 /** OpenSSL interface is enabled. */
 #define PKCS11H_FEATURE_MASK_OPENSSL			(1<< 9)
-/** Engine PolarSSL is enabled. */
+/** Engine mbed TLS is enabled. */
 #define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_POLARSSL	(1<< 10)
+/** Engine mbed TLS is enabled. */
+#define PKCS11H_FEATURE_MASK_ENGINE_CRYPTO_MBEDTLS	(1<< 10)
 /** @} */
 
 /**

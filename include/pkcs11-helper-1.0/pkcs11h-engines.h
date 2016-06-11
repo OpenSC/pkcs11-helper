@@ -213,8 +213,10 @@ typedef struct pkcs11h_crypto_engine_s {
 #define PKCS11H_ENGINE_CRYPTO_WIN32	((pkcs11h_engine_crypto_t *)3)
 /** Select NSS. */
 #define PKCS11H_ENGINE_CRYPTO_NSS	((pkcs11h_engine_crypto_t *)4)
-/** Select PolarSSL. */
+/** Select mbed TLS. */
 #define PKCS11H_ENGINE_CRYPTO_POLARSSL	((pkcs11h_engine_crypto_t *)5)
+/** Select mbed TLS. */
+#define PKCS11H_ENGINE_CRYPTO_MBEDTLS	((pkcs11h_engine_crypto_t *)5)
 /** Auto select GPL enigne. */
 #define PKCS11H_ENGINE_CRYPTO_GPL	((pkcs11h_engine_crypto_t *)10)
 /** @} */

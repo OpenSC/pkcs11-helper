@@ -62,8 +62,8 @@ extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_openssl;
 #if defined(ENABLE_PKCS11H_ENGINE_NSS)
 extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_nss;
 #endif
-#if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
-extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_polarssl;
+#if defined(ENABLE_PKCS11H_ENGINE_MBEDTLS)
+extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_mbedtls;
 #endif
 #if defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 extern const pkcs11h_engine_crypto_t _g_pkcs11h_crypto_engine_gnutls;
@@ -94,8 +94,8 @@ pkcs11h_engine_setCrypto (
 		_engine = &_g_pkcs11h_crypto_engine_openssl;
 #elif defined(ENABLE_PKCS11H_ENGINE_NSS)
 		_engine = &_g_pkcs11h_crypto_engine_nss;
-#elif defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
-		_engine = &_g_pkcs11h_crypto_engine_polarssl;
+#elif defined(ENABLE_PKCS11H_ENGINE_MBEDTLS)
+		_engine = &_g_pkcs11h_crypto_engine_mbedtls;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
@@ -106,8 +106,8 @@ pkcs11h_engine_setCrypto (
 	else if (engine ==  PKCS11H_ENGINE_CRYPTO_GPL) {
 #if defined(ENABLE_PKCS11H_ENGINE_CRYPTOAPI)
 		_engine = &_g_pkcs11h_crypto_engine_cryptoapi;
-#elif defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
-		_engine = &_g_pkcs11h_crypto_engine_polarssl;
+#elif defined(ENABLE_PKCS11H_ENGINE_MBEDTLS)
+		_engine = &_g_pkcs11h_crypto_engine_mbedtls;
 #elif defined(ENABLE_PKCS11H_ENGINE_GNUTLS)
 		_engine = &_g_pkcs11h_crypto_engine_gnutls;
 #else
@@ -147,9 +147,9 @@ pkcs11h_engine_setCrypto (
 		goto cleanup;
 #endif
 	}
-	else if (engine == PKCS11H_ENGINE_CRYPTO_POLARSSL) {
-#if defined(ENABLE_PKCS11H_ENGINE_POLARSSL)
-		_engine = &_g_pkcs11h_crypto_engine_polarssl;
+	else if (engine == PKCS11H_ENGINE_CRYPTO_MBEDTLS) {
+#if defined(ENABLE_PKCS11H_ENGINE_MBEDTLS)
+		_engine = &_g_pkcs11h_crypto_engine_mbedtls;
 #else
 		rv = CKR_ATTRIBUTE_VALUE_INVALID;
 		goto cleanup;

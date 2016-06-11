@@ -17,6 +17,7 @@
 *.in
 *.lo
 *.la
+*~
 
 ltsugar.m4
 libtool.m4
@@ -27,21 +28,22 @@ ltoptions.m4
 test-*
 *.[0-9].html
 
-configure
-config.log
-depcomp
-config.h
 Makefile
-config.status
-config.guess
-config.sub
-stamp-h1
-autom4te.cache
-missing
 aclocal.m4
+autom4te.cache
+compile
+config.guess
+config.h
+config.log
+config.status
+config.sub
+configure
+depcomp
 install-sh
-ltmain.sh
 libtool
+ltmain.sh
+missing
+stamp-h1
 
 pkcs11h-version.h
 config-w32-vc.h

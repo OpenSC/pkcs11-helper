@@ -359,7 +359,7 @@ AC_ARG_VAR([MBEDTLS_CFLAGS], [C compiler flags for mbed TLS])
 AC_ARG_VAR([MBEDTLS_LIBS], [linker flags for mbed TLS])
 if test -z "${MBEDTLS_LIBS}"; then
 	AC_CHECK_LIB(
-		[mbedx509],
+		[mbedtls],
 		[mbedtls_x509_crt_init],
 		[
 			AC_CHECK_HEADERS(
@@ -367,7 +367,7 @@ if test -z "${MBEDTLS_LIBS}"; then
 				,
 				[AC_MSG_ERROR([Cannot find mbed TLS headers])]
 			)
-			MBEDTLS_LIBS="-lmbedx509 -lmbedtls -lmbedcrypto"
+			MBEDTLS_LIBS="-lmbedtls -lmbedx509 -lmbedcrypto"
 			have_mbedtls="yes"
 		],
 		[AC_CHECK_LIB(
@@ -384,7 +384,7 @@ if test -z "${MBEDTLS_LIBS}"; then
 			],
 			[have_mbedtls="no"]
 		)],
-		[-lmbedtls -lmbedcrypto]
+		[-lmbedx509 -lmbedcrypto]
 	)
 else
 	have_mbedtls="yes"

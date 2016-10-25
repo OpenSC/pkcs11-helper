@@ -404,7 +404,7 @@ if test "${enable_pedantic}" = "yes"; then
 fi
 
 if test "${enable_strict}" = "yes"; then
-	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function -Wno-variadic-macros"
+	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function -Wno-variadic-macros -Wno-long-long"
 fi
 
 # Checks for header files.

@@ -57,6 +57,14 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
+/*
+ * Hack libressl incorrect interface number.
+ */
+#if defined(LIBRESSL_VERSION_NUMBER)
+#undef OPENSSL_VERSION_NUMBER
+#define OPENSSL_VERSION_NUMBER 0x1000107fL
+#endif
+
 #if !defined(OPENSSL_NO_EC) && defined(ENABLE_PKCS11H_OPENSSL_EC)
 #define __ENABLE_EC
 #ifdef ENABLE_PKCS11H_OPENSSL_EC_HACK
@@ -87,13 +95,144 @@ struct pkcs11h_openssl_session_s {
 	pkcs11h_hook_openssl_cleanup_t cleanup_hook;
 };
 
+#if OPENSSL_VERSION_NUMBER < 0x10100001L
+static RSA_METHOD *
+RSA_meth_dup (const RSA_METHOD *meth)
+{
+	RSA_METHOD *ret = NULL;
+	CK_RV rv;
+
+	rv = _pkcs11h_mem_malloc ((void *)&ret, sizeof (RSA_METHOD));
+	if (rv != CKR_OK) {
+		goto cleanup;
+	}
+	memmove (ret, meth, sizeof (RSA_METHOD));
+
+cleanup:
+
+	return ret;
+}
+
+static void
+RSA_meth_free (RSA_METHOD *meth)
+{
+	if (meth != NULL) {
+		if (meth->name != NULL) {
+			_pkcs11h_mem_free ((void *)&meth->name);
+		}
+		_pkcs11h_mem_free ((void *)&meth);
+	}
+}
+
+static int
+RSA_meth_set1_name (RSA_METHOD *meth, const char *name)
+{
+	CK_RV rv;
+	rv = _pkcs11h_mem_strdup ((void *)&meth->name, name);
+	return rv == CKR_OK ? 1 : 0;
+}
+
+static int
+RSA_meth_set_flags (RSA_METHOD *meth, int flags)
+{
+	meth->flags = flags;
+	return 1;
+}
+
+static int
+RSA_meth_set_priv_enc (
+	RSA_METHOD *meth,
+	int (*priv_enc) (
+		int flen,
+		const unsigned char *from,
+		unsigned char *to,
+		RSA *rsa,
+		int padding
+	)
+)
+{
+	meth->rsa_priv_enc = priv_enc;
+	return 1;
+}
+
+static int
+RSA_meth_set_priv_dec(
+	RSA_METHOD *meth,
+	int (*priv_dec) (
+		int flen,
+		const unsigned char *from,
+		unsigned char *to,
+		RSA *rsa,
+		int padding
+	)
+)
+{
+	meth->rsa_priv_dec = priv_dec;
+	return 1;
+}
+
+static DSA_METHOD *
+DSA_meth_dup (const DSA_METHOD *meth)
+{
+	DSA_METHOD *ret = NULL;
+	CK_RV rv;
+
+	rv = _pkcs11h_mem_malloc ((void *)&ret, sizeof (DSA_METHOD));
+	if (rv != CKR_OK) {
+		goto cleanup;
+	}
+	memmove (ret, meth, sizeof (DSA_METHOD));
+
+cleanup:
+
+	return ret;
+}
+
+static void
+DSA_meth_free (DSA_METHOD *meth)
+{
+	if (meth != NULL) {
+		if (meth->name != NULL) {
+			_pkcs11h_mem_free ((void *)&meth->name);
+		}
+		_pkcs11h_mem_free ((void *)&meth);
+	}
+}
+
+static int
+DSA_meth_set1_name (DSA_METHOD *meth, const char *name)
+{
+	CK_RV rv;
+	rv = _pkcs11h_mem_strdup ((void *)&meth->name, name);
+	return rv == CKR_OK ? 1 : 0;
+}
+
+static int
+DSA_meth_set_sign (DSA_METHOD *meth,
+		   DSA_SIG *(*sign) (const unsigned char *, int, DSA *))
+{
+	meth->dsa_do_sign = sign;
+	return 1;
+}
+
+static int
+DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+    BN_clear_free (sig->r);
+    BN_clear_free (sig->s);
+    sig->r = r;
+    sig->s = s;
+    return 1;
+}
+#endif
+
 static struct {
 #ifndef OPENSSL_NO_RSA
-	RSA_METHOD rsa;
+	RSA_METHOD *rsa;
 	int rsa_index;
 #endif
 #ifndef OPENSSL_NO_DSA
-	DSA_METHOD dsa;
+	DSA_METHOD *dsa;
 	int dsa_index;
 #endif
 #ifdef __ENABLE_EC
@@ -102,6 +241,7 @@ static struct {
 #endif
 } __openssl_methods;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100001L
 static
 int
 __pkcs11h_openssl_ex_data_dup (
@@ -112,6 +252,17 @@ __pkcs11h_openssl_ex_data_dup (
 	long argl,
 	void *argp
 ) {
+#else
+int
+__pkcs11h_openssl_ex_data_dup (
+	CRYPTO_EX_DATA *to,
+	const CRYPTO_EX_DATA *from,
+	void *from_d,
+	int idx,
+	long argl,
+	void *argp
+) {
+#endif
 	pkcs11h_openssl_session_t openssl_session;
 
 	_PKCS11H_DEBUG (
@@ -400,10 +551,11 @@ __pkcs11h_openssl_session_setRSA(
 		goto cleanup;
 	}
 
-	RSA_set_method (rsa, &__openssl_methods.rsa);
+	RSA_set_method (rsa, __openssl_methods.rsa);
 	RSA_set_ex_data (rsa, __openssl_methods.rsa_index, openssl_session);
-
+#if OPENSSL_VERSION_NUMBER < 0x10100001L
 	rsa->flags |= RSA_FLAG_SIGN_VER;
+#endif
 
 #ifdef BROKEN_OPENSSL_ENGINE
 	if (!rsa->engine) {
@@ -465,6 +617,8 @@ __pkcs11h_openssl_dsa_do_sign(
 	size_t siglen;
 	DSA_SIG *sig = NULL;
 	DSA_SIG *ret = NULL;
+	BIGNUM *r = NULL;
+	BIGNUM *s = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_DEBUG (
@@ -517,18 +671,21 @@ __pkcs11h_openssl_dsa_do_sign(
 		goto cleanup;
 	}
 
-	if (BN_bin2bn (&sigbuf[0], siglen/2, sig->r) == NULL) {
+	if ((r = BN_bin2bn (&sigbuf[0], siglen/2, NULL)) == NULL) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert dsa r");
 		goto cleanup;
 	}
 
-	if (BN_bin2bn (&sigbuf[siglen/2], siglen/2, sig->s) == NULL) {
+	if ((s = BN_bin2bn (&sigbuf[siglen/2], siglen/2, NULL)) == NULL) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert dsa s");
 		goto cleanup;
 	}
 
+	DSA_SIG_set0 (sig, r, s);
 	ret = sig;
 	sig = NULL;
+	r = NULL;
+	s = NULL;
 
 cleanup:
 
@@ -539,6 +696,14 @@ cleanup:
 	if (sig != NULL) {
 		DSA_SIG_free (sig);
 		sig = NULL;
+	}
+
+	if (r != NULL) {
+		BN_clear_free (r);
+	}
+
+	if (s != NULL) {
+		BN_clear_free (s);
 	}
 
 	_PKCS11H_DEBUG (
@@ -573,7 +738,7 @@ __pkcs11h_openssl_session_setDSA(
 		goto cleanup;
 	}
 
-	DSA_set_method (dsa, &__openssl_methods.dsa);
+	DSA_set_method (dsa, __openssl_methods.dsa);
 	DSA_set_ex_data (dsa, __openssl_methods.dsa_index, openssl_session);
 
 	ret = TRUE;
@@ -766,16 +931,24 @@ cleanup:
 
 PKCS11H_BOOL
 _pkcs11h_openssl_initialize (void) {
+
+	PKCS11H_BOOL ret = FALSE;
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_initialize - entered"
 	);
 #ifndef OPENSSL_NO_RSA
-	memmove (&__openssl_methods.rsa, RSA_get_default_method (), sizeof(RSA_METHOD));
-	__openssl_methods.rsa.name = "pkcs11h";
-	__openssl_methods.rsa.rsa_priv_dec = __pkcs11h_openssl_rsa_dec;
-	__openssl_methods.rsa.rsa_priv_enc = __pkcs11h_openssl_rsa_enc;
-	__openssl_methods.rsa.flags  = RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY;
+	if (__openssl_methods.rsa != NULL) {
+		RSA_meth_free (__openssl_methods.rsa);
+	}
+	if ((__openssl_methods.rsa = RSA_meth_dup (RSA_get_default_method ())) == NULL) {
+		goto cleanup;
+	}
+	RSA_meth_set1_name (__openssl_methods.rsa, "pkcs11h");
+	RSA_meth_set_priv_dec (__openssl_methods.rsa, __pkcs11h_openssl_rsa_dec);
+	RSA_meth_set_priv_enc (__openssl_methods.rsa, __pkcs11h_openssl_rsa_enc);
+	RSA_meth_set_flags (__openssl_methods.rsa, RSA_METHOD_FLAG_NO_CHECK | RSA_FLAG_EXT_PKEY);
 	__openssl_methods.rsa_index = RSA_get_ex_new_index (
 		0,
 		"pkcs11h",
@@ -785,9 +958,12 @@ _pkcs11h_openssl_initialize (void) {
 	);
 #endif
 #ifndef OPENSSL_NO_DSA
-	memmove (&__openssl_methods.dsa, DSA_get_default_method (), sizeof(DSA_METHOD));
-	__openssl_methods.dsa.name = "pkcs11h";
-	__openssl_methods.dsa.dsa_do_sign = __pkcs11h_openssl_dsa_do_sign;
+	if (__openssl_methods.dsa != NULL) {
+		DSA_meth_free (__openssl_methods.dsa);
+	}
+	__openssl_methods.dsa = DSA_meth_dup (DSA_get_default_method ());
+	DSA_meth_set1_name (__openssl_methods.dsa, "pkcs11h");
+	DSA_meth_set_sign (__openssl_methods.dsa, __pkcs11h_openssl_dsa_do_sign);
 	__openssl_methods.dsa_index = DSA_get_ex_new_index (
 		0,
 		"pkcs11h",
@@ -811,11 +987,15 @@ _pkcs11h_openssl_initialize (void) {
 		__pkcs11h_openssl_ex_data_free
 	);
 #endif
+	ret = TRUE;
+
+cleanup:
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: _pkcs11h_openssl_initialize - return"
+		"PKCS#11: _pkcs11h_openssl_initialize - return %d",
+		ret
 	);
-	return TRUE;
+	return ret;
 }
 
 PKCS11H_BOOL
@@ -824,6 +1004,18 @@ _pkcs11h_openssl_terminate (void) {
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_terminate"
 	);
+#ifndef OPENSSL_NO_RSA
+	if (__openssl_methods.rsa != NULL) {
+		RSA_meth_free (__openssl_methods.rsa);
+		__openssl_methods.rsa = NULL;
+	}
+#endif
+#ifndef OPENSSL_NO_DSA
+	if (__openssl_methods.dsa != NULL) {
+		DSA_meth_free (__openssl_methods.dsa);
+		__openssl_methods.dsa = NULL;
+	}
+#endif
 #ifdef __ENABLE_EC
 	if (__openssl_methods.ecdsa != NULL) {
 		ECDSA_METHOD_free(__openssl_methods.ecdsa);
@@ -1060,7 +1252,7 @@ pkcs11h_openssl_session_getRSA (
 		goto cleanup;
 	}
 
-	if (evp->type != EVP_PKEY_RSA) {
+	if (EVP_PKEY_id (evp) != EVP_PKEY_RSA) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Invalid public key algorithm");
 		goto cleanup;
 	}
@@ -1137,14 +1329,14 @@ pkcs11h_openssl_session_getEVP (
 	if (0) {
 	}
 #ifndef OPENSSL_NO_RSA
-	else if (evp->type == EVP_PKEY_RSA) {
+	else if (EVP_PKEY_id (evp) == EVP_PKEY_RSA) {
 		if (!__pkcs11h_openssl_session_setRSA(openssl_session, evp)) {
 			goto cleanup;
 		}
 	}
 #endif
 #ifndef OPENSSL_NO_RSA
-	else if (evp->type == EVP_PKEY_DSA) {
+	else if (EVP_PKEY_id (evp) == EVP_PKEY_DSA) {
 		if (!__pkcs11h_openssl_session_setDSA(openssl_session, evp)) {
 			goto cleanup;
 		}
@@ -1158,7 +1350,7 @@ pkcs11h_openssl_session_getEVP (
 	}
 #endif
 	else {
-		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Invalid public key algorithm %d", evp->type);
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Invalid public key algorithm %d", EVP_PKEY_id (evp));
 		goto cleanup;
 	}
 

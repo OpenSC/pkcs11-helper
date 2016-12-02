@@ -176,7 +176,7 @@ __pkcs11h_crypto_mbedtls_certificate_is_issuer (
 ) {
 	x509_crt x509_issuer;
 	x509_crt x509_cert;
-	int verify_flags = 0;
+	uint32_t verify_flags = 0;
 
 	PKCS11H_BOOL is_issuer = FALSE;
 

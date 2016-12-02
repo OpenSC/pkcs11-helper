@@ -398,11 +398,21 @@ if test -n "${MBEDTLS_CFLAGS}" -a "${have_mbedtls}" = "yes"; then
 	CFLAGS="${old_CFLAGS}"
 fi
 
+if test "${enable_pedantic}" = "yes"; then
+	enable_strict="yes"
+	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_DEFAULT_SOURCE"
+fi
+
+if test "${enable_strict}" = "yes"; then
+	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function -Wno-variadic-macros"
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 AX_CPP_VARARG_MACRO_ISO
 AX_CPP_VARARG_MACRO_GCC
 AC_C_CONST
+AC_C_INLINE
 AC_C_VOLATILE
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
@@ -509,15 +519,6 @@ if test "${enable_crypto_engine_mbedtls}" = "yes"; then
 	fi
 else
 	AC_MSG_RESULT([no])
-fi
-
-if test "${enable_pedantic}" = "yes"; then
-	enable_strict="yes"
-	CFLAGS="${CFLAGS} -ansi -pedantic -D__STRICT_ANSI__ -D_ISOC99_SOURCE -D_BSD_SOURCE -D_POSIX_SOURCE"
-fi
-
-if test "${enable_strict}" = "yes"; then
-	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function"
 fi
 
 if test "${enable_threading}" != "yes" -a "${enable_slotevent}" = "yes"; then

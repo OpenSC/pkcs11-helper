@@ -197,7 +197,9 @@ __pkcs11h_crypto_mbedtls_certificate_is_issuer (
 	}
 
 	if ( 0 == x509_crt_verify(&x509_cert, &x509_issuer, NULL, NULL,
-		&verify_flags, NULL, NULL ))
+		&verify_flags, NULL, NULL )) {
+		is_issuer = TRUE;
+	}
 
 cleanup:
 	x509_crt_free(&x509_cert);

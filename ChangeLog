@@ -5,6 +5,7 @@ $Id$
 
 ????-??-?? - Version 1.21
 
+ * mbedtls: fix missing logic if issur certificate, thanks to Steffan Karger
 
 2016-12-08 - Version 1.20
 

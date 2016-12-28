@@ -1,8 +1,6 @@
 pkcs11-helper
 Copyright (c) 2005-2011 Alon Bar-Lev <alon.barlev@gmail.com>
 
-$Id$
-
 ????-??-?? - Version 1.21
 
  * mbedtls: fix missing logic if issur certificate, thanks to Steffan Karger

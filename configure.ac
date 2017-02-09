@@ -295,6 +295,10 @@ if test "${enable_threading}" = "yes" -a "${WIN32}" != "yes"; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
+PKG_CHECK_MODULES([P11KIT], [p11-kit-1],, AC_MSG_ERROR([p11-kit-1 is required]))
+CFLAGS="${CFLAGS} ${P11KIT_CFLAGS}"
+LIBS="${LIBS} ${P11KIT_CFLAGS}"
+
 PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
 if test "${have_openssl}" = "no"; then
 	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])

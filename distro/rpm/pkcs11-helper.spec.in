@@ -46,7 +46,7 @@ pkcs11-helper development files.
 %{__make} %{?_smp_mflags}
 
 %install
-%makeinstall 
+%{__make} %{?_smp_mflags} install DESTDIR="%{?buildroot}"
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig

@@ -1,7 +1,7 @@
 This package was debianized by S. Wefel <wefel@informatik.uni-halle.de> on
 Mon, 29 Jan 2007 16:56:30 +0100.
 
-It was downloaded from http://www.opensc-project.org/files/pkcs11-helper/
+It was downloaded from https://github.com/OpenSC/pkcs11-helper/
 
 Upstream Author: Alon Bar-Lev <alon.barlev@gmail.com>
 

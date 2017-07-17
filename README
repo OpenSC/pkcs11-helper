@@ -30,7 +30,7 @@ COMPATIBILITY
 	  since it uses the minimum required features of the PKCS#11 standard.
 
 SUPPORT
-	http://www.opensc-project.org
+	https://github.com/OpenSC/pkcs11-helper
 
 AUTHORS
 	Alon Bar-Lev <alon.barlev@gmail.com>

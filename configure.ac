@@ -204,14 +204,14 @@ AC_ARG_ENABLE(
 	[crypto-engine-polarssl],
 	[AS_HELP_STRING([--disable-crypto-engine-polarssl],[disable mbed TLS crypto engine])],
 	,
-	[enable_crypto_engine_mbedtls="yes"]
+	[enable_crypto_engine_polarssl="yes"]
 )
 
 AC_ARG_ENABLE(
 	[crypto-engine-mbedtls],
 	[AS_HELP_STRING([--disable-crypto-engine-mbedtls],[disable mbed TLS crypto engine])],
 	,
-	[enable_crypto_engine_mbedtls="yes"]
+	[enable_crypto_engine_mbedtls="${enable_crypto_engine_polarssl}"]
 )
 
 AC_ARG_ENABLE(
@@ -449,6 +449,8 @@ if test "${enable_openssl}" = "yes"; then
 	AC_MSG_RESULT([yes])
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], [1], [Enable openssl interface])
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
 else
 	AC_MSG_RESULT([no])
 fi
@@ -457,6 +459,8 @@ AC_MSG_CHECKING([Win32 crypto engine])
 if test "${WIN32}" = "yes" -a "${enable_crypto_engine_cryptoapi}" = "yes"; then
 	AC_MSG_RESULT([yes])
 	AC_DEFINE([ENABLE_PKCS11H_ENGINE_CRYPTOAPI], [1], [Enable cryptoapi crypto engine])
+	crypto_engine=1
+	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_cryptoapi"
 else
 	AC_MSG_RESULT([no])
 fi
@@ -472,6 +476,8 @@ if test "${enable_crypto_engine_openssl}" = "yes"; then
 			CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 			LIBS="${LIBS} ${OPENSSL_LIBS}"
 		fi
+		crypto_engine=1
+		PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_openssl"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -486,6 +492,8 @@ if test "${enable_crypto_engine_gnutls}" = "yes"; then
 		AC_DEFINE([ENABLE_PKCS11H_ENGINE_GNUTLS], [1], [Enable GnuTLS crypto engine])
 		CFLAGS="${CFLAGS} ${GNUTLS_CFLAGS}"
 		LIBS="${LIBS} ${GNUTLS_LIBS}"
+		crypto_engine=1
+		PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_gnutls"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -500,6 +508,8 @@ if test "${enable_crypto_engine_nss}" = "yes"; then
 		AC_DEFINE([ENABLE_PKCS11H_ENGINE_NSS], [1], [Enable NSS crypto engine])
 		CFLAGS="${CFLAGS} ${NSS_CFLAGS}"
 		LIBS="${LIBS} ${NSS_LIBS}"
+		crypto_engine=1
+		PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_nss"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -514,6 +524,8 @@ if test "${enable_crypto_engine_mbedtls}" = "yes"; then
 		AC_DEFINE([ENABLE_PKCS11H_ENGINE_MBEDTLS], [1], [Enable mbed TLS crypto engine])
 		CFLAGS="${CFLAGS} ${MBEDTLS_CFLAGS}"
 		LIBS="${LIBS} ${MBEDTLS_LIBS}"
+		crypto_engine=1
+		PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_mbedtls"
 	else
 		AC_MSG_RESULT([no])
 	fi
@@ -552,30 +564,6 @@ fi
 if test "${enable_slotevent}" = "yes"; then
 	AC_DEFINE([ENABLE_PKCS11H_SLOTEVENT], [1], [Enable slotevent interface])
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} slotevent"
-fi
-if test "${enable_openssl}" = "yes"; then
-	AC_DEFINE([ENABLE_PKCS11H_OPENSSL], [1], [Enable openssl interface])
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} openssl"
-fi
-if test "${enable_crypto_engine_openssl}" = "yes"; then
-	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_openssl"
-fi
-if test "${enable_crypto_engine_nss}" = "yes"; then
-	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_nss"
-fi
-if test "${enable_crypto_engine_mbedtls}" = "yes"; then
-	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_mbedtls"
-fi
-if test "${enable_crypto_engine_cryptoapi}" = "yes"; then
-	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_cryptoapi"
-fi
-if test "${enable_crypto_engine_gnutls}" = "yes"; then
-	crypto_engine=1
-	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto_gnutls"
 fi
 if test -n "${crypto_engine}"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"

@@ -68,6 +68,15 @@
 #define __PKCS11H_HELPER_H
 
 #include <openssl/x509.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 #include <pkcs11-helper-1.0/pkcs11h-core.h>
 #include <pkcs11-helper-1.0/pkcs11h-certificate.h>
 

@@ -95,7 +95,8 @@ struct pkcs11h_openssl_session_s {
 	pkcs11h_hook_openssl_cleanup_t cleanup_hook;
 };
 
-#if OPENSSL_VERSION_NUMBER < 0x10100001L
+#if OPENSSL_VERSION_NUMBER < 0x100020CFL
+#ifndef OPENSSL_NO_RSA
 static RSA_METHOD *
 RSA_meth_dup (const RSA_METHOD *meth)
 {
@@ -170,7 +171,9 @@ RSA_meth_set_priv_dec(
 	meth->rsa_priv_dec = priv_dec;
 	return 1;
 }
+#endif
 
+#ifndef OPENSSL_NO_DSA
 static DSA_METHOD *
 DSA_meth_dup (const DSA_METHOD *meth)
 {
@@ -224,6 +227,7 @@ DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     sig->s = s;
     return 1;
 }
+#endif
 #endif
 
 static struct {

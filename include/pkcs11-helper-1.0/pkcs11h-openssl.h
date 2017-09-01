@@ -67,6 +67,9 @@
 #ifndef __PKCS11H_HELPER_H
 #define __PKCS11H_HELPER_H
 
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
 #include <openssl/x509.h>
 #include <pkcs11-helper-1.0/pkcs11h-core.h>
 #include <pkcs11-helper-1.0/pkcs11h-certificate.h>
@@ -148,10 +151,12 @@ pkcs11h_openssl_freeSession (
  * @param openssl_session	OpenSSL session reference.
  * @return RSA.
  */
+#ifndef OPENSSL_NO_RSA
 RSA *
 pkcs11h_openssl_session_getRSA (
 	IN const pkcs11h_openssl_session_t openssl_session
 );
+#endif
 
 /**
  * @brief Returns an EVP_PKEY out of the openssl_session object.

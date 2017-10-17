@@ -53,6 +53,9 @@
 #if defined(ENABLE_PKCS11H_OPENSSL)
 
 #include <pkcs11-helper-1.0/pkcs11h-openssl.h>
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
@@ -65,6 +68,7 @@
 #endif
 
 #if !defined(OPENSSL_NO_EC) && defined(ENABLE_PKCS11H_OPENSSL_EC)
+#include <openssl/ecdsa.h>
 #define __ENABLE_EC
 #ifdef ENABLE_PKCS11H_OPENSSL_EC_HACK
 #include <ecs_locl.h>
@@ -95,6 +99,7 @@ struct pkcs11h_openssl_session_s {
 };
 
 #if OPENSSL_VERSION_NUMBER < 0x10100001L
+#ifndef OPENSSL_NO_RSA
 static RSA_METHOD *
 RSA_meth_dup (const RSA_METHOD *meth)
 {
@@ -169,7 +174,9 @@ RSA_meth_set_priv_dec(
 	meth->rsa_priv_dec = priv_dec;
 	return 1;
 }
+#endif
 
+#ifndef OPENSSL_NO_DSA
 static DSA_METHOD *
 DSA_meth_dup (const DSA_METHOD *meth)
 {
@@ -223,6 +230,7 @@ DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     sig->s = s;
     return 1;
 }
+#endif
 #endif
 
 static struct {
@@ -1232,11 +1240,11 @@ cleanup:
 	);
 }
 
+#ifndef OPENSSL_NO_RSA
 RSA *
 pkcs11h_openssl_session_getRSA (
 	IN const pkcs11h_openssl_session_t openssl_session
 ) {
-#ifndef OPENSSL_NO_RSA
 	RSA *rsa = NULL;
 	RSA *ret = NULL;
 	EVP_PKEY *evp = NULL;
@@ -1289,10 +1297,8 @@ cleanup:
 	);
 
 	return ret;
-#else
-	return NULL;
-#endif
 }
+#endif
 
 EVP_PKEY *
 pkcs11h_openssl_session_getEVP (

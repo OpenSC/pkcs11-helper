@@ -64,10 +64,37 @@
 #define OPENSSL_VERSION_NUMBER 0x1000107fL
 #endif
 
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+
 #if !defined(OPENSSL_NO_EC) && defined(ENABLE_PKCS11H_OPENSSL_EC)
 #define __ENABLE_EC
 #ifdef ENABLE_PKCS11H_OPENSSL_EC_HACK
 #include <ecs_locl.h>
+#else
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#include <openssl/ecdsa.h>
+#else
+#include <openssl/ec.h>
+#endif
+#endif
+#endif
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define EC_KEY_METHOD ECDSA_METHOD
+#define EC_KEY_get_default_method ECDSA_get_default_method
+#define EC_KEY_get_ex_new_index ECDSA_get_ex_new_index
+#define EC_KEY_get_ex_data ECDSA_get_ex_data
+#define EC_KEY_set_method ECDSA_set_method
+#define EC_KEY_set_ex_data ECDSA_set_ex_data
+#if defined(ENABLE_PKCS11H_OPENSSL_EC_HACK)
+#define EC_KEY_METHOD_new(ecdsa) (EC_KEY_METHOD *)memmove(malloc(sizeof(EC_KEY_METHOD)), ecdsa, sizeof(EC_KEY_METHOD))
+#define EC_KEY_METHOD_free(ecdsa) free(ecdsa)
+#define ECDSA_METHOD_set_sign(ecdsa, s) ecdsa->ecdsa_do_sign = s
+#else
+#define EC_KEY_METHOD_free ECDSA_METHOD_free
+#define EC_KEY_METHOD_new ECDSA_METHOD_new
 #endif
 #endif
 
@@ -216,12 +243,58 @@ DSA_meth_set_sign (DSA_METHOD *meth,
 static int
 DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
-    BN_clear_free (sig->r);
-    BN_clear_free (sig->s);
-    sig->r = r;
-    sig->s = s;
-    return 1;
+	BN_clear_free (sig->r);
+	BN_clear_free (sig->s);
+	sig->r = r;
+	sig->s = s;
+	return 1;
 }
+
+static int
+ECDSA_SIG_set0 (ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	BN_clear_free (sig->r);
+	BN_clear_free (sig->s);
+	sig->r = r;
+	sig->s = s;
+	return 1;
+}
+
+void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
+	int (**psign)(int type, const unsigned char *dgst,
+		int dlen, unsigned char *sig,
+		unsigned int *siglen,
+		const BIGNUM *kinv, const BIGNUM *r,
+		EC_KEY *eckey),
+	int (**psign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+		BIGNUM **kinvp, BIGNUM **rp),
+	ECDSA_SIG *(**psign_sig)(const unsigned char *dgst,
+		int dgst_len,
+		const BIGNUM *in_kinv,
+		const BIGNUM *in_r,
+		EC_KEY *eckey)
+) {
+	*psign = NULL;
+}
+
+#ifdef __ENABLE_EC
+void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
+	int (*sign)(int type, const unsigned char *dgst,
+		int dlen, unsigned char *sig,
+		unsigned int *siglen,
+		const BIGNUM *kinv, const BIGNUM *r,
+		EC_KEY *eckey),
+	int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+		BIGNUM **kinvp, BIGNUM **rp),
+	ECDSA_SIG *(*sign_sig)(const unsigned char *dgst,
+		int dgst_len,
+		const BIGNUM *in_kinv,
+		const BIGNUM *in_r,
+		EC_KEY *eckey)
+) {
+	ECDSA_METHOD_set_sign(meth, sign_sig);
+}
+#endif
 #endif
 
 static struct {
@@ -234,8 +307,8 @@ static struct {
 	int dsa_index;
 #endif
 #ifdef __ENABLE_EC
-	ECDSA_METHOD *ecdsa;
-	int ecdsa_index;
+	EC_KEY_METHOD *eckey;
+	int eckey_index;
 #endif
 } __openssl_methods;
 
@@ -763,14 +836,14 @@ cleanup:
 
 static
 pkcs11h_certificate_t
-__pkcs11h_openssl_ecdsa_get_pkcs11h_certificate (
+__pkcs11h_openssl_eckey_get_pkcs11h_certificate (
 	IN EC_KEY *ec
 ) {
 	pkcs11h_openssl_session_t session = NULL;
 
 	_PKCS11H_ASSERT (ec!=NULL);
 
-	session = (pkcs11h_openssl_session_t)ECDSA_get_ex_data (ec, __openssl_methods.ecdsa_index);
+	session = (pkcs11h_openssl_session_t)EC_KEY_get_ex_data (ec, __openssl_methods.eckey_index);
 
 	_PKCS11H_ASSERT (session!=NULL);
 	_PKCS11H_ASSERT (session->certificate!=NULL);
@@ -780,23 +853,25 @@ __pkcs11h_openssl_ecdsa_get_pkcs11h_certificate (
 
 static
 ECDSA_SIG *
-__pkcs11h_openssl_ecdsa_do_sign(
+__pkcs11h_openssl_eckey_do_sign(
 	IN const unsigned char *dgst,
 	IN int dlen,
 	IN const BIGNUM *inv,
 	IN const BIGNUM *r,
 	OUT EC_KEY *ec
 ) {
-	pkcs11h_certificate_t certificate = __pkcs11h_openssl_ecdsa_get_pkcs11h_certificate (ec);
+	pkcs11h_certificate_t certificate = __pkcs11h_openssl_eckey_get_pkcs11h_certificate (ec);
 	unsigned char *sigbuf = NULL;
 	size_t siglen;
 	ECDSA_SIG *sig = NULL;
 	ECDSA_SIG *ret = NULL;
+	BIGNUM *sig_r = NULL;
+	BIGNUM *sig_s = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_ecdsa_do_sign - entered dgst=%p, dlen=%d, inv=%p, r=%p, ec=%p",
+		"PKCS#11: __pkcs11h_openssl_eckey_do_sign - entered dgst=%p, dlen=%d, inv=%p, r=%p, ec=%p",
 		(void *)dgst,
 		dlen,
 		(void *)inv,
@@ -848,15 +923,22 @@ __pkcs11h_openssl_ecdsa_do_sign(
 		goto cleanup;
 	}
 
-	if (BN_bin2bn (&sigbuf[0], siglen/2, sig->r) == NULL) {
-		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert ecdsa r");
+	if ((sig_r = BN_bin2bn (&sigbuf[0], siglen/2, NULL)) == NULL) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert eckey r");
 		goto cleanup;
 	}
 
-	if (BN_bin2bn (&sigbuf[siglen/2], siglen/2, sig->s) == NULL) {
-		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert ecdsa s");
+	if ((sig_s = BN_bin2bn (&sigbuf[siglen/2], siglen/2, NULL)) == NULL) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot convert eckey s");
 		goto cleanup;
 	}
+
+	if (!ECDSA_SIG_set0(sig, sig_r, sig_s)) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot set eckey r, s");
+		goto cleanup;
+	}
+	sig_r = NULL;
+	sig_s = NULL;
 
 	ret = sig;
 	sig = NULL;
@@ -872,9 +954,19 @@ cleanup:
 		sig = NULL;
 	}
 
+	if (sig_r != NULL) {
+		BN_free(sig_r);
+		sig_r = NULL;
+	}
+
+	if (sig_s != NULL) {
+		BN_free(sig_s);
+		sig_s = NULL;
+	}
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_openssl_ecdsa_do_sign - return sig=%p",
+		"PKCS#11: __pkcs11h_openssl_eckey_do_sign - return sig=%p",
 		(void *)sig
 	);
 
@@ -904,8 +996,8 @@ __pkcs11h_openssl_session_setECDSA(
 		goto cleanup;
 	}
 
-	ECDSA_set_method (ec, __openssl_methods.ecdsa);
-	ECDSA_set_ex_data (ec, __openssl_methods.ecdsa_index, openssl_session);
+	EC_KEY_set_method (ec, __openssl_methods.eckey);
+	EC_KEY_set_ex_data (ec, __openssl_methods.eckey_index, openssl_session);
 
 	ret = TRUE;
 
@@ -971,13 +1063,26 @@ _pkcs11h_openssl_initialize (void) {
 	);
 #endif
 #ifdef __ENABLE_EC
-	if (__openssl_methods.ecdsa != NULL) {
-		ECDSA_METHOD_free(__openssl_methods.ecdsa);
+	if (__openssl_methods.eckey != NULL) {
+		EC_KEY_METHOD_free(__openssl_methods.eckey);
 	}
-	__openssl_methods.ecdsa = ECDSA_METHOD_new ((ECDSA_METHOD *)ECDSA_get_default_method ());
-	ECDSA_METHOD_set_name(__openssl_methods.ecdsa, "pkcs11h");
-	ECDSA_METHOD_set_sign(__openssl_methods.ecdsa, __pkcs11h_openssl_ecdsa_do_sign);
-	__openssl_methods.ecdsa_index = ECDSA_get_ex_new_index (
+	__openssl_methods.eckey = EC_KEY_METHOD_new (EC_KEY_get_default_method ());
+	{
+		int (*sig)(
+			int type,
+			const unsigned char *dgst,
+			int dlen,
+			unsigned char *sig,
+			unsigned int *siglen,
+			const BIGNUM *kinv,
+			const BIGNUM *r,
+			EC_KEY *eckey
+		) = NULL;
+
+		EC_KEY_METHOD_get_sign(__openssl_methods.eckey, &sig, NULL, NULL);
+		EC_KEY_METHOD_set_sign(__openssl_methods.eckey, sig, NULL, __pkcs11h_openssl_eckey_do_sign);
+	}
+	__openssl_methods.eckey_index = EC_KEY_get_ex_new_index (
 		0,
 		"pkcs11h",
 		NULL,
@@ -1015,9 +1120,9 @@ _pkcs11h_openssl_terminate (void) {
 	}
 #endif
 #ifdef __ENABLE_EC
-	if (__openssl_methods.ecdsa != NULL) {
-		ECDSA_METHOD_free(__openssl_methods.ecdsa);
-		__openssl_methods.ecdsa = NULL;
+	if (__openssl_methods.eckey != NULL) {
+		EC_KEY_METHOD_free(__openssl_methods.eckey);
+		__openssl_methods.eckey = NULL;
 	}
 #endif
 	return TRUE;
@@ -1117,7 +1222,9 @@ pkcs11h_openssl_createSession (
 		"PKCS#11: pkcs11h_openssl_createSession - entry"
 	);
 
+#if OPENSSL_VERSION_NUMBER <0x10100000L
 	OpenSSL_add_all_digests ();
+#endif
 
 	if (
 		_pkcs11h_mem_malloc (
@@ -1231,11 +1338,11 @@ cleanup:
 	);
 }
 
+#ifndef OPENSSL_NO_RSA
 RSA *
 pkcs11h_openssl_session_getRSA (
 	IN const pkcs11h_openssl_session_t openssl_session
 ) {
-#ifndef OPENSSL_NO_RSA
 	RSA *rsa = NULL;
 	RSA *ret = NULL;
 	EVP_PKEY *evp = NULL;
@@ -1288,10 +1395,8 @@ cleanup:
 	);
 
 	return ret;
-#else
-	return NULL;
-#endif
 }
+#endif
 
 EVP_PKEY *
 pkcs11h_openssl_session_getEVP (
@@ -1339,7 +1444,7 @@ pkcs11h_openssl_session_getEVP (
 	}
 #endif
 #ifdef __ENABLE_EC
-	else if (evp->type == EVP_PKEY_EC) {
+	else if (EVP_PKEY_id(evp) == EVP_PKEY_EC) {
 		if (!__pkcs11h_openssl_session_setECDSA(openssl_session, evp)) {
 			goto cleanup;
 		}

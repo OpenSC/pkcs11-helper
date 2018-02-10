@@ -88,7 +88,6 @@ struct pkcs11h_openssl_session_s {
 	_pkcs11h_mutex_t reference_count_lock;
 #endif
 	volatile int reference_count;
-	PKCS11H_BOOL initialized;
 	X509 *x509;
 	pkcs11h_certificate_t certificate;
 	pkcs11h_hook_openssl_cleanup_t cleanup_hook;
@@ -1303,8 +1302,6 @@ pkcs11h_openssl_session_getEVP (
 	EVP_PKEY *ret = NULL;
 
 	_PKCS11H_ASSERT (openssl_session!=NULL);
-	_PKCS11H_ASSERT (!openssl_session->initialized);
-	_PKCS11H_ASSERT (openssl_session!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -1360,8 +1357,6 @@ pkcs11h_openssl_session_getEVP (
 #if defined(ENABLE_PKCS11H_THREADING)
 	_pkcs11h_threading_mutexRelease(&openssl_session->reference_count_lock);
 #endif
-
-	openssl_session->initialized = TRUE;
 
 	ret = evp;
 	evp = NULL;

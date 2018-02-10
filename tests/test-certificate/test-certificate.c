@@ -21,6 +21,13 @@ int main () {
 
 static
 void
+fatal0 (const char * const m) {
+	fprintf (stderr, "%sn", m);
+	exit (1);
+}
+
+static
+void
 fatal (const char * const m, CK_RV rv) {
 	fprintf (stderr, "%s - %lu - %s\n", m, rv, pkcs11h_getMessage (rv));
 	exit (1);
@@ -33,7 +40,9 @@ mypause (const char * const m) {
 
 	fprintf (stdout, "%s", m);
 	fflush (stdout);
-	fgets (temp, sizeof (temp), stdin);
+	if (fgets (temp, sizeof (temp), stdin) == NULL) {
+		fatal0("fgets failed");
+	}
 }
 
 static
@@ -63,7 +72,9 @@ _pkcs11h_hooks_token_prompt (
 
 	while (!fValidInput) {
 		fprintf (stderr, "Please insert token '%s' 'ok' or 'cancel': ", token->display);
-		fgets (buf, sizeof (buf), stdin);
+		if (fgets (buf, sizeof (buf), stdin) == NULL) {
+			fatal0("fgets failed");
+		}
 		buf[sizeof (buf)-1] = '\0';
 		fflush (stdin);
 

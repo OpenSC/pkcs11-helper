@@ -3,6 +3,7 @@ Copyright (c) 2005-2017 Alon Bar-Lev <alon.barlev@gmail.com>
 
 ????-??-?? - Version 1.24
 
+ * build: support libressl-2.7
 
 2018-06-02 - Version 1.23
 

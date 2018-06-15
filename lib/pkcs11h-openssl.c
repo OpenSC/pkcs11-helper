@@ -56,14 +56,6 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
-/*
- * Hack libressl incorrect interface number.
- */
-#if defined(LIBRESSL_VERSION_NUMBER)
-#undef OPENSSL_VERSION_NUMBER
-#define OPENSSL_VERSION_NUMBER 0x1000107fL
-#endif
-
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
@@ -120,7 +112,7 @@ struct pkcs11h_openssl_session_s {
 	pkcs11h_hook_openssl_cleanup_t cleanup_hook;
 };
 
-#if OPENSSL_VERSION_NUMBER < 0x10100001L
+#ifndef HAVE_RSA_METH_DUP
 static RSA_METHOD *
 RSA_meth_dup (const RSA_METHOD *meth)
 {
@@ -137,7 +129,9 @@ cleanup:
 
 	return ret;
 }
+#endif
 
+#ifndef HAVE_RSA_METH_FREE
 static void
 RSA_meth_free (RSA_METHOD *meth)
 {
@@ -148,7 +142,9 @@ RSA_meth_free (RSA_METHOD *meth)
 		_pkcs11h_mem_free ((void *)&meth);
 	}
 }
+#endif
 
+#ifndef HAVE_RSA_METH_SET1_NAME
 static int
 RSA_meth_set1_name (RSA_METHOD *meth, const char *name)
 {
@@ -156,14 +152,18 @@ RSA_meth_set1_name (RSA_METHOD *meth, const char *name)
 	rv = _pkcs11h_mem_strdup ((void *)&meth->name, name);
 	return rv == CKR_OK ? 1 : 0;
 }
+#endif
 
+#ifndef HAVE_RSA_METH_SET_FLAGS
 static int
 RSA_meth_set_flags (RSA_METHOD *meth, int flags)
 {
 	meth->flags = flags;
 	return 1;
 }
+#endif
 
+#ifndef HAVE_RSA_METH_SET_PRIV_ENC
 static int
 RSA_meth_set_priv_enc (
 	RSA_METHOD *meth,
@@ -179,7 +179,9 @@ RSA_meth_set_priv_enc (
 	meth->rsa_priv_enc = priv_enc;
 	return 1;
 }
+#endif
 
+#ifndef HAVE_RSA_METH_SET_PRIV_DEC
 static int
 RSA_meth_set_priv_dec(
 	RSA_METHOD *meth,
@@ -195,7 +197,9 @@ RSA_meth_set_priv_dec(
 	meth->rsa_priv_dec = priv_dec;
 	return 1;
 }
+#endif
 
+#ifndef HAVE_DSA_METH_DUP
 static DSA_METHOD *
 DSA_meth_dup (const DSA_METHOD *meth)
 {
@@ -212,7 +216,9 @@ cleanup:
 
 	return ret;
 }
+#endif
 
+#ifndef HAVE_DSA_METH_FREE
 static void
 DSA_meth_free (DSA_METHOD *meth)
 {
@@ -223,7 +229,9 @@ DSA_meth_free (DSA_METHOD *meth)
 		_pkcs11h_mem_free ((void *)&meth);
 	}
 }
+#endif
 
+#ifndef HAVE_DSA_METH_SET1_NAME
 static int
 DSA_meth_set1_name (DSA_METHOD *meth, const char *name)
 {
@@ -231,7 +239,9 @@ DSA_meth_set1_name (DSA_METHOD *meth, const char *name)
 	rv = _pkcs11h_mem_strdup ((void *)&meth->name, name);
 	return rv == CKR_OK ? 1 : 0;
 }
+#endif
 
+#ifndef HAVE_DSA_METH_SET_SIGN
 static int
 DSA_meth_set_sign (DSA_METHOD *meth,
 		   DSA_SIG *(*sign) (const unsigned char *, int, DSA *))
@@ -239,7 +249,9 @@ DSA_meth_set_sign (DSA_METHOD *meth,
 	meth->dsa_do_sign = sign;
 	return 1;
 }
+#endif
 
+#ifndef HAVE_DSA_SIG_SET0
 static int
 DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
@@ -249,7 +261,9 @@ DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 	sig->s = s;
 	return 1;
 }
+#endif
 
+#ifndef HAVE_ECDSA_SIG_SET0
 static int
 ECDSA_SIG_set0 (ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
@@ -259,7 +273,10 @@ ECDSA_SIG_set0 (ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 	sig->s = s;
 	return 1;
 }
+#endif
 
+#ifdef __ENABLE_EC
+#ifndef HAVE_EC_KEY_METHOD_GET_SIGN
 void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
 	int (**psign)(int type, const unsigned char *dgst,
 		int dlen, unsigned char *sig,
@@ -276,8 +293,9 @@ void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
 ) {
 	*psign = NULL;
 }
+#endif
 
-#ifdef __ENABLE_EC
+#ifndef HAVE_EC_KEY_METHOD_SET_SIGN
 void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
 	int (*sign)(int type, const unsigned char *dgst,
 		int dlen, unsigned char *sig,

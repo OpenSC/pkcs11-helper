@@ -302,6 +302,15 @@ fi
 if test "${have_openssl}" = "yes"; then
 	old_LIBS="${LIBS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_CHECK_FUNCS([ \
+		RSA_meth_dup RSA_meth_free \
+		RSA_meth_set_priv_enc RSA_meth_set_priv_dec \
+		RSA_meth_set1_name RSA_meth_set_flags \
+		DSA_meth_dup DSA_meth_free \
+		DSA_meth_set_sign DSA_meth_set1_name DSA_SIG_set0 ECDSA_SIG_set0 \
+		EC_KEY_METHOD_get_sign EC_KEY_METHOD_set_sign \
+		X509_get0_notBefore X509_get0_notAfter \
+	])
 	AC_CHECK_FUNC(
 		[EC_KEY_METHOD_new],
 		[
@@ -333,9 +342,9 @@ if test "${have_openssl}" = "yes"; then
 			],
 		)]
 	)
-	LIBS="${old_LIBS}"
 	AC_MSG_CHECKING([for OpenSSL ec support])
 	AC_MSG_RESULT([${openssl_ec}])
+	LIBS="${old_LIBS}"
 fi
 
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])

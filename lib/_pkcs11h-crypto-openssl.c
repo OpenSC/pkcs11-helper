@@ -55,14 +55,6 @@
 #if defined(ENABLE_PKCS11H_ENGINE_OPENSSL)
 #include <openssl/x509.h>
 
-/*
- * Hack libressl incorrect interface number.
- */
-#if defined(LIBRESSL_VERSION_NUMBER)
-#undef OPENSSL_VERSION_NUMBER
-#define OPENSSL_VERSION_NUMBER 0x1000107fL
-#endif
-
 #if OPENSSL_VERSION_NUMBER < 0x00907000L && defined(CRYPTO_LOCK_ENGINE)
 # define RSA_get_default_method RSA_get_default_openssl_method
 #else
@@ -80,9 +72,12 @@
 #endif
 #endif
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define X509_get0_notAfter X509_get_notAfter
+#ifndef HAVE_X509_GET0_NOTBEFORE
 #define X509_get0_notBefore X509_get_notBefore
+#endif
+
+#ifndef HAVE_X509_GET0_NOTAFTER
+#define X509_get0_notAfter X509_get_notAfter
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x00908000L

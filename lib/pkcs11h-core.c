@@ -1009,7 +1009,7 @@ pkcs11h_forkFixup (void) {
 #if defined(ENABLE_PKCS11H_THREADING)
 	return CKR_OK;
 #else
-	return __pkcs11h_forkFixup (TRUE);
+	return __pkcs11h_forkFixup (_g_pkcs11h_data->safefork);
 #endif
 #endif
 }
@@ -1277,10 +1277,6 @@ __pkcs11h_threading_atfork_child (void) {
 		_pkcs1h_threading_mutexReleaseAll ();
 		if (_g_pkcs11h_data->safefork) {
 			__pkcs11h_forkFixup (TRUE);
-		}
-		else {
-			__pkcs11h_forkFixup (FALSE);
-			pkcs11h_terminate ();
 		}
 	}
 }

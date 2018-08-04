@@ -1,7 +1,7 @@
 pkcs11-helper
 Copyright (c) 2005-2018 Alon Bar-Lev <alon.barlev@gmail.com>
 
-????-??-?? - Version 1.25
+2018-08-04 - Version 1.25
 
  * core: do not attempt to initialize provider with fork mode is not safe. Too
    many providers do not follow the PKCS#11 spec.

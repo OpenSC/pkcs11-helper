@@ -185,9 +185,9 @@ struct _pkcs11h_data_s {
 		_pkcs11h_mutex_t session;
 		_pkcs11h_mutex_t cache;
 	} mutexes;
+#endif
 #if !defined(_WIN32)
 	PKCS11H_BOOL safefork;
-#endif
 #endif
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)

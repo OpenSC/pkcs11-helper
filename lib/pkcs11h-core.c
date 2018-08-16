@@ -524,7 +524,7 @@ CK_RV
 pkcs11h_setForkMode (
 	IN const PKCS11H_BOOL safe
 ) {
-#if defined(ENABLE_PKCS11H_THREADING) && !defined(_WIN32)
+#if !defined(_WIN32)
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 
@@ -1009,7 +1009,9 @@ pkcs11h_forkFixup (void) {
 #if defined(ENABLE_PKCS11H_THREADING)
 	return CKR_OK;
 #else
-	return __pkcs11h_forkFixup (_g_pkcs11h_data->safefork);
+	if (_g_pkcs11h_data->safefork) {
+		return __pkcs11h_forkFixup (TRUE);
+	}
 #endif
 #endif
 }

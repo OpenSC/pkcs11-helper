@@ -263,6 +263,7 @@ DSA_SIG_set0 (DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 }
 #endif
 
+#ifdef __ENABLE_EC
 #ifndef HAVE_ECDSA_SIG_SET0
 static int
 ECDSA_SIG_set0 (ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
@@ -275,7 +276,6 @@ ECDSA_SIG_set0 (ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 }
 #endif
 
-#ifdef __ENABLE_EC
 #ifndef HAVE_EC_KEY_METHOD_GET_SIGN
 void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
 	int (**psign)(int type, const unsigned char *dgst,

@@ -1310,6 +1310,7 @@ __pkcs11h_forkFixup (
 
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs11h_provider_t current;
+		const PKCS11H_BOOL safe = _g_pkcs11h_data->safefork;
 
 #if defined(ENABLE_PKCS11H_THREADING)
 		if (_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global) != CKR_OK) {
@@ -1317,6 +1318,10 @@ __pkcs11h_forkFixup (
 		}
 		mutex_locked = TRUE;
 #endif
+
+		/* We are already running, so on fork() every possible new child will
+		 * safely finalize the fixup */
+		pkcs11h_setForkMode (FALSE);
 
 		for (
 			current = _g_pkcs11h_data->providers;
@@ -1350,6 +1355,8 @@ __pkcs11h_forkFixup (
 			mutex_locked = FALSE;
 		}
 #endif
+
+		pkcs11h_setForkMode (safe);
 	}
 
 	_PKCS11H_DEBUG (

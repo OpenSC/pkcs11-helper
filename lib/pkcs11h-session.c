@@ -739,12 +739,24 @@ _pkcs11h_session_reset (
 				session->token_id->display
 			);
 
+#if defined(ENABLE_PKCS11H_THREADING)
+			if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+				goto cleanup;
+			}
+			_g_pkcs11h_data->bypass_atfork = TRUE;
+#endif
+
 			canceled = !_g_pkcs11h_data->hooks.token_prompt (
 				_g_pkcs11h_data->hooks.token_prompt_data,
 				user_data,
 				session->token_id,
 				nRetry++
 			);
+
+#if defined(ENABLE_PKCS11H_THREADING)
+			_g_pkcs11h_data->bypass_atfork = FALSE;
+			_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+#endif
 
 			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
@@ -1018,6 +1030,13 @@ _pkcs11h_session_login (
 					session->token_id->display
 				);
 
+#if defined(ENABLE_PKCS11H_THREADING)
+				if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+					goto cleanup;
+				}
+				_g_pkcs11h_data->bypass_atfork = TRUE;
+#endif
+
 				if (
 					_g_pkcs11h_data->hooks.pin_prompt (
 						_g_pkcs11h_data->hooks.pin_prompt_data,
@@ -1033,6 +1052,11 @@ _pkcs11h_session_login (
 				else {
 					rv = CKR_CANCEL;
 				}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+				_g_pkcs11h_data->bypass_atfork = FALSE;
+				_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+#endif
 
 				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,

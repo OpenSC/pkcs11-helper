@@ -185,6 +185,7 @@ struct _pkcs11h_data_s {
 		_pkcs11h_mutex_t session;
 		_pkcs11h_mutex_t cache;
 	} mutexes;
+	PKCS11H_BOOL bypass_atfork;
 #endif
 #if !defined(_WIN32)
 	PKCS11H_BOOL safefork;

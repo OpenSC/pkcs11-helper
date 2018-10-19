@@ -703,6 +703,7 @@ pkcs11h_addProvider (
 		goto cleanup;
 	}
 	mutex_locked = TRUE;
+	_g_pkcs11h_data->bypass_atfork = TRUE;
 #endif
 
 	if ((rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct _pkcs11h_provider_s))) != CKR_OK) {
@@ -841,6 +842,7 @@ cleanup:
 
 #if defined(ENABLE_PKCS11H_THREADING)
 	if (mutex_locked) {
+		_g_pkcs11h_data->bypass_atfork = FALSE;
 		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
 		mutex_locked = FALSE;
 	}
@@ -1257,7 +1259,7 @@ __pkcs11h_hooks_default_pin_prompt (
 static
 void
 __pkcs11h_threading_atfork_prepare  (void) {
-	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized && !_g_pkcs11h_data->bypass_atfork) {
 		if (_g_pkcs11h_data->safefork) {
 			_pkcs1h_threading_mutexLockAll ();
 		}
@@ -1266,7 +1268,7 @@ __pkcs11h_threading_atfork_prepare  (void) {
 static
 void
 __pkcs11h_threading_atfork_parent (void) {
-	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
+	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized && !_g_pkcs11h_data->bypass_atfork) {
 		if (_g_pkcs11h_data->safefork) {
 			_pkcs1h_threading_mutexReleaseAll ();
 		}
@@ -1277,8 +1279,14 @@ void
 __pkcs11h_threading_atfork_child (void) {
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs1h_threading_mutexReleaseAll ();
-		if (_g_pkcs11h_data->safefork) {
-			__pkcs11h_forkFixup (TRUE);
+
+		if (_g_pkcs11h_data->bypass_atfork) {
+			pkcs11h_terminate();
+		}
+		else {
+			if (_g_pkcs11h_data->safefork) {
+				__pkcs11h_forkFixup (TRUE);
+			}
 		}
 	}
 }

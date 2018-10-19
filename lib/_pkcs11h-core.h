@@ -188,6 +188,7 @@ struct _pkcs11h_data_s {
 #endif
 #if !defined(_WIN32)
 	PKCS11H_BOOL safefork;
+	PKCS11H_BOOL fork_pending;
 #endif
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)

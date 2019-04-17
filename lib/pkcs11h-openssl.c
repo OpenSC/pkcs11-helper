@@ -478,6 +478,9 @@ __pkcs11h_openssl_rsa_dec (
 			rv = CKR_MECHANISM_INVALID;
 		break;
 		case RSA_NO_PADDING:
+			mech = CKM_RSA_X_509;
+		break;
+		default:
 			rv = CKR_MECHANISM_INVALID;
 		break;
 	}
@@ -552,6 +555,7 @@ __pkcs11h_openssl_rsa_enc (
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t tlen;
+	CK_MECHANISM_TYPE mech = CKM_RSA_PKCS;
 
 	_PKCS11H_ASSERT (from!=NULL);
 	_PKCS11H_ASSERT (to!=NULL);
@@ -567,9 +571,16 @@ __pkcs11h_openssl_rsa_enc (
 		padding
 	);
 
-	if (padding != RSA_PKCS1_PADDING) {
-		rv = CKR_MECHANISM_INVALID;
-		goto cleanup;
+	switch (padding) {
+		case RSA_PKCS1_PADDING:
+			mech = CKM_RSA_PKCS;
+		break;
+		case RSA_NO_PADDING:
+			mech = CKM_RSA_X_509;
+		break;
+		default:
+			rv = CKR_MECHANISM_INVALID;
+			goto cleanup;
 	}
 
 	tlen = (size_t)RSA_size(rsa);
@@ -587,7 +598,7 @@ __pkcs11h_openssl_rsa_enc (
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			CKM_RSA_PKCS,
+			mech,
 			from,
 			flen,
 			to,

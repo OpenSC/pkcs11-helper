@@ -698,13 +698,6 @@ pkcs11h_addProvider (
 		provider_location
 	);
 
-#if defined(ENABLE_PKCS11H_THREADING)
-	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
-		goto cleanup;
-	}
-	mutex_locked = TRUE;
-#endif
-
 	if ((rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct _pkcs11h_provider_s))) != CKR_OK) {
 		goto cleanup;
 	}
@@ -741,6 +734,13 @@ pkcs11h_addProvider (
 		rv = CKR_FUNCTION_FAILED;
 		goto cleanup;
 	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
+	}
+	mutex_locked = TRUE;
+#endif
 
 #if defined(_WIN32)
 	gfl = (CK_C_GetFunctionList)GetProcAddress (
@@ -825,6 +825,13 @@ pkcs11h_addProvider (
 
 cleanup:
 
+#if defined(ENABLE_PKCS11H_THREADING)
+	if (mutex_locked) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+		mutex_locked = FALSE;
+	}
+#endif
+
 	if (provider != NULL) {
 		if (provider->handle != NULL) {
 #if defined(_WIN32)
@@ -838,13 +845,6 @@ cleanup:
 		_pkcs11h_mem_free ((void *)&provider);
 		provider = NULL;
 	}
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
-		mutex_locked = FALSE;
-	}
-#endif
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_slotevent_notify ();

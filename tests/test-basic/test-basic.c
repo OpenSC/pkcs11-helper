@@ -42,6 +42,7 @@ int main () {
 	}
 
 	pkcs11h_setLogLevel (TEST_LOG_LEVEL);
+	pkcs11h_setForkMode(TRUE);
 
 	printf ("Adding provider '%s'\n", TEST_PROVIDER);
 

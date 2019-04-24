@@ -653,9 +653,6 @@ pkcs11h_addProvider (
 	IN const unsigned slot_poll_interval,
 	IN const PKCS11H_BOOL cert_is_private
 ) {
-#if defined(ENABLE_PKCS11H_THREADING)
-	PKCS11H_BOOL mutex_locked = FALSE;
-#endif
 #if defined(ENABLE_PKCS11H_DEBUG)
 #if defined(_WIN32)
 	int mypid = 0;
@@ -697,13 +694,6 @@ pkcs11h_addProvider (
 		reference,
 		provider_location
 	);
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
-		goto cleanup;
-	}
-	mutex_locked = TRUE;
-#endif
 
 	if ((rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct _pkcs11h_provider_s))) != CKR_OK) {
 		goto cleanup;
@@ -806,6 +796,12 @@ pkcs11h_addProvider (
 
 	provider->enabled = TRUE;
 
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
+	}
+#endif
+
 	if (_g_pkcs11h_data->providers == NULL) {
 		_g_pkcs11h_data->providers = provider;
 	}
@@ -821,6 +817,11 @@ pkcs11h_addProvider (
 	}
 
 	provider = NULL;
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+#endif
+
 	rv = CKR_OK;
 
 cleanup:
@@ -838,13 +839,6 @@ cleanup:
 		_pkcs11h_mem_free ((void *)&provider);
 		provider = NULL;
 	}
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	if (mutex_locked) {
-		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
-		mutex_locked = FALSE;
-	}
-#endif
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_slotevent_notify ();
@@ -877,6 +871,7 @@ pkcs11h_removeProvider (
 	PKCS11H_BOOL has_mutex_global = FALSE;
 	PKCS11H_BOOL has_mutex_cache = FALSE;
 	PKCS11H_BOOL has_mutex_session = FALSE;
+	CK_RV lock_rv;
 #endif
 	_pkcs11h_provider_t provider = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
@@ -896,16 +891,18 @@ pkcs11h_removeProvider (
 	);
 
 #if defined(ENABLE_PKCS11H_THREADING)
-	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache)) != CKR_OK) {
-		goto cleanup;
+	lock_rv = CKR_OK;
+
+	if ((lock_rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.cache)) != CKR_OK) {
+		goto free1;
 	}
 	has_mutex_cache = TRUE;
-	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.session)) != CKR_OK) {
-		goto cleanup;
+	if ((lock_rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.session)) != CKR_OK) {
+		goto free1;
 	}
 	has_mutex_session = TRUE;
-	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
-		goto cleanup;
+	if ((lock_rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto free1;
 	}
 	has_mutex_global = TRUE;
 
@@ -926,12 +923,44 @@ pkcs11h_removeProvider (
 		provider = provider->next;
 	}
 
+	if (provider != NULL) {
+		provider->enabled = FALSE;
+	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+free1:
+	for (
+		current_session = _g_pkcs11h_data->sessions;
+		current_session != NULL;
+		current_session = current_session->next
+	) {
+		_pkcs11h_threading_mutexRelease (&current_session->mutex);
+	}
+
+	if (has_mutex_cache) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.cache);
+		has_mutex_cache = FALSE;
+	}
+	if (has_mutex_session) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.session);
+		has_mutex_session = FALSE;
+	}
+	if (has_mutex_global) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+		has_mutex_global = FALSE;
+	}
+
+	if (lock_rv != CKR_OK) {
+		rv = lock_rv;
+		goto cleanup;
+	}
+#endif
+
 	if (provider == NULL) {
 		rv = CKR_OBJECT_HANDLE_INVALID;
 		goto cleanup;
 	}
 
-	provider->enabled = FALSE;
 	provider->reference[0] = '\0';
 
 	if (provider->should_finalize) {
@@ -967,29 +996,6 @@ pkcs11h_removeProvider (
 	rv = CKR_OK;
 
 cleanup:
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	for (
-		current_session = _g_pkcs11h_data->sessions;
-		current_session != NULL;
-		current_session = current_session->next
-	) {
-		_pkcs11h_threading_mutexRelease (&current_session->mutex);
-	}
-
-	if (has_mutex_cache) {
-		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.cache);
-		has_mutex_cache = FALSE;
-	}
-	if (has_mutex_session) {
-		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.session);
-		has_mutex_session = FALSE;
-	}
-	if (has_mutex_global) {
-		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
-		has_mutex_global = FALSE;
-	}
-#endif
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,

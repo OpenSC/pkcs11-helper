@@ -114,9 +114,7 @@ __pkcs11h_threading_atfork_child (void);
 #endif
 static
 CK_RV
-__pkcs11h_forkFixup (
-	IN const PKCS11H_BOOL activate_slotevent
-);
+__pkcs11h_forkFixup ();
 #endif
 
 
@@ -1016,7 +1014,7 @@ pkcs11h_forkFixup (void) {
 	return CKR_OK;
 #else
 	if (_g_pkcs11h_data->safefork) {
-		return __pkcs11h_forkFixup (TRUE);
+		return __pkcs11h_forkFixup ();
 	}
 #endif
 #endif
@@ -1284,7 +1282,7 @@ __pkcs11h_threading_atfork_child (void) {
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs1h_threading_mutexReleaseAll ();
 		if (_g_pkcs11h_data->safefork) {
-			__pkcs11h_forkFixup (TRUE);
+			__pkcs11h_forkFixup ();
 		}
 	}
 }
@@ -1293,9 +1291,7 @@ __pkcs11h_threading_atfork_child (void) {
 
 static
 CK_RV
-__pkcs11h_forkFixup (
-	IN const PKCS11H_BOOL activate_slotevent
-) {
+__pkcs11h_forkFixup () {
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
@@ -1305,14 +1301,9 @@ __pkcs11h_forkFixup (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_forkFixup entry pid=%d, activate_slotevent=%d",
-		mypid,
-		activate_slotevent ? 1 : 0
+		"PKCS#11: __pkcs11h_forkFixup entry pid=%d",
+		mypid
 	);
-
-#if !defined(ENABLE_PKCS11H_SLOTEVENT)
-	(void)activate_slotevent;
-#endif
 
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs11h_provider_t current;
@@ -1341,9 +1332,7 @@ __pkcs11h_forkFixup (
 			if (_g_pkcs11h_data->slotevent.initialized) {
 				_pkcs11h_slotevent_terminate_force ();
 
-				if (activate_slotevent) {
-					_pkcs11h_slotevent_init ();
-				}
+				_pkcs11h_slotevent_init ();
 			}
 #endif
 		}

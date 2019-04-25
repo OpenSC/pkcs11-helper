@@ -607,6 +607,7 @@ AC_CONFIG_FILES([
 	tests/Makefile
 	tests/test-basic/Makefile
 	tests/test-certificate/Makefile
+	tests/test-fork/Makefile
 	tests/test-openssl/Makefile
 	tests/test-slotevent/Makefile
 ])

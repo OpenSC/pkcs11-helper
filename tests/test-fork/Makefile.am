@@ -50,14 +50,13 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-COMMON= \
-	test-basic \
-	test-fork \
-	test-certificate \
-	test-openssl \
-	test-slotevent
+TESTS=test-fork
+noinst_PROGRAMS=test-fork
 
-if ENABLE_TESTS
-SUBDIRS = $(COMMON)
-endif
-DIST_SUBDIRS = $(COMMON)
+AM_CPPFLAGS= \
+	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include
+LDADD= \
+	$(top_builddir)/lib/libpkcs11-helper.la
+
+test_fork_SOURCES=test-fork.c

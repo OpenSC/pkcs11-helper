@@ -1282,7 +1282,12 @@ __pkcs11h_threading_atfork_child (void) {
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs1h_threading_mutexReleaseAll ();
 		if (_g_pkcs11h_data->safefork) {
-			__pkcs11h_forkFixup ();
+			static PKCS11H_BOOL in_forkfixup = FALSE;
+			if (!in_forkfixup) {
+				in_forkfixup = TRUE;
+				__pkcs11h_forkFixup ();
+				in_forkfixup = FALSE;
+			}
 		}
 	}
 }

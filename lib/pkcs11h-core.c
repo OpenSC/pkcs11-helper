@@ -1292,9 +1292,6 @@ __pkcs11h_threading_atfork_child (void) {
 static
 CK_RV
 __pkcs11h_forkFixup () {
-#if defined(ENABLE_PKCS11H_THREADING)
-	PKCS11H_BOOL mutex_locked = FALSE;
-#endif
 #if defined(ENABLE_PKCS11H_DEBUG)
 	pid_t mypid = getpid ();
 #endif
@@ -1307,13 +1304,6 @@ __pkcs11h_forkFixup () {
 
 	if (_g_pkcs11h_data != NULL && _g_pkcs11h_data->initialized) {
 		_pkcs11h_provider_t current;
-
-#if defined(ENABLE_PKCS11H_THREADING)
-		if (_pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global) != CKR_OK) {
-			goto cleanup;
-		}
-		mutex_locked = TRUE;
-#endif
 
 		for (
 			current = _g_pkcs11h_data->providers;
@@ -1331,20 +1321,10 @@ __pkcs11h_forkFixup () {
 			 */
 			if (_g_pkcs11h_data->slotevent.initialized) {
 				_pkcs11h_slotevent_terminate_force ();
-
 				_pkcs11h_slotevent_init ();
 			}
 #endif
 		}
-
-#if defined(ENABLE_PKCS11H_THREADING)
-	cleanup:
-
-		if (mutex_locked) {
-			_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
-			mutex_locked = FALSE;
-		}
-#endif
 	}
 
 	_PKCS11H_DEBUG (

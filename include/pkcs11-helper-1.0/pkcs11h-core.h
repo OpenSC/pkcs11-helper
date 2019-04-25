@@ -480,7 +480,11 @@ pkcs11h_removeProvider (
 /**
  * @brief Handle special case of POSIX fork()
  * @return CK_RV.
- * @attention This function must be called from the main thread.
+ * @attention
+ * This function must be called once from the main thread of child process.
+ * It must be called before any pkcs11-helper calls.
+ * In case you do not want to use PKCS#11 at child, call this function and
+ * then pkcs11h_terminate.
  * @attention
  * This function should be called after fork is called. This is required
  * due to a limitation of the PKCS#11 standard.

@@ -53,12 +53,7 @@
 #include "_pkcs11h-crypto.h"
 
 #if defined(ENABLE_PKCS11H_ENGINE_MBEDTLS)
-#ifdef HAVE_MBEDTLS_X509_CRT_H
-#include <mbedtls/compat-1.3.h>
 #include <mbedtls/x509_crt.h>
-#else
-#include <polarssl/x509_crt.h>
-#endif
 
 static
 int
@@ -88,7 +83,7 @@ __pkcs11h_crypto_mbedtls_certificate_get_expiration (
 	IN const size_t blob_size,
 	OUT time_t * const expiration
 ) {
-	x509_crt x509;
+	mbedtls_x509_crt x509;
 
 	(void)global_data;
 
@@ -99,11 +94,11 @@ __pkcs11h_crypto_mbedtls_certificate_get_expiration (
 	*expiration = (time_t)0;
 
 	memset(&x509, 0, sizeof(x509));
-	if (0 != x509_crt_parse (&x509, blob, blob_size)) {
+	if (0 != mbedtls_x509_crt_parse (&x509, blob, blob_size)) {
 		goto cleanup;
 	}
 
-	if (0 == x509_time_expired(&x509.valid_to)) {
+	if (0 == mbedtls_x509_time_is_past(&x509.valid_to)) {
 		struct tm tm1;
 
 		memset (&tm1, 0, sizeof (tm1));
@@ -120,7 +115,7 @@ __pkcs11h_crypto_mbedtls_certificate_get_expiration (
 
 cleanup:
 
-	x509_crt_free(&x509);
+	mbedtls_x509_crt_free(&x509);
 
 	return *expiration != (time_t)0;
 }
@@ -134,7 +129,7 @@ __pkcs11h_crypto_mbedtls_certificate_get_dn (
 	OUT char * const dn,
 	IN const size_t dn_max
 ) {
-	x509_crt x509;
+	mbedtls_x509_crt x509;
 	int ret = FALSE;
 
 	(void)global_data;
@@ -147,11 +142,11 @@ __pkcs11h_crypto_mbedtls_certificate_get_dn (
 	dn[0] = '\x0';
 
 	memset(&x509, 0, sizeof(x509));
-	if (0 != x509_crt_parse (&x509, blob, blob_size)) {
+	if (0 != mbedtls_x509_crt_parse (&x509, blob, blob_size)) {
 		goto cleanup;
 	}
 
-	if (-1 == x509_dn_gets(dn, dn_max, &x509.subject)) {
+	if (-1 == mbedtls_x509_dn_gets(dn, dn_max, &x509.subject)) {
 		goto cleanup;
 	}
 
@@ -159,7 +154,7 @@ __pkcs11h_crypto_mbedtls_certificate_get_dn (
 
 cleanup:
 
-	x509_crt_free(&x509);
+	mbedtls_x509_crt_free(&x509);
 
 	return ret;
 }
@@ -173,8 +168,8 @@ __pkcs11h_crypto_mbedtls_certificate_is_issuer (
 	IN const unsigned char * const cert_blob,
 	IN const size_t cert_blob_size
 ) {
-	x509_crt x509_issuer;
-	x509_crt x509_cert;
+	mbedtls_x509_crt x509_issuer;
+	mbedtls_x509_crt x509_cert;
 	uint32_t verify_flags = 0;
 
 	PKCS11H_BOOL is_issuer = FALSE;
@@ -186,23 +181,23 @@ __pkcs11h_crypto_mbedtls_certificate_is_issuer (
 	_PKCS11H_ASSERT (cert_blob!=NULL);
 
 	memset(&x509_issuer, 0, sizeof(x509_issuer));
-	if (0 != x509_crt_parse (&x509_issuer, issuer_blob, issuer_blob_size)) {
+	if (0 != mbedtls_x509_crt_parse (&x509_issuer, issuer_blob, issuer_blob_size)) {
 		goto cleanup;
 	}
 
 	memset(&x509_cert, 0, sizeof(x509_cert));
-	if (0 != x509_crt_parse (&x509_cert, cert_blob, cert_blob_size)) {
+	if (0 != mbedtls_x509_crt_parse (&x509_cert, cert_blob, cert_blob_size)) {
 		goto cleanup;
 	}
 
-	if ( 0 == x509_crt_verify(&x509_cert, &x509_issuer, NULL, NULL,
+	if ( 0 == mbedtls_x509_crt_verify(&x509_cert, &x509_issuer, NULL, NULL,
 		&verify_flags, NULL, NULL )) {
 		is_issuer = TRUE;
 	}
 
 cleanup:
-	x509_crt_free(&x509_cert);
-	x509_crt_free(&x509_issuer);
+	mbedtls_x509_crt_free(&x509_cert);
+	mbedtls_x509_crt_free(&x509_issuer);
 
 	return is_issuer;
 }

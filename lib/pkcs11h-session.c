@@ -1049,10 +1049,6 @@ _pkcs11h_session_login (
 
 			}
 
-			if ((rv = __pkcs11h_session_touch (session)) != CKR_OK) {
-				goto cleanup;
-			}
-
 			if (
 				(rv = session->provider->f->C_Login (
 					session->session_handle,
@@ -1063,6 +1059,10 @@ _pkcs11h_session_login (
 				rv != CKR_USER_ALREADY_LOGGED_IN
 			) {
 				goto retry;
+			}
+
+			if ((rv = __pkcs11h_session_touch (session)) != CKR_OK) {
+				goto cleanup;
 			}
 
 			login_succeeded = TRUE;

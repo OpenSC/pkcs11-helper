@@ -1,6 +1,9 @@
 pkcs11-helper
 Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 
+????-??-?? - Version 1.28
+
+
 2020-11-17 - Version 1.27
 
 * core: handle PIN expiration after C_Login as C_Login may take a while

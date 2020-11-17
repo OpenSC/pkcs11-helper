@@ -4,6 +4,8 @@ Copyright (c) 2005-2018 Alon Bar-Lev <alon.barlev@gmail.com>
 ????-??-?? - Version 1.27
 
 * core: handle PIN expiration after C_Login as C_Login may take a while
+* core: return explict success when plugin&play and no threading and no
+  safefork, thanks to Tunnelblick
 
 2020-01-21 - Version 1.26
 

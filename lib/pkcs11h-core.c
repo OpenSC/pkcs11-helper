@@ -1016,6 +1016,9 @@ pkcs11h_forkFixup (void) {
 	if (_g_pkcs11h_data->safefork) {
 		return __pkcs11h_forkFixup ();
 	}
+	else {
+		return CKR_OK;
+	}
 #endif
 #endif
 }

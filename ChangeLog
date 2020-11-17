@@ -1,7 +1,7 @@
 pkcs11-helper
-Copyright (c) 2005-2018 Alon Bar-Lev <alon.barlev@gmail.com>
+Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 
-????-??-?? - Version 1.27
+2020-11-17 - Version 1.27
 
 * core: handle PIN expiration after C_Login as C_Login may take a while
 * core: return explict success when plugin&play and no threading and no

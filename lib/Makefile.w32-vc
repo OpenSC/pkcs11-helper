@@ -82,7 +82,7 @@ CFLAGS=$(CFLAGS) -DNDEBUG
 
 LINK32=link.exe
 LIB32=lib.exe
-LINK32_FLAGS=/nologo /subsystem:windows /dll /incremental:no
+LINK32_FLAGS=/nologo /subsystem:windows /dll /incremental:no /release
 LIB32_FLAGS=/nologo
 
 HEADERS = \

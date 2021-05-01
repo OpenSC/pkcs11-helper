@@ -449,7 +449,7 @@ __pkcs11h_openssl_rsa_dec (
 #endif
 	pkcs11h_certificate_t certificate = __pkcs11h_openssl_rsa_get_pkcs11h_certificate (rsa);
 	PKCS11H_BOOL session_locked = FALSE;
-	CK_MECHANISM_TYPE mech = CKM_RSA_PKCS;
+	CK_MECHANISM mech = {CKM_RSA_PKCS, NULL, 0};
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t tlen = (size_t)flen;
 
@@ -469,16 +469,16 @@ __pkcs11h_openssl_rsa_dec (
 
 	switch (padding) {
 		case RSA_PKCS1_PADDING:
-			mech = CKM_RSA_PKCS;
+			mech.mechanism = CKM_RSA_PKCS;
 		break;
 		case RSA_PKCS1_OAEP_PADDING:
-			mech = CKM_RSA_PKCS_OAEP;
+			mech.mechanism = CKM_RSA_PKCS_OAEP;
 		break;
 		case RSA_SSLV23_PADDING:
 			rv = CKR_MECHANISM_INVALID;
 		break;
 		case RSA_NO_PADDING:
-			mech = CKM_RSA_X_509;
+			mech.mechanism = CKM_RSA_X_509;
 		break;
 		default:
 			rv = CKR_MECHANISM_INVALID;
@@ -500,7 +500,7 @@ __pkcs11h_openssl_rsa_dec (
 	if (
 		(rv = pkcs11h_certificate_decryptAny (
 			certificate,
-			mech,
+			&mech,
 			from,
 			flen,
 			to,
@@ -555,7 +555,7 @@ __pkcs11h_openssl_rsa_enc (
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	size_t tlen;
-	CK_MECHANISM_TYPE mech = CKM_RSA_PKCS;
+	CK_MECHANISM mech = {CKM_RSA_PKCS, NULL, 0};
 
 	_PKCS11H_ASSERT (from!=NULL);
 	_PKCS11H_ASSERT (to!=NULL);
@@ -573,10 +573,10 @@ __pkcs11h_openssl_rsa_enc (
 
 	switch (padding) {
 		case RSA_PKCS1_PADDING:
-			mech = CKM_RSA_PKCS;
+			mech.mechanism = CKM_RSA_PKCS;
 		break;
 		case RSA_NO_PADDING:
-			mech = CKM_RSA_X_509;
+			mech.mechanism = CKM_RSA_X_509;
 		break;
 		default:
 			rv = CKR_MECHANISM_INVALID;
@@ -598,7 +598,7 @@ __pkcs11h_openssl_rsa_enc (
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			mech,
+			&mech,
 			from,
 			flen,
 			to,
@@ -720,6 +720,7 @@ __pkcs11h_openssl_dsa_do_sign(
 	BIGNUM *r = NULL;
 	BIGNUM *s = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
+	CK_MECHANISM mech = {CKM_DSA, NULL, 0};
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -736,7 +737,7 @@ __pkcs11h_openssl_dsa_do_sign(
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			CKM_DSA,
+			&mech,
 			dgst,
 			(size_t)dlen,
 			NULL,
@@ -755,7 +756,7 @@ __pkcs11h_openssl_dsa_do_sign(
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			CKM_DSA,
+			&mech,
 			dgst,
 			(size_t)dlen,
 			sigbuf,
@@ -897,6 +898,7 @@ __pkcs11h_openssl_eckey_do_sign(
 	BIGNUM *sig_r = NULL;
 	BIGNUM *sig_s = NULL;
 	CK_RV rv = CKR_FUNCTION_FAILED;
+	CK_MECHANISM mech = {CKM_ECDSA, NULL, 0};
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -917,7 +919,7 @@ __pkcs11h_openssl_eckey_do_sign(
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			CKM_ECDSA,
+			&mech,
 			dgst,
 			(size_t)dlen,
 			NULL,
@@ -936,7 +938,7 @@ __pkcs11h_openssl_eckey_do_sign(
 	if (
 		(rv = pkcs11h_certificate_signAny (
 			certificate,
-			CKM_ECDSA,
+			&mech,
 			dgst,
 			(size_t)dlen,
 			sigbuf,

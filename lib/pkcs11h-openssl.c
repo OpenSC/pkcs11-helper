@@ -319,6 +319,7 @@ static struct {
 #ifndef OPENSSL_NO_RSA
 	RSA_METHOD *rsa;
 	int rsa_index;
+	EVP_PKEY_METHOD *pmeth_rsa;
 #endif
 #ifndef OPENSSL_NO_DSA
 	DSA_METHOD *dsa;
@@ -628,6 +629,244 @@ cleanup:
 	return rv == CKR_OK ? (int)tlen : -1;
 }
 
+static int
+__pkcs11h_get_pss_params(
+	IN EVP_PKEY_CTX *ctx,
+	IN EVP_PKEY *pkey,
+	IN OUT CK_RSA_PKCS_PSS_PARAMS *params
+)
+{
+	int saltlen;
+	const EVP_MD *md, *mgf1_md;
+
+	_PKCS11H_ASSERT (ctx!=NULL);
+	_PKCS11H_ASSERT (pkey!=NULL);
+	_PKCS11H_ASSERT (params!=NULL);
+
+	if (
+		(EVP_PKEY_CTX_get_signature_md (ctx, &md) <= 0)
+		|| (EVP_PKEY_CTX_get_rsa_mgf1_md (ctx, &mgf1_md) <= 0)
+		|| (EVP_PKEY_CTX_get_rsa_pss_saltlen (ctx, &saltlen) <= 0)
+	) {
+		return -1;
+	}
+
+	if (saltlen == -1) {
+		saltlen = EVP_MD_size (md);
+	}
+	else if (saltlen = -2) {
+		saltlen = EVP_PKEY_size (pkey) - EVP_MD_size (md) - 2;
+	}
+	if (((EVP_PKEY_bits (pkey) - 1) & 0x7) == 0) {
+		saltlen -= 1;
+	}
+	if (saltlen < 0) {
+		return -1;
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: __pkcs11h_get_pss_params: saltlen=%d md=%s mgf1_md=%s",
+		saltlen, EVP_MD_name (md), EVP_MD_name (mgf1_md)
+	);
+
+	switch (EVP_MD_type(md)) {
+		case NID_sha1:
+			params->hash_alg = CKM_SHA_1;
+		break;
+		case NID_sha224:
+			params->hash_alg = CKM_SHA224;
+		break;
+		case NID_sha256:
+			params->hash_alg = CKM_SHA256;
+		break;
+		case NID_sha384:
+			params->hash_alg = CKM_SHA384;
+		break;
+		case NID_sha512:
+			params->hash_alg = CKM_SHA512;
+		break;
+		default:
+			return -1;
+	}
+
+	switch (EVP_MD_type(mgf1_md)) {
+		case NID_sha1:
+			params->mgf = CKG_MGF1_SHA1;
+		break;
+		case NID_sha224:
+			params->mgf = CKG_MGF1_SHA224;
+		break;
+		case NID_sha256:
+			params->mgf = CKG_MGF1_SHA256;
+		break;
+			case NID_sha384:
+			params->mgf = CKG_MGF1_SHA384;
+		break;
+		case NID_sha512:
+			params->mgf = CKG_MGF1_SHA512;
+		break;
+		default:
+			return -1;
+	}
+
+	params->s_len = saltlen;
+	return 0;
+}
+
+static int
+__pkcs11h_openssl_pkey_rsa_sign(
+	IN EVP_PKEY_CTX *ctx,
+	OUT unsigned char *sig,
+	IN OUT size_t *siglen,
+	IN const unsigned char *tbs,
+	IN size_t tbslen
+)
+{
+	EVP_PKEY *pkey;
+	RSA *rsa = NULL;
+	CK_RSA_PKCS_PSS_PARAMS params = {0};
+	CK_MECHANISM mech = {CKM_RSA_PKCS, NULL, 0};
+	int padding;
+
+	_PKCS11H_ASSERT (sig!=NULL);
+
+	PKCS11H_BOOL session_locked = FALSE;
+	pkcs11h_certificate_t certificate;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_openssl_pkey_rsa_sign entered - ctx=%p, sig=%p, siglen=%zu, tbs=%p, tbslen=%zu",
+		(void*)ctx,
+		sig,
+		siglen,
+		tbs,
+		tbslen
+	);
+
+	EVP_PKEY_CTX_get_rsa_padding (ctx, &padding);
+
+	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
+	if (pkey) {
+		rsa = EVP_PKEY_get0_RSA (pkey);
+	}
+	if (rsa == NULL) {
+		goto cleanup;
+	}
+
+	switch (padding) {
+		int ret;
+		unsigned int sltmp;
+		case RSA_PKCS1_PADDING:
+		{
+			/* Call the global RSA_sign() which will add the digest info wrapper and
+			 * then call the key specific rsa_enc method we have set
+			 */
+			EVP_MD *md;
+			if (EVP_PKEY_CTX_get_signature_md (ctx, &md) <= 0) {
+				_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot do signature: unknown signature MD");
+			}
+			else if (RSA_sign (EVP_MD_type(md), tbs, tbslen, sig, &sltmp, rsa) >= 0) {
+			        *siglen = sltmp;
+			        rv = CKR_OK;
+			}
+			goto cleanup;
+		}
+		break;
+		case RSA_PKCS1_PSS_PADDING:
+			mech.mechanism = CKM_RSA_PKCS_PSS;
+			if (__pkcs11h_get_pss_params (ctx, pkey, &params) < 0) {
+				goto cleanup;
+			}
+			mech.pParameter = &params;
+			mech.ulParameterLen = sizeof(params);
+		break;
+		default:
+			if ((ret = __pkcs11h_openssl_rsa_enc (tbslen, tbs, sig, rsa, padding)) >= 0) {
+				*siglen = ret;
+                                rv = CKR_OK;
+                        }
+			goto cleanup;
+	}
+
+	certificate = __pkcs11h_openssl_rsa_get_pkcs11h_certificate (rsa);
+
+	if ((rv = pkcs11h_certificate_lockSession (certificate)) != CKR_OK) {
+		goto cleanup;
+	}
+	session_locked = TRUE;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: __pkcs11h_openssl_pkey_rsa_sign performing signature with mechanism_type = %ld",
+		mech.mechanism
+	);
+
+	if (
+		(rv = pkcs11h_certificate_signAny (
+			certificate,
+			&mech,
+			tbs,
+			tbslen,
+			sig,
+			siglen
+		)) != CKR_OK
+	) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot perform signature %ld:'%s'", rv, pkcs11h_getMessage (rv));
+		goto cleanup;
+	}
+
+	rv = CKR_OK;
+
+cleanup:
+	if (session_locked) {
+		pkcs11h_certificate_releaseSession (certificate);
+		session_locked = FALSE;
+	}
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: __pkcs11h_openssl_pkey_rsa_sign - return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv == CKR_OK ? (int)*siglen : -1;
+}
+
+static int
+__pkcs11h_openssl_pkey_rsa_decrypt(
+	IN EVP_PKEY_CTX *ctx,
+	OUT unsigned char *out,
+	IN OUT size_t *outlen,
+	IN const unsigned char *in,
+	IN size_t inlen
+)
+{
+	EVP_PKEY *pkey;
+	RSA *rsa;
+	int padding;
+	int ret = -1;
+
+	_PKCS11H_ASSERT (out!=NULL);
+
+	EVP_PKEY_CTX_get_rsa_padding (ctx, &padding);
+
+	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
+	if (pkey) {
+		rsa = EVP_PKEY_get0_RSA (pkey);
+	}
+	if (rsa) {
+		ret = __pkcs11h_openssl_rsa_dec (inlen, in, out, rsa, padding);
+	}
+
+	if (ret >= 0) {
+		*outlen = ret;
+	}
+	return (ret < 0 ) ? ret : 1;
+}
+
 static
 PKCS11H_BOOL
 __pkcs11h_openssl_session_setRSA(
@@ -676,7 +915,7 @@ cleanup:
 	}
 
 	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG2,
+		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: __pkcs11h_openssl_session_setRSA - return ret=%d",
 		ret
 	);
@@ -1077,6 +1316,19 @@ _pkcs11h_openssl_initialize (void) {
 		__pkcs11h_openssl_ex_data_dup,
 		__pkcs11h_openssl_ex_data_free
 	);
+	/* Intercept PKEY sign method for version 1.1.1 and later */
+#if OPENSSL_VERSION_NUMBER > 0x10101000L
+	const EVP_PKEY_METHOD *pmeth_orig = EVP_PKEY_meth_find (EVP_PKEY_RSA);
+	if (__openssl_methods.pmeth_rsa != NULL) {
+		EVP_PKEY_meth_free(__openssl_methods.pmeth_rsa);
+	}
+	if ((__openssl_methods.pmeth_rsa = EVP_PKEY_meth_new (EVP_PKEY_RSA, EVP_PKEY_FLAG_AUTOARGLEN)) == NULL) {
+		goto cleanup;
+	}
+	EVP_PKEY_meth_copy (__openssl_methods.pmeth_rsa, pmeth_orig);
+	EVP_PKEY_meth_set_sign (__openssl_methods.pmeth_rsa, NULL,
+		__pkcs11h_openssl_pkey_rsa_sign);
+#endif
 #endif
 #ifndef OPENSSL_NO_DSA
 	if (__openssl_methods.dsa != NULL) {
@@ -1142,6 +1394,10 @@ _pkcs11h_openssl_terminate (void) {
 	if (__openssl_methods.rsa != NULL) {
 		RSA_meth_free (__openssl_methods.rsa);
 		__openssl_methods.rsa = NULL;
+	}
+	if (__openssl_methods.pmeth_rsa != NULL) {
+		EVP_PKEY_meth_free (__openssl_methods.pmeth_rsa);
+		__openssl_methods.pmeth_rsa = NULL;
 	}
 #endif
 #ifndef OPENSSL_NO_DSA

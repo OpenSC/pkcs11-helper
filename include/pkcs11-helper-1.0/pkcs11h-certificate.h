@@ -352,7 +352,7 @@ pkcs11h_certificate_releaseSession (
 /**
  * @brief Sign data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech   		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -366,7 +366,7 @@ pkcs11h_certificate_releaseSession (
 CK_RV
 pkcs11h_certificate_sign (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -376,7 +376,7 @@ pkcs11h_certificate_sign (
 /**
  * @brief Sign data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech  		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -390,7 +390,7 @@ pkcs11h_certificate_sign (
 CK_RV
 pkcs11h_certificate_signRecover (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -400,7 +400,7 @@ pkcs11h_certificate_signRecover (
 /**
  * @brief Decrypt data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech  		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -413,7 +413,7 @@ pkcs11h_certificate_signRecover (
 CK_RV
 pkcs11h_certificate_decrypt (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -423,7 +423,7 @@ pkcs11h_certificate_decrypt (
 /**
  * @brief Decrypt data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech  		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -436,7 +436,7 @@ pkcs11h_certificate_decrypt (
 CK_RV
 pkcs11h_certificate_unwrap (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -446,7 +446,7 @@ pkcs11h_certificate_unwrap (
 /**
  * @brief Sign data mechanism determined by key attributes.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech  		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -459,7 +459,7 @@ pkcs11h_certificate_unwrap (
 CK_RV
 pkcs11h_certificate_signAny (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -469,7 +469,7 @@ pkcs11h_certificate_signAny (
 /**
  * @brief Decrypt data mechanism determined by key attributes.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech  		PKCS#11 mechanism.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -482,7 +482,7 @@ pkcs11h_certificate_signAny (
 CK_RV
 pkcs11h_certificate_decryptAny (
 	IN const pkcs11h_certificate_t certificate,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN CK_MECHANISM * mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,

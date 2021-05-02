@@ -162,6 +162,10 @@ extern "C" {
 #define min_key_size ulMinKeySize
 #define max_key_size ulMaxKeySize
 
+#define ck_rsa_pkcs_mgf_type_t CK_RSA_PKCS_MGF_TYPE
+#define hash_alg hashAlg
+#define s_len sLen
+
 #define ck_rv_t CK_RV
 #define ck_notify_t CK_NOTIFY
 
@@ -473,6 +477,7 @@ struct ck_date
 
 
 typedef unsigned long ck_mechanism_type_t;
+typedef unsigned long ck_rsa_pkcs_mgf_type_t;
 
 #define CKM_RSA_PKCS_KEY_PAIR_GEN	(0)
 #define CKM_RSA_PKCS			(1)
@@ -549,6 +554,9 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_SHA256			(0x250)
 #define CKM_SHA256_HMAC			(0x251)
 #define CKM_SHA256_HMAC_GENERAL		(0x252)
+#define CKM_SHA224			(0x255)
+#define CKM_SHA224_HMAC			(0x256)
+#define CKM_SHA224_HMAC_GENERAL		(0x257)
 #define CKM_SHA384			(0x260)
 #define CKM_SHA384_HMAC			(0x261)
 #define CKM_SHA384_HMAC_GENERAL		(0x262)
@@ -674,6 +682,12 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_X9_42_DH_PARAMETER_GEN	(0x2002)
 #define CKM_VENDOR_DEFINED		((unsigned long) (1 << 31))
 
+#define CKG_MGF1_SHA1			(0x00000001UL)
+#define CKG_MGF1_SHA224			(0x00000005UL)
+#define CKG_MGF1_SHA256			(0x00000002UL)
+#define CKG_MGF1_SHA384			(0x00000003UL)
+#define CKG_MGF1_SHA512			(0x00000004UL)
+
 
 struct ck_mechanism
 {
@@ -689,6 +703,13 @@ struct ck_mechanism_info
   unsigned long max_key_size;
   ck_flags_t flags;
 };
+
+struct ck_rsa_pkcs_pss_params {
+	ck_mechanism_type_t hash_alg;
+	ck_rsa_pkcs_mgf_type_t mgf;
+	unsigned long s_len;
+};
+
 
 #define CKF_HW			(1 << 0)
 #define CKF_ENCRYPT		(1 << 8)
@@ -1252,6 +1273,8 @@ typedef struct ck_mechanism *CK_MECHANISM_PTR;
 
 typedef struct ck_mechanism_info CK_MECHANISM_INFO;
 typedef struct ck_mechanism_info *CK_MECHANISM_INFO_PTR;
+
+typedef struct ck_rsa_pkcs_pss_params CK_RSA_PKCS_PSS_PARAMS;
 
 typedef struct ck_function_list CK_FUNCTION_LIST;
 typedef struct ck_function_list *CK_FUNCTION_LIST_PTR;

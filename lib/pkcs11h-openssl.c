@@ -56,6 +56,10 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
@@ -328,6 +332,9 @@ static struct {
 #ifdef __ENABLE_EC
 	EC_KEY_METHOD *eckey;
 	int eckey_index;
+#endif
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE *engine;
 #endif
 } __openssl_methods;
 
@@ -904,6 +911,11 @@ __pkcs11h_openssl_session_setRSA(
 	ENGINE_set_RSA(ENGINE_get_default_RSA (), &openssl_session->rsa);
 	_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: OpenSSL engine support is broken! Workaround enabled");
 #endif
+#if !defined(OPENSSL_NO_ENGINE)
+	if (__openssl_methods.engine) {
+		EVP_PKEY_set1_engine(evp, __openssl_methods.engine);
+	}
+#endif
 
 	ret = TRUE;
 
@@ -1289,6 +1301,75 @@ cleanup:
 
 #endif
 
+
+static int
+_pkcs11h_pkey_meths(
+	ENGINE *e,
+	EVP_PKEY_METHOD **pmeth,
+	const int **nids,
+	int nid
+	) {
+
+	static int supported_nids[] = {EVP_PKEY_RSA, 0};
+
+	if (!pmeth) {
+		*nids = supported_nids;
+		return sizeof (supported_nids) / sizeof (int) - 1;
+	}
+#ifndef OPENSSL_NO_RSA
+	else if (nid == EVP_PKEY_RSA) {
+		if (!__openssl_methods.pmeth_rsa) {
+			return 0;
+		}
+		*pmeth =  __openssl_methods.pmeth_rsa;
+		return 1;
+	}
+#endif
+	else {
+		*pmeth = NULL;
+		return 0;
+	}
+}
+
+static void
+_pkcs11h_engine_delete (void)
+{
+#ifndef OPENSSL_NO_ENGINE
+	/* We have only one common engine for all keys and do no
+	 * reference counting. At this point we assume all pkey's
+	 * associated with this engine have been deleted.
+	 */
+	if (__openssl_methods.engine) {
+		ENGINE_free (__openssl_methods.engine);
+		__openssl_methods.engine = NULL;
+	}
+#endif
+}
+
+static void
+_pkcs11h_engine_create (void)
+{
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE *e = ENGINE_new ();
+
+	if (
+		!e ||
+		!ENGINE_set_id (e, "pkc11-helper") ||
+		!ENGINE_set_name (e, "PKCS11 helper internal engine") ||
+#ifndef OPENSSL_NO_RSA
+		!ENGINE_set_RSA (e, __openssl_methods.rsa) ||
+#endif
+		!ENGINE_set_pkey_meths (e, _pkcs11h_pkey_meths)
+	) {
+		ENGINE_free (e);
+		e = NULL;
+	}
+	__openssl_methods.engine = e;
+
+#endif
+	return;
+}
+
 PKCS11H_BOOL
 _pkcs11h_openssl_initialize (void) {
 
@@ -1328,6 +1409,7 @@ _pkcs11h_openssl_initialize (void) {
 	EVP_PKEY_meth_copy (__openssl_methods.pmeth_rsa, pmeth_orig);
 	EVP_PKEY_meth_set_sign (__openssl_methods.pmeth_rsa, NULL,
 		__pkcs11h_openssl_pkey_rsa_sign);
+	_pkcs11h_engine_create();
 #endif
 #endif
 #ifndef OPENSSL_NO_DSA
@@ -1412,6 +1494,7 @@ _pkcs11h_openssl_terminate (void) {
 		__openssl_methods.eckey = NULL;
 	}
 #endif
+	_pkcs11h_engine_delete();
 	return TRUE;
 }
 

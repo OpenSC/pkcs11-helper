@@ -347,6 +347,18 @@ if test "${have_openssl}" = "yes"; then
 	LIBS="${old_LIBS}"
 fi
 
+PKG_CHECK_MODULES([OPENSSL], [openssl >= 1.1.1], [have_openssl_111="yes"], [have_openssl_111="no"])
+if test "${have_openssl_111}" = "yes" ; then
+	old_LIBS="${LIBS}"
+	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_CHECK_FUNC(
+		[ENGINE_new],
+		[use_openssl_pkey_methods="yes"],
+		[use_openssl_pkey_methods="no"]
+	)
+	LIBS="${old_LIBS}"
+fi
+
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 1.4], [have_gnutls="yes"], [have_gnutls="no"])
 PKG_CHECK_MODULES([NSS], [nss >= 3.11], [have_nss="yes"], [have_nss="no"])
 
@@ -586,6 +598,7 @@ AM_CONDITIONAL([ENABLE_PKCS11H_CERTIFICATE], [test "${enable_certificate}" = "ye
 AM_CONDITIONAL([ENABLE_PKCS11H_SLOTEVENT], [test "${enable_slotevent}" = "yes"])
 AM_CONDITIONAL([ENABLE_PKCS11H_OPENSSL], [test "${enable_openssl}" = "yes"])
 AM_CONDITIONAL([ENABLE_TESTS], [test "${enable_tests}" = "yes"])
+AM_CONDITIONAL([USE_OPENSSL_PKEY_METHODS], [test "${use_openssl_pkey_methods}" = "yes"])
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h

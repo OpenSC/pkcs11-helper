@@ -89,8 +89,13 @@ libpkcs11_helper_la_SOURCES= \
 	_pkcs11h-core.h pkcs11h-core.c \
 	pkcs11h-data.c \
 	pkcs11h-serialization.c \
-	_pkcs11h-openssl.h pkcs11h-openssl.c \
+	_pkcs11h-openssl.h \
 	$(NULL)
+if USE_OPENSSL_PKEY_METHODS
+libpkcs11_helper_la_SOURCES+=pkcs11h-openssl-1.1.1.c
+else
+libpkcs11_helper_la_SOURCES+=pkcs11h-openssl.c
+endif
 libpkcs11_helper_la_LDFLAGS= \
 	$(AM_LDFLAGS) \
 	-version-info @LIBPKCS11_HELPER_LT_CURRENT@:@LIBPKCS11_HELPER_LT_REVISION@:@LIBPKCS11_HELPER_LT_AGE@ \

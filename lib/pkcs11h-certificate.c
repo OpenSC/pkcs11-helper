@@ -73,7 +73,7 @@ CK_RV
 __pkcs11h_certificate_doPrivateOperation (
 	IN const pkcs11h_certificate_t certificate,
 	IN const enum __pkcs11h_private_op_e op,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN const CK_MECHANISM * const mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -777,7 +777,7 @@ CK_RV
 __pkcs11h_certificate_doPrivateOperation (
 	IN const pkcs11h_certificate_t certificate,
 	IN const enum __pkcs11h_private_op_e op,
-	IN const CK_MECHANISM_TYPE mech_type,
+	IN const CK_MECHANISM * const mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,
@@ -786,9 +786,6 @@ __pkcs11h_certificate_doPrivateOperation (
 #if defined(ENABLE_PKCS11H_THREADING)
 	PKCS11H_BOOL mutex_locked = FALSE;
 #endif
-	CK_MECHANISM mech = {
-		mech_type, NULL, 0
-	};
 
 /*	CK_BBOOL wrap_attrs_false = CK_FALSE; */
 	CK_BBOOL wrap_attrs_true = CK_TRUE;
@@ -812,16 +809,18 @@ __pkcs11h_certificate_doPrivateOperation (
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: __pkcs11h_certificate_doPrivateOperation entry certificate=%p, op=%d, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: __pkcs11h_certificate_doPrivateOperation entry certificate=%p, op=%d, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
 		op,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -851,28 +850,28 @@ __pkcs11h_certificate_doPrivateOperation (
 				case __pkcs11h_private_op_sign:
 					rv = certificate->session->provider->f->C_SignInit (
 						certificate->session->session_handle,
-						&mech,
+						(CK_MECHANISM*)mech,
 						certificate->key_handle
 					);
 				break;
 				case __pkcs11h_private_op_sign_recover:
 					rv = certificate->session->provider->f->C_SignRecoverInit (
 						certificate->session->session_handle,
-						&mech,
+						(CK_MECHANISM*)mech,
 						certificate->key_handle
 					);
 				break;
 				case __pkcs11h_private_op_decrypt:
 					rv = certificate->session->provider->f->C_DecryptInit (
 						certificate->session->session_handle,
-						&mech,
+						(CK_MECHANISM*)mech,
 						certificate->key_handle
 					);
 				break;
 				case __pkcs11h_private_op_unwrap:
 					rv = certificate->session->provider->f->C_UnwrapKey (
 						certificate->session->session_handle,
-						&mech,
+						(CK_MECHANISM*)mech,
 						certificate->key_handle,
 						(CK_BYTE_PTR)source,
 						source_size,
@@ -1305,20 +1304,42 @@ pkcs11h_certificate_sign (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_sign_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_sign_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_sign entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_sign_ex entry certificate=%p, mech=%p mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1333,7 +1354,7 @@ pkcs11h_certificate_sign (
 		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
 			__pkcs11h_private_op_sign,
-			mech_type,
+			mech,
 			source,
 			source_size,
 			target,
@@ -1367,20 +1388,42 @@ pkcs11h_certificate_signRecover (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_signRecover_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_signRecover_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signRecover entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_signRecover_ex entry certificate=%p, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1395,7 +1438,7 @@ pkcs11h_certificate_signRecover (
 		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
 			__pkcs11h_private_op_sign_recover,
-			mech_type,
+			mech,
 			source,
 			source_size,
 			target,
@@ -1429,20 +1472,42 @@ pkcs11h_certificate_decrypt (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_decrypt_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_decrypt_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_decrypt entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_decrypt entry certificate=%p, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1457,7 +1522,7 @@ pkcs11h_certificate_decrypt (
 		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
 			__pkcs11h_private_op_decrypt,
-			mech_type,
+			mech,
 			source,
 			source_size,
 			target,
@@ -1491,20 +1556,42 @@ pkcs11h_certificate_unwrap (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_unwrap_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_unwrap_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_unwrap entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_unwrap entry certificate=%p, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1519,7 +1606,7 @@ pkcs11h_certificate_unwrap (
 		(rv = __pkcs11h_certificate_doPrivateOperation (
 			certificate,
 			__pkcs11h_private_op_unwrap,
-			mech_type,
+			mech,
 			source,
 			source_size,
 			target,
@@ -1553,21 +1640,43 @@ pkcs11h_certificate_signAny (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_signAny_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_signAny_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM *mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL acked = FALSE;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_signAny entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_signAny_ex entry certificate=%p, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1590,9 +1699,9 @@ pkcs11h_certificate_signAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_SIGN) != 0
 	) {
 		switch (
-			(rv = pkcs11h_certificate_sign (
+			(rv = pkcs11h_certificate_sign_ex (
 				certificate,
-				mech_type,
+				mech,
 				source,
 				source_size,
 				target,
@@ -1617,9 +1726,9 @@ pkcs11h_certificate_signAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_RECOVER) != 0
 	) {
 		switch (
-			(rv = pkcs11h_certificate_signRecover (
+			(rv = pkcs11h_certificate_signRecover_ex (
 				certificate,
-				mech_type,
+				mech,
 				source,
 				source_size,
 				target,
@@ -1668,21 +1777,43 @@ pkcs11h_certificate_decryptAny (
 	OUT unsigned char * const target,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_MECHANISM mech = {mech_type, NULL, 0};
+	return pkcs11h_certificate_decryptAny_ex (
+		certificate,
+		&mech,
+		source,
+		source_size,
+		target,
+		p_target_size
+	);
+}
+
+CK_RV
+pkcs11h_certificate_decryptAny_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+) {
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	PKCS11H_BOOL acked = FALSE;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
 	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
 	_PKCS11H_ASSERT (certificate!=NULL);
+	_PKCS11H_ASSERT (mech!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 	/*_PKCS11H_ASSERT (target); NOT NEEDED*/
 	_PKCS11H_ASSERT (p_target_size!=NULL);
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_certificate_decryptAny entry certificate=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
+		"PKCS#11: pkcs11h_certificate_decryptAny entry certificate=%p, mech=%p, mech_type=%ld, source=%p, source_size="P_Z", target=%p, *p_target_size="P_Z"",
 		(void *)certificate,
-		mech_type,
+		(void *)mech,
+		mech->mechanism,
 		source,
 		source_size,
 		target,
@@ -1704,9 +1835,9 @@ pkcs11h_certificate_decryptAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_DECRYPT) != 0
 	) {
 		switch (
-			pkcs11h_certificate_decrypt (
+			pkcs11h_certificate_decrypt_ex (
 				certificate,
-				mech_type,
+				mech,
 				source,
 				source_size,
 				target,
@@ -1731,9 +1862,9 @@ pkcs11h_certificate_decryptAny (
 		(certificate->mask_private_mode & PKCS11H_PRIVATEMODE_MASK_UNWRAP) != 0
 	) {
 		switch (
-			pkcs11h_certificate_unwrap (
+			pkcs11h_certificate_unwrap_ex (
 				certificate,
-				mech_type,
+				mech,
 				source,
 				source_size,
 				target,

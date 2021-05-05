@@ -352,7 +352,7 @@ pkcs11h_certificate_releaseSession (
 /**
  * @brief Sign data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -374,9 +374,33 @@ pkcs11h_certificate_sign (
 );
 
 /**
+ * @brief Sign data with mechanism parameters.
+ * @param certificate		Certificate object.
+ * @param mech			PKCS#11 mechanism.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ * @see pkcs11h_certificate_signAny().
+ */
+CK_RV
+pkcs11h_certificate_sign_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
  * @brief Sign data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -398,9 +422,33 @@ pkcs11h_certificate_signRecover (
 );
 
 /**
+ * @brief Sign data with mechanism parameters.
+ * @param certificate		Certificate object.
+ * @param mech			PKCS#11 mechanism.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ * @see pkcs11h_certificate_signAny().
+ */
+CK_RV
+pkcs11h_certificate_signRecover_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
  * @brief Decrypt data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -421,9 +469,32 @@ pkcs11h_certificate_decrypt (
 );
 
 /**
+ * @brief Decrypt data with mechanism parameters.
+ * @param certificate		Certificate object.
+ * @param mech			PKCS#11 mechanism.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ */
+CK_RV
+pkcs11h_certificate_decrypt_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
  * @brief Decrypt data.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -444,9 +515,32 @@ pkcs11h_certificate_unwrap (
 );
 
 /**
- * @brief Sign data mechanism determined by key attributes.
+ * @brief Decrypt data with mechanism parameters.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech			PKCS#11 mechanism type.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ */
+CK_RV
+pkcs11h_certificate_unwrap_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
+ * @brief Sign data with method determined by key attributes.
+ * @param certificate		Certificate object.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -467,9 +561,32 @@ pkcs11h_certificate_signAny (
 );
 
 /**
- * @brief Decrypt data mechanism determined by key attributes.
+ * @brief Sign data with method determined by key attributes.
  * @param certificate		Certificate object.
- * @param mech_type		PKCS#11 mechanism.
+ * @param mech			PKCS#11 mechanism.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ */
+CK_RV
+pkcs11h_certificate_signAny_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
+ * @brief Decrypt data with method determined by key attributes.
+ * @param certificate		Certificate object.
+ * @param mech_type		PKCS#11 mechanism type.
  * @param source		Buffer to sign.
  * @param source_size		Buffer size.
  * @param target		Target buffer.
@@ -483,6 +600,29 @@ CK_RV
 pkcs11h_certificate_decryptAny (
 	IN const pkcs11h_certificate_t certificate,
 	IN const CK_MECHANISM_TYPE mech_type,
+	IN const unsigned char * const source,
+	IN const size_t source_size,
+	OUT unsigned char * const target,
+	IN OUT size_t * const p_target_size
+);
+
+/**
+ * @brief Decrypt data with method determined by key attributes.
+ * @param certificate		Certificate object.
+ * @param mech			PKCS#11 mechanism.
+ * @param source		Buffer to sign.
+ * @param source_size		Buffer size.
+ * @param target		Target buffer.
+ * @param p_target_size		Target buffer size.
+ * @return CK_RV.
+ * @note target may be NULL to get size.
+ * @attention When using in threaded environment session must be locked.
+ * @see pkcs11h_certificate_lockSession().
+ */
+CK_RV
+pkcs11h_certificate_decryptAny_ex (
+	IN const pkcs11h_certificate_t certificate,
+	IN const CK_MECHANISM * const mech,
 	IN const unsigned char * const source,
 	IN const size_t source_size,
 	OUT unsigned char * const target,

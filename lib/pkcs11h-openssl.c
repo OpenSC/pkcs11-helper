@@ -713,6 +713,7 @@ __pkcs11h_openssl_dsa_do_sign(
 	OUT DSA *dsa
 ) {
 	pkcs11h_certificate_t certificate = __pkcs11h_openssl_dsa_get_pkcs11h_certificate (dsa);
+	PKCS11H_BOOL session_locked = FALSE;
 	unsigned char *sigbuf = NULL;
 	size_t siglen;
 	DSA_SIG *sig = NULL;
@@ -732,6 +733,11 @@ __pkcs11h_openssl_dsa_do_sign(
 	_PKCS11H_ASSERT (dgst!=NULL);
 	_PKCS11H_ASSERT (dsa!=NULL);
 	_PKCS11H_ASSERT (certificate!=NULL);
+
+	if ((rv = pkcs11h_certificate_lockSession (certificate)) != CKR_OK) {
+		goto cleanup;
+	}
+	session_locked = TRUE;
 
 	if (
 		(rv = pkcs11h_certificate_signAny (
@@ -788,6 +794,11 @@ __pkcs11h_openssl_dsa_do_sign(
 	s = NULL;
 
 cleanup:
+
+	if (session_locked) {
+		pkcs11h_certificate_releaseSession (certificate);
+		session_locked = FALSE;
+	}
 
 	if (sigbuf != NULL) {
 		_pkcs11h_mem_free ((void *)&sigbuf);
@@ -890,6 +901,7 @@ __pkcs11h_openssl_eckey_do_sign(
 	OUT EC_KEY *ec
 ) {
 	pkcs11h_certificate_t certificate = __pkcs11h_openssl_eckey_get_pkcs11h_certificate (ec);
+	PKCS11H_BOOL session_locked = FALSE;
 	unsigned char *sigbuf = NULL;
 	size_t siglen;
 	ECDSA_SIG *sig = NULL;
@@ -913,6 +925,11 @@ __pkcs11h_openssl_eckey_do_sign(
 	_PKCS11H_ASSERT (r==NULL);
 	_PKCS11H_ASSERT (ec!=NULL);
 	_PKCS11H_ASSERT (certificate!=NULL);
+
+	if ((rv = pkcs11h_certificate_lockSession (certificate)) != CKR_OK) {
+		goto cleanup;
+	}
+	session_locked = TRUE;
 
 	if (
 		(rv = pkcs11h_certificate_signAny (
@@ -973,6 +990,11 @@ __pkcs11h_openssl_eckey_do_sign(
 	sig = NULL;
 
 cleanup:
+
+	if (session_locked) {
+		pkcs11h_certificate_releaseSession (certificate);
+		session_locked = FALSE;
+	}
 
 	if (sigbuf != NULL) {
 		_pkcs11h_mem_free ((void *)&sigbuf);
@@ -1465,7 +1487,7 @@ pkcs11h_openssl_session_getEVP (
 		}
 	}
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DSA
 	else if (EVP_PKEY_id (evp) == EVP_PKEY_DSA) {
 		if (!__pkcs11h_openssl_session_setDSA(openssl_session, evp)) {
 			goto cleanup;

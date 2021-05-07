@@ -6,16 +6,16 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 
 2020-11-17 - Version 1.27
 
-* core: handle PIN expiration after C_Login as C_Login may take a while
-* core: return explict success when plugin&play and no threading and no
-  safefork, thanks to Tunnelblick
+ * core: handle PIN expiration after C_Login as C_Login may take a while
+ * core: return explict success when plugin&play and no threading and no
+   safefork, thanks to Tunnelblick
 
 2020-01-21 - Version 1.26
 
-* openssl: build with openssl ec disabled
-* openssl: support RSA_NO_PADDING padding, thanks to Selva Nair
-* core: reduce mutex lock scope of add/remove provider, thanks to Frank Morgner
-* core: improve the fork fixup sequence
+ * openssl: build with openssl ec disabled
+ * openssl: support RSA_NO_PADDING padding, thanks to Selva Nair
+ * core: reduce mutex lock scope of add/remove provider, thanks to Frank Morgner
+ * core: improve the fork fixup sequence
 
 2018-08-16 - Version 1.25.1
 

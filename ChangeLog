@@ -6,6 +6,7 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
  * build: windows: checksum in PE, thanks to Simon Rozman.
  * mbed: require >=mbedtls-2, mbed dropped polarssl compatibility,
    thanks to Uipko Berghuis
+ * certificate: add methods accept full mechanism, thanks to Selva Nair.
 
 2020-11-17 - Version 1.27
 

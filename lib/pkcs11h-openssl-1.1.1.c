@@ -57,6 +57,8 @@
 #include "_pkcs11h-core.h"
 #include "_pkcs11h-mem.h"
 
+#include <openssl/engine.h>
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
@@ -83,6 +85,7 @@ static struct {
 	int dsa_index;
 	EVP_PKEY_METHOD *pmeth_ec;
 	int eckey_index;
+	ENGINE *engine;
 } __openssl_methods;
 
 int
@@ -751,6 +754,7 @@ __pkcs11h_openssl_session_setRSA(
 	}
 
 	RSA_set_ex_data (rsa, __openssl_methods.rsa_index, openssl_session);
+	EVP_PKEY_set1_engine(evp, __openssl_methods.engine);
 
 	ret = TRUE;
 
@@ -863,6 +867,7 @@ __pkcs11h_openssl_session_setDSA(
 	}
 
 	DSA_set_ex_data (dsa, __openssl_methods.dsa_index, openssl_session);
+	EVP_PKEY_set1_engine(evp, __openssl_methods.engine);
 
 	ret = TRUE;
 
@@ -977,6 +982,7 @@ __pkcs11h_openssl_session_setECDSA(
 	}
 
 	EC_KEY_set_ex_data (ec, __openssl_methods.eckey_index, openssl_session);
+	EVP_PKEY_set1_engine(evp, __openssl_methods.engine);
 
 	ret = TRUE;
 
@@ -1147,6 +1153,92 @@ cleanup:
 
 #endif
 
+static int
+__pkcs11h_pkey_meths(
+	IN  ENGINE * const e,
+	OUT EVP_PKEY_METHOD **pmeth,
+	OUT int const **nids,
+	IN const int nid
+	) {
+
+	static int supported_nids[] = {EVP_PKEY_RSA, EVP_PKEY_DSA, EVP_PKEY_EC};
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: __pkcs11h_pkey_meths entry - engine=%p, pmeth=%p, nids=%p, nid=%d",
+		(void *)e,
+		(void *)pmeth,
+		(void *)nids,
+		nid
+	);
+
+	if (!pmeth && !nids)
+		return 0; /* not expected to happen */
+
+	if (!pmeth) {
+		*nids = supported_nids;
+		return sizeof (supported_nids) / sizeof (int);
+	}
+
+	switch (nid) {
+#ifndef OPENSSL_NO_RSA
+		case EVP_PKEY_RSA:
+			*pmeth =  __openssl_methods.pmeth_rsa;
+		break;
+#endif
+#ifndef OPENSSL_NO_DSA
+		case EVP_PKEY_DSA:
+			*pmeth =  __openssl_methods.pmeth_dsa;
+		break;
+#endif
+#ifndef OPENSSL_NO_DSA
+		case EVP_PKEY_EC:
+			*pmeth =  __openssl_methods.pmeth_ec;
+		break;
+#endif
+		default:
+			*pmeth = NULL;
+		break;
+	}
+	return *pmeth ? 1 : 0;
+}
+
+static void
+__pkcs11h_engine_delete (void)
+{
+	if (__openssl_methods.engine) {
+		ENGINE_set_pkey_meths (__openssl_methods.engine, NULL);
+		ENGINE_free (__openssl_methods.engine);
+		__openssl_methods.engine = NULL;
+	}
+}
+
+static PKCS11H_BOOL
+__pkcs11h_engine_create (void)
+{
+	PKCS11H_BOOL ret = TRUE;
+	ENGINE *e;
+
+	if (__openssl_methods.engine)
+		return TRUE; /* already initialized */
+
+	e = ENGINE_new ();
+
+	if (
+		!e ||
+		!ENGINE_set_id (e, "pkc11-helper") ||
+		!ENGINE_set_name (e, "PKCS11 helper internal engine") ||
+		!ENGINE_set_pkey_meths (e, __pkcs11h_pkey_meths)
+	) {
+		ENGINE_free (e);
+		e = NULL;
+		ret = FALSE;
+	}
+	__openssl_methods.engine = e;
+
+	return ret;
+}
+
 PKCS11H_BOOL
 _pkcs11h_openssl_initialize (void) {
 
@@ -1217,6 +1309,9 @@ _pkcs11h_openssl_initialize (void) {
 	EVP_PKEY_meth_set_sign (__openssl_methods.pmeth_ec, NULL,
 		__pkcs11h_openssl_pkey_ecdsa_sign);
 #endif
+	if (!__pkcs11h_engine_create())
+		goto cleanup;
+
 	ret = TRUE;
 
 cleanup:
@@ -1234,6 +1329,7 @@ _pkcs11h_openssl_terminate (void) {
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_terminate"
 	);
+	__pkcs11h_engine_delete();
 #ifndef OPENSSL_NO_RSA
 	if (__openssl_methods.pmeth_rsa != NULL) {
 		EVP_PKEY_meth_free (__openssl_methods.pmeth_rsa);

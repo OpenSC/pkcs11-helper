@@ -294,12 +294,26 @@ if test "${enable_threading}" = "yes" -a "${WIN32}" != "yes"; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
-PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
+PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 1.1.1], [have_openssl_111="yes" have_openssl="yes"], [have_openssl_111="no"])
+if test "${have_openssl_111}" = "yes" ; then
+	old_LIBS="${LIBS}"
+	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_CHECK_FUNC(
+		[ENGINE_new],
+		[use_openssl_pkey_methods="yes"],
+		[use_openssl_pkey_methods="no"]
+	)
+	LIBS="${old_LIBS}"
+fi
+
+if test "${have_openssl_111}" = "no"; then
+	PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
+fi
 if test "${have_openssl}" = "no"; then
 	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
 fi
 
-if test "${have_openssl}" = "yes"; then
+if test "${have_openssl}" = "yes" -a "${use_openssl_pkey_methods}" != "yes"; then
 	old_LIBS="${LIBS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
 	AC_CHECK_FUNCS([ \
@@ -344,18 +358,6 @@ if test "${have_openssl}" = "yes"; then
 	)
 	AC_MSG_CHECKING([for OpenSSL ec support])
 	AC_MSG_RESULT([${openssl_ec}])
-	LIBS="${old_LIBS}"
-fi
-
-PKG_CHECK_MODULES([OPENSSL], [openssl >= 1.1.1], [have_openssl_111="yes"], [have_openssl_111="no"])
-if test "${have_openssl_111}" = "yes" ; then
-	old_LIBS="${LIBS}"
-	LIBS="${LIBS} ${OPENSSL_LIBS}"
-	AC_CHECK_FUNC(
-		[ENGINE_new],
-		[use_openssl_pkey_methods="yes"],
-		[use_openssl_pkey_methods="no"]
-	)
 	LIBS="${old_LIBS}"
 fi
 

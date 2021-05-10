@@ -1153,15 +1153,31 @@ cleanup:
 
 #endif
 
-static int
+/* return number of nids or 1 on success, 0 on error */
+static
+int
 __pkcs11h_pkey_meths(
 	IN  ENGINE * const e,
 	OUT EVP_PKEY_METHOD **pmeth,
 	OUT int const **nids,
 	IN const int nid
-	) {
+) {
 
-	static int supported_nids[] = {EVP_PKEY_RSA, EVP_PKEY_DSA, EVP_PKEY_EC};
+	int ret = 0;
+	static int supported_nids[3];
+	static int num_nids = 0;
+
+	if (num_nids == 0) {
+#ifndef OPENSSL_NO_RSA
+		supported_nids[num_nids++] = EVP_PKEY_RSA;
+#endif
+#ifndef OPENSSL_NO_DSA
+		supported_nids[num_nids++] = EVP_PKEY_DSA;
+#endif
+#ifndef OPENSSL_NO_EC
+		supported_nids[num_nids++] = EVP_PKEY_EC;
+#endif
+	}
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
@@ -1172,12 +1188,14 @@ __pkcs11h_pkey_meths(
 		nid
 	);
 
-	if (!pmeth && !nids)
-		return 0; /* not expected to happen */
+	if (!pmeth && !nids) { /* not expected to happen */
+		goto done;
+	}
 
 	if (!pmeth) {
 		*nids = supported_nids;
-		return sizeof (supported_nids) / sizeof (int);
+		ret = num_nids;
+		goto done;
 	}
 
 	switch (nid) {
@@ -1200,12 +1218,16 @@ __pkcs11h_pkey_meths(
 			*pmeth = NULL;
 		break;
 	}
-	return *pmeth ? 1 : 0;
+	ret = (*pmeth != NULL) ? 1 : 0;
+
+done:
+	return ret;
 }
 
-static void
-__pkcs11h_engine_delete (void)
-{
+static
+void
+__pkcs11h_engine_delete (void) {
+
 	if (__openssl_methods.engine) {
 		ENGINE_set_pkey_meths (__openssl_methods.engine, NULL);
 		ENGINE_free (__openssl_methods.engine);
@@ -1213,14 +1235,17 @@ __pkcs11h_engine_delete (void)
 	}
 }
 
-static PKCS11H_BOOL
-__pkcs11h_engine_create (void)
-{
-	PKCS11H_BOOL ret = TRUE;
+static
+PKCS11H_BOOL
+__pkcs11h_engine_create (void) {
+
+	PKCS11H_BOOL ret = FALSE;
 	ENGINE *e;
 
-	if (__openssl_methods.engine)
-		return TRUE; /* already initialized */
+	if (__openssl_methods.engine) {
+		ret = TRUE; /* already initialized */
+		goto done;
+	}
 
 	e = ENGINE_new ();
 
@@ -1232,10 +1257,12 @@ __pkcs11h_engine_create (void)
 	) {
 		ENGINE_free (e);
 		e = NULL;
-		ret = FALSE;
+		goto done;
 	}
 	__openssl_methods.engine = e;
+	ret = TRUE;
 
+done:
 	return ret;
 }
 

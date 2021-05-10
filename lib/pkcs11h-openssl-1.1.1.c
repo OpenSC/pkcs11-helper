@@ -63,8 +63,7 @@
 #include <openssl/dsa.h>
 #endif
 
-#if !defined(OPENSSL_NO_EC) && defined(ENABLE_PKCS11H_OPENSSL_EC)
-#define __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
 #endif
 
@@ -166,7 +165,7 @@ __pkcs11h_openssl_get_pkcs11h_certificate (
 #ifndef OPENSSL_NO_RSA
 		case EVP_PKEY_RSA:
 		{
-			RSA *rsa = EVP_PKEY_get0_RSA (pkey);
+			const RSA *rsa = EVP_PKEY_get0_RSA (pkey);
 			_PKCS11H_ASSERT (rsa!=NULL);
 			session = (pkcs11h_openssl_session_t)RSA_get_ex_data (rsa, __openssl_methods.rsa_index);
 		}
@@ -181,10 +180,10 @@ __pkcs11h_openssl_get_pkcs11h_certificate (
 		}
 		break;
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 		case EVP_PKEY_EC:
 		{
-			EC_KEY *ec = EVP_PKEY_get0_EC_KEY (pkey);
+			const EC_KEY *ec = EVP_PKEY_get0_EC_KEY (pkey);
 			_PKCS11H_ASSERT (ec!=NULL);
 			session = (pkcs11h_openssl_session_t)EC_KEY_get_ex_data (ec, __openssl_methods.eckey_index);
 		}
@@ -204,73 +203,45 @@ __pkcs11h_openssl_get_pkcs11h_certificate (
 
 #ifndef OPENSSL_NO_RSA
 
+static
 PKCS11H_BOOL
-__pkcs11h_md2ckm (
+__pkcs11h_md2ck (
 	IN const EVP_MD * const md,
-	OUT CK_MECHANISM_TYPE * const hash_alg
+	OUT CK_MECHANISM_TYPE * const hash_alg,
+	IN PKCS11H_BOOL is_mgf
 )
 {
+	PKCS11H_BOOL ret = TRUE;
+
 	_PKCS11H_ASSERT(md!=NULL);
 	_PKCS11H_ASSERT(hash_alg!=NULL);
 
 	switch (EVP_MD_type(md)) {
 		case NID_sha1:
-			*hash_alg = CKM_SHA_1;
+			*hash_alg = is_mgf ? CKG_MGF1_SHA1 : CKM_SHA_1;
 		break;
 		case NID_sha224:
-			*hash_alg = CKM_SHA224;
+			*hash_alg = is_mgf ? CKG_MGF1_SHA224 : CKM_SHA224;
 		break;
 		case NID_sha256:
-			*hash_alg = CKM_SHA256;
+			*hash_alg = is_mgf ? CKG_MGF1_SHA256 : CKM_SHA256;
 		break;
 		case NID_sha384:
-			*hash_alg = CKM_SHA384;
+			*hash_alg = is_mgf ? CKG_MGF1_SHA384 : CKM_SHA384;
 		break;
 		case NID_sha512:
-			*hash_alg = CKM_SHA512;
+			*hash_alg = is_mgf ? CKG_MGF1_SHA512 : CKM_SHA512;
 		break;
 		default:
 			_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Unknown digest type (%d)", EVP_MD_type(md));
-			return FALSE;
+			ret = FALSE;
 		break;
 	}
-	return TRUE;
+	return ret;
 }
 
-static CK_RSA_PKCS_MGF_TYPE
-__pkcs11h_md2mgf (
-	IN const EVP_MD * const md,
-	OUT CK_RSA_PKCS_MGF_TYPE * const mgf
-)
-{
-	_PKCS11H_ASSERT(md!=NULL);
-	_PKCS11H_ASSERT(mgf!=NULL);
-
-	switch (EVP_MD_type(md)) {
-		case NID_sha1:
-			*mgf = CKG_MGF1_SHA1;
-		break;
-		case NID_sha224:
-			*mgf = CKG_MGF1_SHA224;
-		break;
-		case NID_sha256:
-			*mgf = CKG_MGF1_SHA256;
-		break;
-		case NID_sha384:
-			*mgf = CKG_MGF1_SHA384;
-		break;
-		case NID_sha512:
-			*mgf = CKG_MGF1_SHA512;
-		break;
-		default:
-			_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Unknown mgf1 digest type (%d)", EVP_MD_type(md));
-			return FALSE;
-		break;
-	}
-	return TRUE;
-}
-
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_get_ossl_pss_params (
 	IN EVP_PKEY_CTX *ctx,
 	OUT EVP_MD **md,
@@ -278,6 +249,8 @@ __pkcs11h_get_ossl_pss_params (
 	OUT int * const saltlen
 )
 {
+	PKCS11H_BOOL ret = FALSE;
+
 	_PKCS11H_ASSERT (ctx!=NULL);
 	_PKCS11H_ASSERT (md!=NULL);
 	_PKCS11H_ASSERT (mgf1_md!=NULL);
@@ -290,17 +263,22 @@ __pkcs11h_get_ossl_pss_params (
 		(*md == NULL) || (*mgf1_md == NULL)
 	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: failed to get pss params from ctx");
-		return FALSE;
+		goto done;
 	}
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
 		"PKCS#11: __pkcs11h_get_pss_params: saltlen=%d md=%s mgf1_md=%s",
 		*saltlen, EVP_MD_name (*md), EVP_MD_name (*mgf1_md)
 	);
-	return TRUE;
+
+	ret = TRUE;
+
+done:
+	return ret;
 }
 
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_get_pss_params (
 	IN EVP_PKEY_CTX *ctx,
 	OUT CK_RSA_PKCS_PSS_PARAMS *params
@@ -309,16 +287,19 @@ __pkcs11h_get_pss_params (
 	EVP_MD *md, *mgf1_md;
 	int saltlen;
 	EVP_PKEY *pkey;
+	PKCS11H_BOOL ret = FALSE;
 
 	_PKCS11H_ASSERT (ctx!=NULL);
 	_PKCS11H_ASSERT (params!=NULL);
 
 	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
-	if (pkey==NULL)
-		return FALSE;
+	if (pkey==NULL) {
+		goto done;
+	}
 
-	if (!__pkcs11h_get_ossl_pss_params (ctx, &md, &mgf1_md, &saltlen))
-		return FALSE;
+	if (!__pkcs11h_get_ossl_pss_params (ctx, &md, &mgf1_md, &saltlen)) {
+		goto done;
+	}
 
 	if (saltlen == RSA_PSS_SALTLEN_DIGEST) {
 		saltlen = EVP_MD_size (md);
@@ -331,22 +312,24 @@ __pkcs11h_get_pss_params (
 	}
 	if (saltlen < 0) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: pss invalid saltlen < 0 (%d)", saltlen);
-		return FALSE;
+		goto done;
 	}
 
 	memset (params, 0, sizeof(CK_RSA_PKCS_PSS_PARAMS));
 	params->sLen = saltlen;
 	if (
-		__pkcs11h_md2ckm (md, &params->hashAlg) &&
-		__pkcs11h_md2mgf (mgf1_md, &params->mgf)
+		__pkcs11h_md2ck (md, &params->hashAlg, FALSE) &&
+		__pkcs11h_md2ck (mgf1_md, &params->mgf, TRUE)
 	) {
-		return TRUE;
+		ret = TRUE;
 	}
 
-	return FALSE;
+done:
+	return ret;
 }
 
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_get_oaep_params(
 	IN EVP_PKEY_CTX *ctx,
 	OUT CK_RSA_PKCS_OAEP_PARAMS *params
@@ -355,6 +338,7 @@ __pkcs11h_get_oaep_params(
 	const EVP_MD *md, *mgf1_md;
 	int len = 0;
 	unsigned char * label = NULL;
+	PKCS11H_BOOL ret = FALSE;
 
 	_PKCS11H_ASSERT(ctx!=NULL);
 	_PKCS11H_ASSERT(params!=NULL);
@@ -365,7 +349,7 @@ __pkcs11h_get_oaep_params(
 		(md == NULL) || (mgf1_md == NULL)
 	) {
 		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: failed to get oaep params from ctx");
-		return FALSE;
+		goto done;
 	}
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG1,
@@ -382,17 +366,19 @@ __pkcs11h_get_oaep_params(
 	}
 
 	if (
-		__pkcs11h_md2ckm (md, &params->hashAlg) &&
-		__pkcs11h_md2mgf (mgf1_md, &params->mgf)
+		__pkcs11h_md2ck (md, &params->hashAlg, FALSE) &&
+		__pkcs11h_md2ck (mgf1_md, &params->mgf, TRUE)
 	) {
-		return TRUE;
+		ret = TRUE;
 	}
 
-	return FALSE;
+done:
+	return ret;
 }
 
 /* return 1 on success -1 on error */
-static int
+static
+int
 __pkcs11h_openssl_pkey_rsa_decrypt(
 	IN EVP_PKEY_CTX *ctx,
 	OUT unsigned char *to,
@@ -406,7 +392,7 @@ __pkcs11h_openssl_pkey_rsa_decrypt(
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	EVP_PKEY *pkey;
 	int padding;
-	size_t tlen_tmp = *tlen;
+	size_t tlen_tmp;
 	CK_MECHANISM mech = {CKM_RSA_PKCS, NULL, 0};
 	CK_RSA_PKCS_OAEP_PARAMS oaep_params = {0};
 
@@ -425,6 +411,7 @@ __pkcs11h_openssl_pkey_rsa_decrypt(
 		flen
 	);
 
+	tlen_tmp = *tlen;
 	EVP_PKEY_CTX_get_rsa_padding (ctx, &padding);
 
 	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
@@ -502,7 +489,8 @@ cleanup:
  * Returns false on error, true  on success. The caller must free *enc
  * by calling _pkcs11h_mem_free(enc);
  */
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_encode_pkcs1 (
 	OUT unsigned char **enc,
 	OUT size_t *enc_len,
@@ -592,7 +580,8 @@ cleanup:
 }
 
 /* return 1 on success -1 on error */
-static int
+static
+int
 __pkcs11h_openssl_pkey_rsa_sign(
 	IN EVP_PKEY_CTX *ctx,
 	OUT unsigned char *sig,
@@ -631,6 +620,7 @@ __pkcs11h_openssl_pkey_rsa_sign(
 		tbslen
 	);
 
+	siglen_tmp = *siglen;
 	EVP_PKEY_CTX_get_rsa_padding (ctx, &padding);
 
 	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
@@ -641,7 +631,6 @@ __pkcs11h_openssl_pkey_rsa_sign(
 	switch (padding) {
 		case RSA_PKCS1_PADDING:
 		{
-			/* Add DigestInfo to tbs */
 			EVP_MD *md;
 			int md_type;
 			if (EVP_PKEY_CTX_get_signature_md (ctx, &md) <= 0) {
@@ -649,16 +638,19 @@ __pkcs11h_openssl_pkey_rsa_sign(
 				goto cleanup;
 			}
 
+			mech.mechanism = CKM_RSA_PKCS;
 			md_type = EVP_MD_type(md);
-			if (md_type == NID_md5_sha1) {
-				break; /* DigestInfo wrapper not needed */
+
+			if (md_type != NID_md5_sha1) { /* Add DigestInfo to tbs */
+				if (__pkcs11h_encode_pkcs1 (&encoded, &enc_len, md_type, tbs, tbslen)) {
+					from = encoded;
+					from_len = enc_len;
+				}
+				else {
+					_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: PKCS1 encoding failed");
+					goto cleanup;
+				}
 			}
-			else if (!__pkcs11h_encode_pkcs1 (&encoded, &enc_len, md_type, tbs, tbslen)) {
-				_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: PKCS1 encoding failed");
-				goto cleanup;
-			}
-			from = encoded;
-			from_len = enc_len;
 		}
 		break;
 		case RSA_PKCS1_PSS_PADDING:
@@ -785,7 +777,8 @@ cleanup:
  * On return tlen is updated to output size.
  * Returns TRUE on success FALSE on error.
  */
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_dsa_bin2der(
 	IN const unsigned char * const buf,
 	IN const size_t len,
@@ -889,7 +882,7 @@ cleanup:
 
 #endif
 
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 
 /*
  * Helper to convert ECDSA signature returned by PKCS11
@@ -899,7 +892,8 @@ cleanup:
  * On return tlen is updated to output size.
  * Returns TRUE on success FALSE on error.
  */
-static PKCS11H_BOOL
+static
+PKCS11H_BOOL
 __pkcs11h_ecdsa_bin2der(
 	IN const unsigned char * const buf,
 	IN const size_t len,
@@ -1004,10 +998,11 @@ cleanup:
 
 #endif
 
-#if !defined(OPENSSL_NO_DSA) || defined(__ENABLE_EC)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 
 /* Common method used for EC and DSA */
-static int
+static
+int
 __pkcs11h_openssl_pkey_ecdsa_sign(
 	IN EVP_PKEY_CTX *ctx,
 	OUT unsigned char *sig,
@@ -1019,7 +1014,7 @@ __pkcs11h_openssl_pkey_ecdsa_sign(
 	PKCS11H_BOOL session_locked = FALSE;
 	CK_MECHANISM_TYPE mech_type = CKM_ECDSA;
 	CK_RV rv = CKR_FUNCTION_FAILED;
-	size_t siglen_tmp = *siglen;
+	size_t siglen_tmp;
 	EVP_PKEY *pkey;
 	unsigned char *sig_tmp = NULL;
 	size_t siglen_der;
@@ -1040,6 +1035,7 @@ __pkcs11h_openssl_pkey_ecdsa_sign(
 		tbslen
 	);
 
+	siglen_tmp = *siglen;
 	pkey = EVP_PKEY_CTX_get0_pkey (ctx);
 	if (pkey == NULL) {
 		goto cleanup;
@@ -1051,7 +1047,7 @@ __pkcs11h_openssl_pkey_ecdsa_sign(
 			mech_type = CKM_DSA;
 		break;
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 		case EVP_PKEY_EC:
 			mech_type = CKM_ECDSA;
 		break;
@@ -1124,7 +1120,7 @@ __pkcs11h_openssl_pkey_ecdsa_sign(
 			goto cleanup;
 	}
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 	else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
 		if (!__pkcs11h_ecdsa_bin2der(sig_tmp, siglen_tmp, &sig, &siglen_der))
 			goto cleanup;
@@ -1317,7 +1313,7 @@ _pkcs11h_openssl_initialize (void) {
 	EVP_PKEY_meth_set_sign (__openssl_methods.pmeth_dsa, NULL,
 		__pkcs11h_openssl_pkey_ecdsa_sign);
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 	__openssl_methods.eckey_index = EC_KEY_get_ex_new_index (
 		0,
 		"pkcs11h",
@@ -1352,6 +1348,7 @@ cleanup:
 
 PKCS11H_BOOL
 _pkcs11h_openssl_terminate (void) {
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: _pkcs11h_openssl_terminate"
@@ -1369,7 +1366,7 @@ _pkcs11h_openssl_terminate (void) {
 		__openssl_methods.pmeth_dsa = NULL;
 	}
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 	if (__openssl_methods.pmeth_ec != NULL) {
 		EVP_PKEY_meth_free (__openssl_methods.pmeth_ec);
 		__openssl_methods.pmeth_ec = NULL;
@@ -1689,7 +1686,7 @@ pkcs11h_openssl_session_getEVP (
 		}
 	}
 #endif
-#ifdef __ENABLE_EC
+#ifndef OPENSSL_NO_EC
 	else if (EVP_PKEY_id(evp) == EVP_PKEY_EC) {
 		if (!__pkcs11h_openssl_session_setECDSA(openssl_session, evp)) {
 			goto cleanup;

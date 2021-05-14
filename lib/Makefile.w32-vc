@@ -55,15 +55,15 @@
 #OPENSSL=1
 !ifdef OPENSSL
 !ifndef OPENSSL_HOME
-OPENSSL_HOME = ..\..\openssl-0.9.8a
+OPENSSL_HOME = ..\..\openssl
 !endif
 !endif
 
 !ifdef OPENSSL
-OPENSSL_STATIC = libeay32.lib
-#OPENSSL_STATIC = libeay32sd.lib
-OPENSSL_DYNAMIC = libeay32.lib
-#OPENSSL_DYNAMIC = libeay32d.lib
+OPENSSL_STATIC = libcrypto.lib
+#OPENSSL_STATIC = libcryptosd.lib
+OPENSSL_DYNAMIC = libcrypto.lib
+#OPENSSL_DYNAMIC = libcryptod.lib
 
 OPENSSL_INC=$(OPENSSL_HOME)\include
 OPENSSL_LIB=$(OPENSSL_HOME)\lib

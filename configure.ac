@@ -294,12 +294,26 @@ if test "${enable_threading}" = "yes" -a "${WIN32}" != "yes"; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
-PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
+PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 1.1.1], [have_openssl_111="yes" have_openssl="yes"], [have_openssl_111="no"])
+if test "${have_openssl_111}" = "yes" ; then
+	old_LIBS="${LIBS}"
+	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	AC_CHECK_FUNC(
+		[ENGINE_new],
+		[use_openssl_pkey_methods="yes"],
+		[use_openssl_pkey_methods="no"]
+	)
+	LIBS="${old_LIBS}"
+fi
+
+if test "${have_openssl_111}" = "no"; then
+	PKG_CHECK_MODULES([OPENSSL], [libcrypto >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
+fi
 if test "${have_openssl}" = "no"; then
 	PKG_CHECK_MODULES([OPENSSL], [openssl >= 0.9.7], [have_openssl="yes"], [have_openssl="no"])
 fi
 
-if test "${have_openssl}" = "yes"; then
+if test "${have_openssl}" = "yes" -a "${use_openssl_pkey_methods}" != "yes"; then
 	old_LIBS="${LIBS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
 	AC_CHECK_FUNCS([ \
@@ -586,6 +600,7 @@ AM_CONDITIONAL([ENABLE_PKCS11H_CERTIFICATE], [test "${enable_certificate}" = "ye
 AM_CONDITIONAL([ENABLE_PKCS11H_SLOTEVENT], [test "${enable_slotevent}" = "yes"])
 AM_CONDITIONAL([ENABLE_PKCS11H_OPENSSL], [test "${enable_openssl}" = "yes"])
 AM_CONDITIONAL([ENABLE_TESTS], [test "${enable_tests}" = "yes"])
+AM_CONDITIONAL([USE_OPENSSL_PKEY_METHODS], [test "${use_openssl_pkey_methods}" = "yes"])
 AC_CONFIG_FILES([
 	Makefile
 	config-w32-vc.h

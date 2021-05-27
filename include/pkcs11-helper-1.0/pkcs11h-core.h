@@ -278,6 +278,27 @@ struct pkcs11h_token_id_s {
 	char label[sizeof (((CK_TOKEN_INFO *)NULL)->label)+1];
 };
 
+
+/**
+ * @brief Provider property enum.
+ */
+enum pkcs11h_provider_property_e {
+	PKCS11H_PROVIDER_PROPERTY_LOCATION = 0, /*!< Provider location. Value type is char*. Default value is NULL. */
+	PKCS11H_PROVIDER_PROPERTY_ALLOW_PROTECTED_AUTH, /*!< Allow this provider to use protected authentication. Value type is @ref PKCS11H_BOOL. Default value is False. */
+	PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE, /*!< Provider private mode @ref PKCS11H_PRIVATEMODE_MASK override. Value type is unsigned. Default value is @ref PKCS11H_PRIVATEMODE_MASK_AUTO. */
+	PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD, /*!< Provider slot event @ref PKCS11H_SLOTEVENT_METHOD method. Value type is unsigned. Default value is @ref PKCS11H_SLOTEVENT_METHOD_AUTO. */
+	PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL, /*!< Slot event poll interval (If in polling mode). Value type is unsigned. Default value is 0. */
+	PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE, /*!< Provider's certificate access should be done after login. Value type is @ref PKCS11H_BOOL. Default value is False. */
+
+	_PKCS11H_PROVIDER_PROPERTY_LAST
+};
+
+/**
+ * @brief Provider property identidier.
+ * Identivier sets up pkcs11h_provider_property_t type indide pkcs11h_setProviderProperty.
+ */
+typedef enum pkcs11h_provider_property_e pkcs11h_provider_property_t;
+
 /**
  * @brief Get message by return value.
  * @param rv	Return value.
@@ -443,7 +464,7 @@ pkcs11h_setMaxLoginRetries (
 );
 
 /**
- * @brief Add a PKCS#11 provider.
+ * @brief Register, configure and initialize  a PKCS#11 provider.
  * @param reference		Reference name for this provider.
  * @param provider_location	Provider library location.
  * @param allow_protected_auth	Allow this provider to use protected authentication.
@@ -464,6 +485,44 @@ pkcs11h_addProvider (
 	IN const unsigned slot_event_method,
 	IN const unsigned slot_poll_interval,
 	IN const PKCS11H_BOOL cert_is_private
+);
+
+/**
+ * @brief Register a PKCS#11 provider.
+ * @param reference		Reference name for this provider.
+ * @return CK_RV.
+ */
+CK_RV
+pkcs11h_registerProvider (
+	IN const char * const reference
+);
+
+/**
+ * @brief Set PKCS#11 provider property.
+ * @param reference             Reference name for this provider.
+ * @param property              Property kind.
+ * @param value                 Property value. Referenced type has to satisfy property @ref pkcs11h_provider_property_e value type
+ * @param value_size            size of dereferenced property value.
+ * @return CK_RV.
+ */
+CK_RV
+pkcs11h_setProviderProperty (
+	IN const char * const reference,
+	IN const pkcs11h_provider_property_t property,
+    IN const void * value,
+	IN const size_t value_size;
+);
+
+/**
+ * @brief Initialize a PKCS#11 provider.
+ * @param reference		Reference name for this provider.
+ * @attention This function must be called from the main thread.
+ * @note The global allow_protected_auth must be enabled in order to allow provider specific.
+ * @return CK_RV.
+ */
+CK_RV
+pkcs11h_initializeProvider (
+	IN const char * const reference
 );
 
 /**

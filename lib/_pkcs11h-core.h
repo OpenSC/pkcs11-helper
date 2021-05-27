@@ -120,6 +120,7 @@ struct _pkcs11h_provider_s {
 
 	CK_FUNCTION_LIST_PTR f;
 	PKCS11H_BOOL should_finalize;
+	const char* provider_location;
 	PKCS11H_BOOL allow_protected_auth;
 	PKCS11H_BOOL cert_is_private;
 	unsigned mask_private_mode;

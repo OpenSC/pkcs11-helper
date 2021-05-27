@@ -117,6 +117,9 @@ CK_RV
 __pkcs11h_forkFixup ();
 #endif
 
+static
+_pkcs11h_provider_t
+__pkcs11h_get_pkcs11_provider(const char * const reference);
 
 /*==========================================
  * Data
@@ -124,6 +127,17 @@ __pkcs11h_forkFixup ();
 
 _pkcs11h_data_t _g_pkcs11h_data = NULL;
 unsigned int _g_pkcs11h_loglevel = PKCS11H_LOG_INFO;
+
+const char* _g_pkcs11h_provider_preperty_names[] = {
+	"PKCS11H_PROVIDER_PROPERTY_LOCATION",
+	"PKCS11H_PROVIDER_PROPERTY_ALLOW_PROTECTED_AUTH",
+	"PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE",
+	"PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD",
+	"PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL",
+	"PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE"
+};
+
+_PKCS11H_STATIC_ASSERT(sizeof(_g_pkcs11h_provider_preperty_names)/sizeof(*_g_pkcs11h_provider_preperty_names) == _PKCS11H_PROVIDER_PROPERTY_LAST);
 
 /*======================================================================*
  * PUBLIC INTERFACE
@@ -861,6 +875,477 @@ cleanup:
 }
 
 CK_RV
+pkcs11h_registerProvider (
+	IN const char * const reference
+) {
+	_pkcs11h_provider_t provider = NULL;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_registerProvider entry version='%s', reference='%s'",
+		PACKAGE_VERSION,
+		reference
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Register provider '%s'",
+		reference
+	);
+
+	if ((rv = _pkcs11h_mem_malloc ((void *)&provider, sizeof (struct _pkcs11h_provider_s))) != CKR_OK) {
+		goto cleanup;
+	}
+
+	strncpy (
+		provider->reference,
+		reference,
+		sizeof (provider->reference)-1
+	);
+	provider->reference[sizeof (provider->reference)-1] = '\x0';
+	provider->mask_private_mode = PKCS11H_PRIVATEMODE_MASK_AUTO;
+	provider->slot_event_method = PKCS11H_SLOTEVENT_METHOD_AUTO;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_registerProvider Provider '%s' manufacturerID '%s'",
+		reference,
+		provider->manufacturerID
+	);
+
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
+	}
+#endif
+
+	if (_g_pkcs11h_data->providers == NULL) {
+		_g_pkcs11h_data->providers = provider;
+	}
+	else {
+		_pkcs11h_provider_t last = NULL;
+
+		for (
+			last = _g_pkcs11h_data->providers;
+			last->next != NULL;
+			last = last->next
+		);
+		last->next = provider;
+	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+#endif
+
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Provider '%s' registered rv=%lu-'%s'",
+		reference,
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_registerProvider return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
+CK_RV
+pkcs11h_setProviderProperty (
+	IN const char * const reference,
+	IN const pkcs11h_provider_property_t property,
+	IN const void * value,
+	IN const size_t value_size
+) {
+#if defined(ENABLE_PKCS11H_THREADING)
+	PKCS11H_BOOL has_mutex_global = FALSE;
+	CK_RV lock_rv;
+#endif
+
+	_pkcs11h_provider_t provider = NULL;
+	CK_RV rv = CKR_OK;
+
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (value!=NULL);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_setProviderProperty entry version='%s', reference='%s', property='%d'",
+		PACKAGE_VERSION,
+		reference,
+		property
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Set up provider '%s' property '%d'",
+		reference,
+		property
+	);
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	lock_rv = CKR_OK;
+
+	if ((lock_rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto free1;
+	}
+	has_mutex_global = TRUE;
+#endif
+
+	provider = __pkcs11h_get_pkcs11_provider(reference);
+
+	if (provider == NULL) {
+		rv = CKR_OBJECT_HANDLE_INVALID;
+		goto cleanup;
+	}
+
+	switch (property) {
+		case PKCS11H_PROVIDER_PROPERTY_LOCATION:
+		{
+			const char* provider_location = *(const char**) value;
+			_PKCS11H_ASSERT (sizeof(provider_location) == value_size);
+			_PKCS11H_ASSERT (provider_location != NULL);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%s'",
+				_g_pkcs11h_provider_preperty_names[property],
+				provider_location
+			);
+
+			if (provider->provider_location != NULL &&
+				(rv = _pkcs11h_mem_free((void *)&provider->provider_location)) != CKR_OK) {
+				break;
+			}
+
+			if ((rv = _pkcs11h_mem_strdup(&provider->provider_location, provider_location)) != CKR_OK) {
+				break;
+			}
+
+			strncpy (
+			provider->manufacturerID,
+			(
+				strlen (provider_location) < sizeof (provider->manufacturerID) ?
+				provider_location :
+				provider_location+strlen (provider_location)-sizeof (provider->manufacturerID)+1
+			),
+			sizeof (provider->manufacturerID)-1
+			);
+			provider->manufacturerID[sizeof (provider->manufacturerID)-1] = '\x0';
+		}
+		break;
+
+		case PKCS11H_PROVIDER_PROPERTY_ALLOW_PROTECTED_AUTH:
+		{
+			PKCS11H_BOOL allow_protected_auth = *(PKCS11H_BOOL*) value;
+			_PKCS11H_ASSERT (sizeof(allow_protected_auth) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%d'",
+				_g_pkcs11h_provider_preperty_names[property],
+				allow_protected_auth
+			);
+
+			provider->allow_protected_auth = allow_protected_auth;
+		}
+		break;
+
+		case PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE:
+		{
+			unsigned mask_private_mode = *(unsigned*) value;
+			_PKCS11H_ASSERT (sizeof(mask_private_mode) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%08x'",
+				_g_pkcs11h_provider_preperty_names[property],
+				mask_private_mode
+			);
+
+			provider->mask_private_mode = mask_private_mode;
+		}
+		break;
+
+		case PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD:
+		{
+			unsigned slot_event_method = *(unsigned*) value;
+			_PKCS11H_ASSERT (sizeof(slot_event_method) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%08x'",
+				_g_pkcs11h_provider_preperty_names[property],
+				slot_event_method
+			);
+
+			provider->slot_event_method = slot_event_method;
+		}
+		break;
+
+		case PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL:
+		{
+			unsigned slot_poll_interval = *(unsigned*) value;
+			_PKCS11H_ASSERT (sizeof(slot_poll_interval) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%08x'",
+				_g_pkcs11h_provider_preperty_names[property],
+				slot_poll_interval
+			);
+
+			provider->slot_poll_interval = slot_poll_interval;
+		}
+		break;
+
+		case PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE:
+		{
+			PKCS11H_BOOL cert_is_private = *(PKCS11H_BOOL*) value;
+			_PKCS11H_ASSERT (sizeof(cert_is_private) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to '%d'",
+				_g_pkcs11h_provider_preperty_names[property],
+				cert_is_private
+			);
+
+			provider->cert_is_private = cert_is_private;
+		}
+		break;
+
+		default:
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_ERROR,
+				"PKCS#11: Trying to set unknown property '%d'",
+				property
+			);
+
+			rv = CKR_FUNCTION_FAILED;
+	}
+
+#if defined(ENABLE_PKCS11H_THREADING)
+free1:
+	if (has_mutex_global) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+		has_mutex_global = FALSE;
+	}
+
+	if (lock_rv != CKR_OK) {
+		rv = lock_rv;
+		goto cleanup;
+	}
+#endif
+
+cleanup:
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Provider '%s' property is set rv=%lu-'%s'",
+		reference,
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_setProviderProperty return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
+CK_RV
+pkcs11h_initializeProvider (
+        IN const char * const reference
+) {
+#if defined(ENABLE_PKCS11H_THREADING)
+	PKCS11H_BOOL has_mutex_global = FALSE;
+#endif
+
+#if defined(ENABLE_PKCS11H_DEBUG)
+#if defined(_WIN32)
+	int mypid = 0;
+#else
+	pid_t mypid = getpid ();
+#endif
+#endif
+#if !defined(_WIN32)
+	void *p;
+#endif
+
+	_pkcs11h_provider_t provider = NULL;
+	CK_C_GetFunctionList gfl = NULL;
+	CK_INFO info;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_initializeProvider entry version='%s', pid=%d, reference='%s'",
+		PACKAGE_VERSION,
+		mypid,
+		reference
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Initializing provider '%s'",
+		reference
+	);
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if ((rv = _pkcs11h_threading_mutexLock (&_g_pkcs11h_data->mutexes.global)) != CKR_OK) {
+		goto cleanup;
+	}
+	has_mutex_global= TRUE;
+#endif
+
+	provider = __pkcs11h_get_pkcs11_provider(reference);
+
+	if (provider == NULL) {
+		rv = CKR_OBJECT_HANDLE_INVALID;
+		goto cleanup;
+	}
+
+	_PKCS11H_ASSERT (provider->provider_location != NULL);
+
+#if defined(_WIN32)
+	provider->handle = LoadLibraryA (provider->provider_location);
+#else
+	provider->handle = dlopen (provider->provider_location, RTLD_NOW);
+#endif
+
+	if (provider->handle == NULL) {
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+	}
+
+#if defined(_WIN32)
+	gfl = (CK_C_GetFunctionList)GetProcAddress (
+		provider->handle,
+		"C_GetFunctionList"
+	);
+#else
+	/*
+	 * Make compiler happy!
+	 */
+	p = dlsym (
+		provider->handle,
+		"C_GetFunctionList"
+	);
+	memmove (
+		&gfl,
+		&p,
+		sizeof (void *)
+	);
+#endif
+	if (gfl == NULL) {
+		rv = CKR_FUNCTION_FAILED;
+		goto cleanup;
+	}
+
+	if ((rv = gfl (&provider->f)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	if ((rv = provider->f->C_Initialize (NULL)) != CKR_OK) {
+		if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED) {
+			rv = CKR_OK;
+		}
+		else {
+			goto cleanup;
+		}
+	}
+	else {
+		provider->should_finalize = TRUE;
+	}
+
+	if ((rv = provider->f->C_GetInfo (&info)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	_pkcs11h_util_fixupFixedString (
+		provider->manufacturerID,
+		(char *)info.manufacturerID,
+		sizeof (info.manufacturerID)
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_initializeProvider Provider '%s' manufacturerID '%s'",
+		reference,
+		provider->manufacturerID
+	);
+
+	provider->enabled = TRUE;
+
+	rv = CKR_OK;
+
+cleanup:
+
+	if (!provider->enabled) {
+		if (provider->handle != NULL) {
+#if defined(_WIN32)
+			FreeLibrary (provider->handle);
+#else
+			dlclose (provider->handle);
+#endif
+			provider->handle = NULL;
+		}
+	}
+
+
+#if defined(ENABLE_PKCS11H_THREADING)
+	if (has_mutex_global) {
+		_pkcs11h_threading_mutexRelease (&_g_pkcs11h_data->mutexes.global);
+		has_mutex_global = FALSE;
+	}
+#endif
+
+#if defined(ENABLE_PKCS11H_SLOTEVENT)
+	_pkcs11h_slotevent_notify ();
+#endif
+
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG1,
+		"PKCS#11: Provider '%s' initialized rv=%lu-'%s'",
+		reference,
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_initializeProvider return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
+CK_RV
 pkcs11h_removeProvider (
 	IN const char * const reference
 ) {
@@ -913,13 +1398,7 @@ pkcs11h_removeProvider (
 	}
 #endif
 
-	provider = _g_pkcs11h_data->providers;
-	while (
-		provider != NULL &&
-		strcmp (reference, provider->reference)
-	) {
-		provider = provider->next;
-	}
+	provider = __pkcs11h_get_pkcs11_provider(reference);
 
 	if (provider != NULL) {
 		provider->enabled = FALSE;
@@ -964,6 +1443,10 @@ free1:
 	if (provider->should_finalize) {
 		provider->f->C_Finalize (NULL);
 		provider->should_finalize = FALSE;
+	}
+
+	if (provider->provider_location) {
+		_pkcs11h_mem_free((void *)&provider->provider_location);
 	}
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
@@ -1344,4 +1827,20 @@ __pkcs11h_forkFixup () {
 }
 
 #endif				/* !WIN32 */
+
+static
+_pkcs11h_provider_t
+__pkcs11h_get_pkcs11_provider(const char * const reference) {
+	_pkcs11h_provider_t provider = NULL;
+
+	provider = _g_pkcs11h_data->providers;
+	while (
+		provider != NULL &&
+		strcmp (reference, provider->reference)
+	) {
+		provider = provider->next;
+	}
+
+	return provider;
+}
 

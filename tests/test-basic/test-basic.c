@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../../config.h"
 #include <pkcs11-helper-1.0/pkcs11h-core.h>
 
@@ -43,20 +44,53 @@ int main () {
 
 	pkcs11h_setLogLevel (TEST_LOG_LEVEL);
 
-	printf ("Adding provider '%s'\n", TEST_PROVIDER);
-
+	printf ("Registering provider '%s'\n", TEST_PROVIDER);
 	if (
-		(rv = pkcs11h_addProvider (
-			TEST_PROVIDER,
-			TEST_PROVIDER,
-			FALSE,
-			PKCS11H_PRIVATEMODE_MASK_AUTO,
-			PKCS11H_SLOTEVENT_METHOD_AUTO,
-			0,
-			FALSE
+		(rv = pkcs11h_registerProvider (
+			TEST_PROVIDER
 		)) != CKR_OK
 	) {
-		fatal ("pkcs11h_addProvider failed", rv);
+		fatal ("pkcs11h_registerProvider failed", rv);
+	}
+
+	const char* provider_location = TEST_PROVIDER;
+
+	printf ("Setting provider location\n");
+	if (
+		(rv = pkcs11h_setProviderProperty (
+			TEST_PROVIDER,
+			PKCS11H_PROVIDER_PROPERTY_LOCATION,
+			&provider_location,
+			sizeof(provider_location)
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_setProviderProperty failed for PKCS11H_PROVIDER_PROPERTY_LOCATION", rv);
+	}
+
+	CK_C_INITIALIZE_ARGS init_args;
+	memset(&init_args, 0, sizeof(init_args));
+	init_args.flags = CKF_OS_LOCKING_OK;
+	CK_C_INITIALIZE_ARGS_PTR init_args_ptr = &init_args;
+
+	printf ("Setting initialization arguments\n");
+	if (
+		(rv = pkcs11h_setProviderProperty (
+			TEST_PROVIDER,
+			PKCS11H_PROVIDER_PROPERTY_INIT_ARGS,
+			&init_args_ptr,
+			sizeof(init_args_ptr)
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_setProviderProperty failed for PKCS11H_PROVIDER_PROPERTY_INIT_ARGS", rv);
+	}
+
+	printf ("Initialization provider '%s'\n", TEST_PROVIDER);
+	if (
+		(rv = pkcs11h_initializeProvider (
+			TEST_PROVIDER
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_initializeProvider failed", rv);
 	}
 
 	printf ("Terminating pkcs11-helper\n");

@@ -109,12 +109,7 @@ _pkcs11h_util_hexToBinary (
 		p++;
 	}
 
-	if (*p != '\x0') {
-		return CKR_ATTRIBUTE_VALUE_INVALID;
-	}
-	else {
-		return CKR_OK;
-	}
+	return CKR_OK;
 }
 
 CK_RV

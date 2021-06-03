@@ -134,7 +134,8 @@ const char* _g_pkcs11h_provider_preperty_names[] = {
 	"PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE",
 	"PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD",
 	"PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL",
-	"PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE"
+	"PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE",
+	"PKCS11H_PROVIDER_PROPERTY_INIT_ARGS",
 };
 
 _PKCS11H_STATIC_ASSERT(sizeof(_g_pkcs11h_provider_preperty_names)/sizeof(*_g_pkcs11h_provider_preperty_names) == _PKCS11H_PROVIDER_PROPERTY_LAST);
@@ -1130,6 +1131,30 @@ pkcs11h_setProviderProperty (
 		}
 		break;
 
+		case PKCS11H_PROVIDER_PROPERTY_INIT_ARGS:
+		{
+			CK_C_INITIALIZE_ARGS_PTR init_args = *(CK_C_INITIALIZE_ARGS_PTR*) value;
+			_PKCS11H_ASSERT (sizeof(init_args) == value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property '%s' to {flags = '%08lx'}",
+				_g_pkcs11h_provider_preperty_names[property],
+				init_args->flags
+			);
+
+			if (provider->init_args != NULL &&
+				(rv = _pkcs11h_mem_free((void *)&provider->init_args)) != CKR_OK) {
+				break;
+			}
+
+			if (init_args != NULL &&
+				(rv = _pkcs11h_mem_duplicate((void *)&provider->init_args, NULL, init_args, sizeof(*init_args))) != CKR_OK) {
+				break;
+			}
+		}
+		break;
+
 		default:
 			_PKCS11H_DEBUG (
 				PKCS11H_LOG_ERROR,
@@ -1268,7 +1293,7 @@ pkcs11h_initializeProvider (
 		goto cleanup;
 	}
 
-	if ((rv = provider->f->C_Initialize (NULL)) != CKR_OK) {
+	if ((rv = provider->f->C_Initialize (provider->init_args)) != CKR_OK) {
 		if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED) {
 			rv = CKR_OK;
 		}
@@ -1449,6 +1474,10 @@ free1:
 		_pkcs11h_mem_free((void *)&provider->provider_location);
 	}
 
+	if (provider->init_args) {
+		_pkcs11h_mem_free((void *)&provider->init_args);
+	}
+
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_slotevent_notify ();
 
@@ -1554,7 +1583,7 @@ pkcs11h_plugAndPlay (void) {
 			current = current->next
 		) {
 			if (current->enabled) {
-				current->f->C_Initialize (NULL);
+				current->f->C_Initialize (current->init_args);
 			}
 		}
 
@@ -1802,7 +1831,7 @@ __pkcs11h_forkFixup () {
 			current = current->next
 		) {
 			if (current->enabled) {
-				current->f->C_Initialize (NULL);
+				current->f->C_Initialize (current->init_args);
 			}
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)

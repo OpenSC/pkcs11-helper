@@ -289,6 +289,8 @@ enum pkcs11h_provider_property_e {
 	PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD, /*!< Provider slot event @ref PKCS11H_SLOTEVENT_METHOD method. Value type is unsigned. Default value is @ref PKCS11H_SLOTEVENT_METHOD_AUTO. */
 	PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL, /*!< Slot event poll interval (If in polling mode). Value type is unsigned. Default value is 0. */
 	PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE, /*!< Provider's certificate access should be done after login. Value type is @ref PKCS11H_BOOL. Default value is False. */
+	PKCS11H_PROVIDER_PROPERTY_INIT_ARGS, /*!< Provider initialize arguments. Value type is CK_C_INITIALIZE_ARGS_PTR. Default value is NULL.
+											  \attention Ownership over value will be taken by library*/
 
 	_PKCS11H_PROVIDER_PROPERTY_LAST
 };

@@ -70,7 +70,8 @@
 
 #define P_Z PRINTF_Z_FORMAT
 
-#define _PKCS11H_ASSERT		assert
+#define _PKCS11H_ASSERT     assert
+#define _PKCS11H_STATIC_ASSERT     _Static_assert 
 
 #endif
 

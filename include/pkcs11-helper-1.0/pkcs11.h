@@ -1716,6 +1716,13 @@ typedef struct ck_function_list_3_0 **CK_FUNCTION_LIST_3_0_PTR_PTR;
 typedef struct ck_c_initialize_args CK_C_INITIALIZE_ARGS;
 typedef struct ck_c_initialize_args *CK_C_INITIALIZE_ARGS_PTR;
 
+/* FIPS Indicator Interface. This may move to the normal PKCS #11 table
+ * in the future. For now it's called "Vendor NSS FIPS Interface" */
+typedef CK_RV (*CK_NSS_GetFIPSStatus)(CK_SESSION_HANDLE hSession,
+                                      CK_OBJECT_HANDLE hObject,
+                                      CK_ULONG ulOperationType,
+                                      CK_ULONG *pulFIPSStatus);
+
 #define NULL_PTR NULL
 
 /* Delete the helper macros defined at the top of the file.  */

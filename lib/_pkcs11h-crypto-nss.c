@@ -48,14 +48,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#if defined(ENABLE_PKCS11H_ENGINE_NSS)
+#include <nss.h>
+#include <cert.h>
+
+/* Use PKCS#11 of nss to avoid conflicts and make nss happy with its own extensions */
+#define PKCS11_H 1
+
 #include "common.h"
 
 #include "_pkcs11h-crypto.h"
-
-#if defined(ENABLE_PKCS11H_ENGINE_NSS)
-#define _PKCS11T_H_ /* required so no conflict with ours */
-#include <nss.h>
-#include <cert.h>
 
 static
 int

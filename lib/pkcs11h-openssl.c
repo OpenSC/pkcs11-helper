@@ -474,9 +474,6 @@ __pkcs11h_openssl_rsa_dec (
 		case RSA_PKCS1_OAEP_PADDING:
 			mech = CKM_RSA_PKCS_OAEP;
 		break;
-		case RSA_SSLV23_PADDING:
-			rv = CKR_MECHANISM_INVALID;
-		break;
 		case RSA_NO_PADDING:
 			mech = CKM_RSA_X_509;
 		break;

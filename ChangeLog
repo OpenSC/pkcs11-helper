@@ -3,6 +3,8 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 
 ????-??-?? - Version 1.28
 
+ * build: openssl: remove RSA_SSLV23_PADDING constant usage due to openssl-3
+   compatability, thanks to t0b3.
  * build: nss: use nss pkcs11.h, thanks to Fabrice Fontaine.
  * build: windows: checksum in PE, thanks to Simon Rozman.
  * build: windows: support openssl-1.1.1, thanks to Lev Stipakov.

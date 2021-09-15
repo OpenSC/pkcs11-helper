@@ -1,0 +1,7 @@
+nmake
+parms
+ro
+fo
+gost
+standarts
+nd

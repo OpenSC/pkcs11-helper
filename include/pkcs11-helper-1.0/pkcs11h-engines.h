@@ -126,7 +126,7 @@ typedef struct pkcs11h_crypto_engine_s {
 	/**
 	 * @brief Initialize engine.
 	 * @param global_data	Engine data.
-	 * @return None zero - Sucess.
+	 * @return None zero - Success.
 	 */
 	int (*initialize) (
 		IN void * const global_data
@@ -135,7 +135,7 @@ typedef struct pkcs11h_crypto_engine_s {
 	/**
 	 * @brief Uninitialize engine.
 	 * @param global_data	Engine data.
-	 * @return None zero - Sucess.
+	 * @return None zero - Success.
 	 */
 	int (*uninitialize) (
 		IN void * const global_data
@@ -147,7 +147,7 @@ typedef struct pkcs11h_crypto_engine_s {
 	 * @param blob		Certificate blob.
 	 * @param blob_size	Certificate blob size.
 	 * @param expiration	Certificate expiration time.
-	 * @return None zero - Sucess.
+	 * @return None zero - Success.
 	 */
 	int (*certificate_get_expiration) (
 		IN void * const global_data,
@@ -163,7 +163,7 @@ typedef struct pkcs11h_crypto_engine_s {
 	 * @param blob_size	Certificate blob size.
 	 * @param dn		dn buffer.
 	 * @param dn_max	dn buffer size.
-	 * @return None zero - Sucess.
+	 * @return None zero - Success.
 	 */
 	int (*certificate_get_dn) (
 		IN void * const global_data,
@@ -180,7 +180,7 @@ typedef struct pkcs11h_crypto_engine_s {
 	 * @param issuer_blob_size	Issuer's certificate blob size.
 	 * @param cert_blob		Certificate blob.
 	 * @param cert_blob_size	Certificate blob size.
-	 * @return None zero - Sucess.
+	 * @return None zero - Success.
 	 */
 	int (*certificate_is_issuer) (
 		IN void * const global_data,

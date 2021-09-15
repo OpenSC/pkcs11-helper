@@ -4,7 +4,7 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 ????-??-?? - Version 1.28
 
  * build: openssl: remove RSA_SSLV23_PADDING constant usage due to openssl-3
-   compatability, thanks to t0b3.
+   compatibility, thanks to t0b3.
  * build: nss: use nss pkcs11.h, thanks to Fabrice Fontaine.
  * build: windows: checksum in PE, thanks to Simon Rozman.
  * build: windows: support openssl-1.1.1, thanks to Lev Stipakov.
@@ -15,7 +15,7 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
 2020-11-17 - Version 1.27
 
  * core: handle PIN expiration after C_Login as C_Login may take a while
- * core: return explict success when plugin&play and no threading and no
+ * core: return explicit success when plugin&play and no threading and no
    safefork, thanks to Tunnelblick
 
 2020-01-21 - Version 1.26

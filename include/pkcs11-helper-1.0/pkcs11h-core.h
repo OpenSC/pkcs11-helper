@@ -342,7 +342,7 @@ pkcs11h_getLogLevel (void);
  * @attention
  * This function should be called after @ref pkcs11h_initialize()
  * @note
- * This funciton is releavant if @ref PKCS11H_FEATURE_MASK_THREADING is set.
+ * This function is relevant if @ref PKCS11H_FEATURE_MASK_THREADING is set.
  * If safe mode is on, the child process can use the loaded PKCS#11 providers
  * but it cannot use fork(), while it is in one of the hooks functions, since
  * locked mutexes cannot be released.

@@ -110,7 +110,7 @@ esac
 
 AC_ARG_ENABLE(
 	[doc],
-	[AS_HELP_STRING([--enable-doc],[enable documantation])],
+	[AS_HELP_STRING([--enable-doc],[enable documentation])],
 	,
 	[enable_doc="no"]
 )

@@ -10,7 +10,7 @@
 /* Enable debug support */
 #define ENABLE_PKCS11H_DEBUG 1
 
-/* Use GNUTLS cryto engine */
+/* Use GNUTLS crypto engine */
 /* #undef ENABLE_PKCS11H_ENGINE_GNUTLS */
 
 /* Use OpenSSL crypto engine */

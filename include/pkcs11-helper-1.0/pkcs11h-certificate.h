@@ -242,7 +242,7 @@ pkcs11h_certificate_setUserData (
 );
 
 /**
- * @brief Get certifiate id object out of a certifiate.
+ * @brief Get certificate id object out of a certificate.
  * @param certificate		Certificate object.
  * @param p_certificate_id	Certificate id object pointer.
  * @return CK_RV.
@@ -288,7 +288,7 @@ pkcs11h_certificate_serializeCertificateId (
 /**
  * @brief Deserialize certificate_id out of string.
  * @param p_certificate_id	id.
- * @param sz			Inut string
+ * @param sz			Input string
  * @return CK_RV.
  * @note Caller must free result.
  * @see pkcs11h_certificate_freeCertificateId().
@@ -320,7 +320,7 @@ pkcs11h_certificate_ensureKeyAccess (
 );
 
 /**
- * @brief Lock session for threded environment.
+ * @brief Lock session for threaded environment.
  * @param certificate		Certificate object.
  * @return CK_RV.
  * @remarks

@@ -722,7 +722,7 @@ pkcs11h_addProvider (
 #if defined(_WIN32)
 	provider->handle = LoadLibraryA (provider_location);
 #else
-	provider->handle = dlopen (provider_location, RTLD_NOW);
+	provider->handle = dlopen (provider_location, RTLD_NOW | RTLD_LOCAL);
 #endif
 
 	if (provider->handle == NULL) {

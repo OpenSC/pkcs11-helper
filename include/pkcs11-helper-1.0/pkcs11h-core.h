@@ -241,8 +241,15 @@ extern "C" {
 */
 #define PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE 5
 
+/**
+ * @brief Provider initialize arguments.
+ * Value type is CK_C_INITIALIZE_ARGS_PTR.
+ * Default value is NULL.
+ */
+#define PKCS11H_PROVIDER_PROPERTY_INIT_ARGS 6
+
 /** @private */
-#define _PKCS11H_PROVIDER_PROPERTY_LAST 6
+#define _PKCS11H_PROVIDER_PROPERTY_LAST 7
 
 /** @} */
 

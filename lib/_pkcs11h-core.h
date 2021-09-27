@@ -127,6 +127,7 @@ struct _pkcs11h_provider_s {
 	unsigned mask_decrypt_mode;
 	unsigned slot_event_method;
 	unsigned slot_poll_interval;
+	CK_C_INITIALIZE_ARGS_PTR init_args;
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_thread_t slotevent_thread;

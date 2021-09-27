@@ -135,6 +135,7 @@ static const char * __pkcs11h_provider_preperty_names[] = {
 	"slot_event_method",
 	"slot_poll_interval",
 	"cert_is_private",
+	"init_args",
 	NULL
 };
 
@@ -835,6 +836,9 @@ pkcs11h_setProviderPropertyByName (
 			*(PKCS11H_BOOL *)value = (PKCS11H_BOOL)(strtol(value_str, 0, 0) != 0 ? 1 : 0);
 			value_size = sizeof(PKCS11H_BOOL);
 		break;
+		case PKCS11H_PROVIDER_PROPERTY_INIT_ARGS:
+			rv = CKR_ATTRIBUTE_TYPE_INVALID;
+			goto cleanup;
 	}
 
 	rv = pkcs11h_setProviderProperty (
@@ -995,6 +999,22 @@ pkcs11h_setProviderProperty (
 		}
 		break;
 
+		case PKCS11H_PROVIDER_PROPERTY_INIT_ARGS:
+		{
+			CK_C_INITIALIZE_ARGS_PTR init_args = *(CK_C_INITIALIZE_ARGS_PTR*) value;
+			_PKCS11H_ASSERT (sizeof(init_args) <= value_size);
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting property %s={flags: 0x%08lx}",
+				__pkcs11h_provider_preperty_names[property],
+				init_args->flags
+			);
+
+			provider->init_args = init_args;
+		}
+		break;
+
 		default:
 			_PKCS11H_DEBUG (
 				PKCS11H_LOG_ERROR,
@@ -1097,9 +1117,14 @@ pkcs11h_initializeProvider (
 		goto cleanup;
 	}
 
-	memset(&init_args, 0, sizeof(init_args));
-	if ((init_args.pReserved = getenv("PKCS11H_INIT_ARGS_RESERVED")) != NULL) {
-		pinit_args = &init_args;
+	if (provider->init_args != NULL) {
+		pinit_args = provider->init_args;
+	}
+	else {
+		memset(&init_args, 0, sizeof(init_args));
+		if ((init_args.pReserved = getenv("PKCS11H_INIT_ARGS_RESERVED")) != NULL) {
+			pinit_args = &init_args;
+		}
 	}
 
 	if ((rv = provider->f->C_Initialize (pinit_args)) != CKR_OK) {

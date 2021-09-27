@@ -78,6 +78,19 @@ int main () {
 		}
 	}
 
+	memset(&init_args, 0, sizeof(init_args));
+	init_args.flags = CKF_OS_LOCKING_OK;
+	if (
+		(rv = pkcs11h_setProviderProperty (
+			reference,
+			PKCS11H_PROVIDER_PROPERTY_INIT_ARGS,
+			&init_args_ptr,
+			sizeof(init_args_ptr)
+		)) != CKR_OK
+	) {
+		fatal ("pkcs11h_setProviderProperty failed for PKCS11H_PROVIDER_PROPERTY_INIT_ARGS", rv);
+	}
+
 	if ((rv = pkcs11h_initializeProvider (reference)) != CKR_OK) {
 		fatal ("pkcs11h_initializeProvider failed", rv);
 	}

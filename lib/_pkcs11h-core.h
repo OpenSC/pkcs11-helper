@@ -147,6 +147,7 @@ struct _pkcs11h_session_s {
 	CK_SESSION_HANDLE session_handle;
 
 	PKCS11H_BOOL allow_protected_auth_supported;
+	PKCS11H_BOOL login_required;
 	int pin_cache_period;
 	time_t pin_expire_time;
 

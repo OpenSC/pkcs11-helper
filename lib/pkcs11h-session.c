@@ -695,6 +695,7 @@ _pkcs11h_session_reset (
 					if (session->provider == NULL) {
 						session->provider = current_provider;
 						session->allow_protected_auth_supported = (info.flags & CKF_PROTECTED_AUTHENTICATION_PATH) != 0;
+						session->login_required = (info.flags & CKF_LOGIN_REQUIRED) != 0;
 					}
 				}
 
@@ -982,8 +983,11 @@ _pkcs11h_session_login (
 	}
 
 	if (
-		!is_publicOnly ||
-		session->provider->cert_is_private
+		session->login_required &&
+		(
+			!is_publicOnly ||
+			session->provider->cert_is_private
+		)
 	) {
 		PKCS11H_BOOL login_succeeded = FALSE;
 		unsigned retry_count = 0;

@@ -664,8 +664,8 @@ pkcs11h_addProvider (
 
 	_pkcs11h_provider_t provider = NULL;
 	CK_C_GetFunctionList gfl = NULL;
-	CK_C_INITIALIZE_ARGS initargs;
-	CK_C_INITIALIZE_ARGS_PTR pinitargs = NULL;
+	CK_C_INITIALIZE_ARGS init_args;
+	CK_C_INITIALIZE_ARGS_PTR pinit_args = NULL;
 	CK_INFO info;
 	CK_RV rv = CKR_FUNCTION_FAILED;
 
@@ -758,12 +758,12 @@ pkcs11h_addProvider (
 		goto cleanup;
 	}
 
-	memset(&initargs, 0, sizeof(initargs));
-	if ((initargs.pReserved = getenv("PKCS11H_INIT_ARGS_RESERVED")) != NULL) {
-		pinitargs = &initargs;
+	memset(&init_args, 0, sizeof(init_args));
+	if ((init_args.pReserved = getenv("PKCS11H_INIT_ARGS_RESERVED")) != NULL) {
+		pinit_args = &init_args;
 	}
 
-	if ((rv = provider->f->C_Initialize (pinitargs)) != CKR_OK) {
+	if ((rv = provider->f->C_Initialize (pinit_args)) != CKR_OK) {
 		if (rv == CKR_CRYPTOKI_ALREADY_INITIALIZED) {
 			rv = CKR_OK;
 		}

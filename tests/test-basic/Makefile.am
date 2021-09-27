@@ -52,6 +52,7 @@ MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
 MY_TESTS = \
 	test-basic \
+	test-basic2 \
 	$(NULL)
 
 TESTS=$(MY_TESTS)
@@ -64,3 +65,4 @@ LDADD= \
 	$(top_builddir)/lib/libpkcs11-helper.la
 
 test_basic_SOURCES=test-basic.c
+test_basic2_SOURCES=test-basic2.c

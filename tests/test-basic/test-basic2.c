@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../../config.h"
 #include <pkcs11-helper-1.0/pkcs11h-core.h>
 
@@ -24,6 +25,22 @@ _pkcs11h_hooks_log (
 }
 
 int main () {
+	struct {
+		char *p;
+		char *v;
+	} props[] = {
+		{"location", TEST_PROVIDER},
+		{"allow_protected_auth", "1"},
+		{"mask_private_mode", "2"},
+		{"slot_event_method", "3"},
+		{"slot_poll_interval", "0x55"},
+		{"cert_is_private", "1"},
+		{NULL, NULL}
+	}, *p;
+
+	const char * reference = "reference1";
+	CK_C_INITIALIZE_ARGS init_args;
+	CK_C_INITIALIZE_ARGS_PTR init_args_ptr = &init_args;
 	CK_RV rv;
 
 	printf ("Version: %08x\n", pkcs11h_getVersion ());
@@ -43,20 +60,30 @@ int main () {
 
 	pkcs11h_setLogLevel (TEST_LOG_LEVEL);
 
-	printf ("Adding provider '%s'\n", TEST_PROVIDER);
+	printf ("Registering provider '%s'\n", TEST_PROVIDER);
+	if ((rv = pkcs11h_registerProvider (reference)) != CKR_OK) {
+		fatal ("pkcs11h_registerProvider failed", rv);
+	}
 
-	if (
-		(rv = pkcs11h_addProvider (
-			"reference1",
-			TEST_PROVIDER,
-			TRUE,
-			PKCS11H_PRIVATEMODE_MASK_DECRYPT,
-			PKCS11H_SLOTEVENT_METHOD_POLL,
-			0x55,
-			TRUE
-		)) != CKR_OK
-	) {
-		fatal ("pkcs11h_addProvider failed", rv);
+	for (p = props; p->p != NULL; p++) {
+		printf("Setting property '%s'='%s'\n", p->p, p->v);
+		if (
+			(rv = pkcs11h_setProviderPropertyByName (
+				reference,
+				p->p,
+				p->v
+			)) != CKR_OK
+		) {
+			fatal ("pkcs11h_setProviderPropertyByName failed", rv);
+		}
+	}
+
+	if ((rv = pkcs11h_initializeProvider (reference)) != CKR_OK) {
+		fatal ("pkcs11h_initializeProvider failed", rv);
+	}
+
+	if ((rv = pkcs11h_removeProvider (reference)) != CKR_OK) {
+		fatal ("pkcs11h_initializeProvider failed", rv);
 	}
 
 	printf ("Terminating pkcs11-helper\n");

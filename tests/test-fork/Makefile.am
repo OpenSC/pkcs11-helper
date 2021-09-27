@@ -50,8 +50,12 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-TESTS=test-fork
-noinst_PROGRAMS=test-fork
+MY_TESTS = \
+	test-fork \
+	$(NULL)
+
+TESTS=$(MY_TESTS)
+noinst_PROGRAMS=$(MY_TESTS)
 
 AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \

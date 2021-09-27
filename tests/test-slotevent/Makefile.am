@@ -50,8 +50,12 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-TESTS=test-slotevent
-noinst_PROGRAMS=test-slotevent
+MY_TESTS = \
+	test-slotevent \
+	$(NULL)
+
+TESTS=$(MY_TESTS)
+noinst_PROGRAMS=$(MY_TESTS)
 
 AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \

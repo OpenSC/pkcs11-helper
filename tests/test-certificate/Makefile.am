@@ -50,8 +50,12 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-TESTS=test-certificate
-noinst_PROGRAMS=test-certificate
+MY_TESTS = \
+	test-certificate \
+	$(NULL)
+
+TESTS=$(MY_TESTS)
+noinst_PROGRAMS=$(MY_TESTS)
 
 AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \

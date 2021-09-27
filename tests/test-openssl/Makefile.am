@@ -50,8 +50,12 @@
 
 MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 
-TESTS=test-openssl
-noinst_PROGRAMS=test-openssl
+MY_TESTS = \
+	test-openssl \
+	$(NULL)
+
+TESTS=$(MY_TESTS)
+noinst_PROGRAMS=$(MY_TESTS)
 
 AM_CPPFLAGS= \
 	-I$(top_srcdir)/include \

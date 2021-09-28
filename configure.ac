@@ -48,7 +48,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-AC_PREREQ(2.60)
+AC_PREREQ([2.69])
 
 define([PACKAGE_VERSION_MAJOR], [1])
 define([PACKAGE_VERSION_MINOR], [28])
@@ -87,7 +87,7 @@ AC_ARG_WITH(
 test -z "${WIN32}" && WIN32="no"
 test -z "${CYGWIN}" && CYGWIN="no"
 case "${host}" in
- 	*-mingw*|*-winnt*)
+	*-mingw*|*-winnt*)
 		WIN32="yes"
 		WIN_LIBPREFIX="lib"
 	;;
@@ -254,19 +254,8 @@ PKG_PROG_PKG_CONFIG
 AC_ARG_VAR([M4], [m4 utility])
 AC_CHECK_PROGS([M4], [m4])
 
-ifdef(
-	[LT_INIT],
-	[
-		LT_INIT([win32-dll])
-		LT_LANG([Windows Resource])
-	],
-	[
-		AC_LIBTOOL_WIN32_DLL
-		AC_LIBTOOL_RC
-		AC_PROG_LIBTOOL
-	]
-)
-
+LT_INIT([win32-dll])
+LT_LANG([Windows Resource])
 
 if test "${enable_doc}" = "yes"; then
 	AC_ARG_VAR([DOXYGEN], [doxygen utility])
@@ -403,7 +392,8 @@ if test "${enable_strict}" = "yes"; then
 fi
 
 # Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+
 AX_CPP_VARARG_MACRO_ISO
 AX_CPP_VARARG_MACRO_GCC
 AC_C_CONST
@@ -412,7 +402,13 @@ AC_C_VOLATILE
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+# Obsolete code to be removed.
+if test $ac_cv_header_sys_time_h = yes; then
+	AC_DEFINE([TIME_WITH_SYS_TIME],[1],[Define to 1 if you can safely include both <sys/time.h>
+		and <time.h>.  This macro is obsolete.])
+fi
+
 AC_STRUCT_TM
 AX_SIZE_T_PRINTF
 AC_CHECK_HEADERS([ \

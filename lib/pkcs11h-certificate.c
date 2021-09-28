@@ -476,7 +476,9 @@ __pkcs11h_certificate_getKeyAttributes (
 			{CKA_SIGN, NULL, 0},
 			{CKA_SIGN_RECOVER, NULL, 0},
 			{CKA_DECRYPT, NULL, 0},
-			{CKA_UNWRAP, NULL, 0}
+			{CKA_UNWRAP, NULL, 0},
+			{CKA_ALWAYS_AUTHENTICATE, NULL, 0},
+			{CKA_LABEL, NULL, 0}
 		};
 
 		/*
@@ -502,6 +504,7 @@ __pkcs11h_certificate_getKeyAttributes (
 			CK_BBOOL *key_attrs_sign_recover;
 			CK_BBOOL *key_attrs_decrypt;
 			CK_BBOOL *key_attrs_unwrap;
+			CK_BBOOL *key_attrs_always_authenticate;
 
 			if (
 				(rv = _pkcs11h_session_getObjectAttributes (
@@ -518,6 +521,7 @@ __pkcs11h_certificate_getKeyAttributes (
 			key_attrs_sign_recover = (CK_BBOOL *)key_attrs[1].pValue;
 			key_attrs_decrypt = (CK_BBOOL *)key_attrs[2].pValue;
 			key_attrs_unwrap = (CK_BBOOL *)key_attrs[3].pValue;
+			key_attrs_always_authenticate = (CK_BBOOL *)key_attrs[4].pValue;
 
 			if (key_attrs_sign != NULL && *key_attrs_sign != CK_FALSE) {
 				certificate->mask_private_mode |= PKCS11H_PRIVATEMODE_MASK_SIGN;
@@ -536,10 +540,34 @@ __pkcs11h_certificate_getKeyAttributes (
 				goto retry;
 			}
 
+			if (key_attrs_always_authenticate != NULL) {
+				certificate->always_authenticate = *key_attrs_always_authenticate != 0;
+			}
+
+			if (strlen(certificate->id->displayName) == 0) {
+				if (key_attrs[5].pValue == NULL) {
+					strcpy(certificate->id->displayName, "Certificate");
+				}
+				else {
+					size_t len =  (
+						key_attrs[5].ulValueLen < sizeof(certificate->id->displayName) - 1 ?
+						key_attrs[5].ulValueLen :
+						sizeof(certificate->id->displayName) - 1
+					);
+					memmove(
+						certificate->id->displayName,
+						key_attrs[5].pValue,
+						len
+					);
+					certificate->id->displayName[len] = '\0';
+				}
+			}
+
 			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Key attributes loaded (%08x)",
-				certificate->mask_private_mode
+				"PKCS#11: Key attribute=%08x always_authenticated=%d",
+				certificate->mask_private_mode,
+				certificate->always_authenticate
 			);
 
 			op_succeed = TRUE;
@@ -892,6 +920,29 @@ __pkcs11h_certificate_doPrivateOperation (
 
 			if (rv != CKR_OK) {
 				goto retry;
+			}
+
+			if (certificate->always_authenticate) {
+				_PKCS11H_DEBUG (
+					PKCS11H_LOG_DEBUG2,
+					"PKCS#11: CKU_CONTEXT_SPECIFIC login"
+				);
+				if (
+					(rv = _pkcs11h_session_login_context (
+						certificate->session,
+						CKU_CONTEXT_SPECIFIC,
+						certificate->id->displayName,
+						certificate->user_data,
+						(certificate->mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT)
+					)) != CKR_OK
+				) {
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG2,
+						"PKCS#11: CKU_CONTEXT_SPECIFIC login rv=%ld",
+						rv
+					);
+					goto retry;
+				}
 			}
 		}
 

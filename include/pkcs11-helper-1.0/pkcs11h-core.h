@@ -178,10 +178,14 @@ extern "C" {
 #define PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT	(1<<0)
 /** Allow token prompt. */
 #define PKCS11H_PROMPT_MASK_ALLOW_TOKEN_PROMPT	(1<<1)
+/** Allow key prompt. */
+#define PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT	(1<<2)
 /** Allow all prompt. */
 #define PKCS11H_PROMPT_MASK_ALLOW_ALL ( \
 		PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT | \
-		PKCS11H_PROMPT_MASK_ALLOW_TOKEN_PROMPT \
+		PKCS11H_PROMPT_MASK_ALLOW_TOKEN_PROMPT | \
+		PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT | \
+		0 \
 	)
 /** @} */
 
@@ -303,6 +307,20 @@ extern "C" {
  */
 #define PKCS11H_PROPERTY_MAX_LOGIN_RETRIES 12
 
+/**
+ * @brief A key prompt callback.
+ * Value type is pkcs11h_hook_key_prompt_t.
+ * @attention
+ * If @ref pkcs11h_setForkMode() is true, you cannot fork while in hook.
+ */
+#define PKCS11H_PROPERTY_KEY_PROMPT_HOOK 13
+
+/**
+ * @brief A key prompt callback data.
+ * Value is void *.
+ */
+#define PKCS11H_PROPERTY_KEY_PROMPT_HOOK_DATA 14
+
 /** @} */
 
 /**
@@ -417,6 +435,27 @@ typedef PKCS11H_BOOL (*pkcs11h_hook_pin_prompt_t)(
 	IN void * const global_data,
 	IN void * const user_data,
 	IN const pkcs11h_token_id_t token,
+	IN const unsigned retry,
+	OUT char * const pin,
+	IN const size_t pin_max
+);
+
+/**
+ * @brief Key prompt hook.
+ * @param global_data	Hook data.
+ * @param user_data	Local data.
+ * @param token		Token.
+ * @param label		Key label
+ * @param retry		Retry counter.
+ * @param pin		PIN buffer.
+ * @param pin_max	PIN buffer size.
+ * @return TRUE success.
+ */
+typedef PKCS11H_BOOL (*pkcs11h_hook_key_prompt_t)(
+	IN void * const global_data,
+	IN void * const user_data,
+	IN const pkcs11h_token_id_t token,
+	IN const char * const label,
 	IN const unsigned retry,
 	OUT char * const pin,
 	IN const size_t pin_max

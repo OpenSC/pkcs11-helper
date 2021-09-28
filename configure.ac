@@ -436,6 +436,8 @@ if test "${WIN32}" != "yes"; then
 	])
 fi
 
+PKCS11H_FEATURES=" key_prompt"
+
 AC_MSG_CHECKING([OpenSSL interface])
 if test "${enable_openssl}" = "yes"; then
 	if test "${have_openssl}" != "yes"; then
@@ -563,6 +565,8 @@ fi
 if test -n "${crypto_engine}"; then
 	PKCS11H_FEATURES="${PKCS11H_FEATURES} engine_crypto"
 fi
+
+PKCS11H_FEATURES="${PKCS11H_FEATURES} " # add trailing space
 
 pkgconfigdir="\$(libdir)/pkgconfig"
 m4dir="\$(datadir)/aclocal"

@@ -124,6 +124,15 @@ __pkcs11h_session_touch (
 );
 
 CK_RV
+_pkcs11h_session_login_context (
+	IN const _pkcs11h_session_t session,
+	IN const CK_USER_TYPE user,
+	IN const char * const label,
+	IN void * const user_data,
+	IN const unsigned mask_prompt
+);
+
+CK_RV
 _pkcs11h_session_login (
 	IN const _pkcs11h_session_t session,
 	IN const PKCS11H_BOOL public_only,

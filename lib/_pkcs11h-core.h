@@ -173,10 +173,12 @@ struct _pkcs11h_data_s {
 		void * slotevent_data;
 		void * token_prompt_data;
 		void * pin_prompt_data;
+		void * key_prompt_data;
 		pkcs11h_hook_log_t log;
 		pkcs11h_hook_slotevent_t slotevent;
 		pkcs11h_hook_token_prompt_t token_prompt;
 		pkcs11h_hook_pin_prompt_t pin_prompt;
+		pkcs11h_hook_key_prompt_t key_prompt;
 	} hooks;
 
 	PKCS11H_BOOL allow_protected_auth;

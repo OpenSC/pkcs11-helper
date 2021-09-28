@@ -605,6 +605,14 @@ __pkcs11h_propertyAddress(
 			*value = &_g_pkcs11h_data->hooks.pin_prompt_data;
 			*value_size = sizeof(_g_pkcs11h_data->hooks.pin_prompt_data);
 		break;
+		case PKCS11H_PROPERTY_KEY_PROMPT_HOOK:
+			*value = &_g_pkcs11h_data->hooks.key_prompt;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.key_prompt);
+		break;
+		case PKCS11H_PROPERTY_KEY_PROMPT_HOOK_DATA:
+			*value = &_g_pkcs11h_data->hooks.key_prompt_data;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.key_prompt_data);
+		break;
 		case PKCS11H_PROPERTY_ALLOW_PROTECTED_AUTHENTICATION:
 			*value = &_g_pkcs11h_data->allow_protected_auth;
 			*value_size = sizeof(_g_pkcs11h_data->allow_protected_auth);

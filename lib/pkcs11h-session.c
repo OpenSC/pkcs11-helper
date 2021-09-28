@@ -938,6 +938,227 @@ __pkcs11h_session_touch (
 }
 
 CK_RV
+_pkcs11h_session_login_context (
+	IN const _pkcs11h_session_t session,
+	IN const CK_USER_TYPE user,
+	IN const char * const label,
+	IN void * const user_data,
+	IN const unsigned mask_prompt
+) {
+	struct pkcs11h_token_id_s _compat_token_id;
+	pkcs11h_token_id_t compact_token_id = &_compat_token_id;
+	PKCS11H_BOOL login_succeeded = FALSE;
+	unsigned retry_count = 0;
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: _pkcs11h_session_login_context entry session=%p, user=%ld, label='%s', user_data=%p, mask_prompt=%08x",
+		(void *)session,
+		user,
+		label,
+		user_data,
+		mask_prompt
+	);
+
+	/*
+	 * If there is a label, then add it to the display name for pin prompt.
+	 */
+	if (label != NULL && _g_pkcs11h_data->hooks.key_prompt == NULL) {
+		static const char * const SEP1 = " label=\"";
+		static const char * const SEP2 = "\"";
+		char *p;
+
+		memcpy(compact_token_id, session->token_id, sizeof(*compact_token_id));
+
+		strncpy (
+			compact_token_id->display,
+			session->token_id->display,
+			sizeof(compact_token_id->display)
+		);
+		strncat (
+			compact_token_id->display,
+			SEP1,
+			sizeof (compact_token_id->display)-1-strlen (compact_token_id->display)
+		);
+		p = compact_token_id->display + strlen(compact_token_id->display);
+		strncat (
+			compact_token_id->display,
+			label,
+			sizeof (compact_token_id->display)-1-strlen (compact_token_id->display)
+		);
+		while (*p != '\0') {
+			if (*p == '"') {
+				*p = '_';
+			}
+			p++;
+		}
+		strncat (
+			compact_token_id->display,
+			SEP2,
+			sizeof (compact_token_id->display)-1-strlen (compact_token_id->display)
+		);
+		compact_token_id->display[sizeof (compact_token_id->display) - 1] = '\0';
+
+	}
+
+	if (label == NULL && (mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT) == 0) {
+		rv = CKR_USER_NOT_LOGGED_IN;
+
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
+		);
+	}
+
+	if (label != NULL && (mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT) == 0) {
+		rv = CKR_USER_NOT_LOGGED_IN;
+
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
+		);
+	}
+
+	while (
+		!login_succeeded &&
+		retry_count < _g_pkcs11h_data->max_retries
+	) {
+		CK_UTF8CHAR_PTR utfPIN = NULL;
+		CK_ULONG lPINLength = 0;
+		char pin[1024];
+
+		if (
+			!(
+				_g_pkcs11h_data->allow_protected_auth  &&
+				session->provider->allow_protected_auth &&
+				session->allow_protected_auth_supported
+			)
+		) {
+			PKCS11H_BOOL prompt_ret;
+
+			if (label != NULL &&_g_pkcs11h_data->hooks.key_prompt != NULL) {
+				_PKCS11H_DEBUG (
+					PKCS11H_LOG_DEBUG1,
+					"PKCS#11: Calling key_prompt hook for '%s':'%s'",
+					session->token_id->display,
+					label
+				);
+				prompt_ret = _g_pkcs11h_data->hooks.key_prompt (
+					_g_pkcs11h_data->hooks.key_prompt_data,
+					user_data,
+					session->token_id,
+					label,
+					retry_count,
+					pin,
+					sizeof (pin)
+				);
+			}
+			else {
+				_PKCS11H_DEBUG (
+					PKCS11H_LOG_DEBUG1,
+					"PKCS#11: Calling pin_prompt hook for '%s'",
+					compact_token_id->display
+				);
+				prompt_ret = _g_pkcs11h_data->hooks.pin_prompt (
+					_g_pkcs11h_data->hooks.pin_prompt_data,
+					user_data,
+					label == NULL ? session->token_id : compact_token_id,
+					retry_count,
+					pin,
+					sizeof (pin)
+				);
+			}
+
+			if (prompt_ret) {
+				rv = CKR_OK;
+			}
+			else {
+				rv = CKR_CANCEL;
+			}
+
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: key_prompt/pin_prompt hook return rv=%ld",
+				rv
+			);
+
+			if (rv != CKR_OK ){
+				goto retry;
+			}
+
+			utfPIN = (CK_UTF8CHAR_PTR)pin;
+			lPINLength = strlen (pin);
+
+		}
+
+		if (
+			(rv = session->provider->f->C_Login (
+				session->session_handle,
+				user,
+				utfPIN,
+				lPINLength
+			)) != CKR_OK &&
+			rv != CKR_USER_ALREADY_LOGGED_IN
+		) {
+			goto retry;
+		}
+
+		if ((rv = __pkcs11h_session_touch (session)) != CKR_OK) {
+			goto cleanup;
+		}
+
+		login_succeeded = TRUE;
+		rv = CKR_OK;
+
+	retry:
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG2,
+			"PKCS#11: _pkcs11h_session_login_context C_Login rv=%lu-'%s'",
+			rv,
+			pkcs11h_getMessage (rv)
+		);
+
+		/*
+		 * Clean PIN buffer
+		 */
+		memset (pin, 0, sizeof (pin));
+
+		if (
+			rv != CKR_OK &&
+			rv != CKR_PIN_INCORRECT &&
+			rv != CKR_PIN_INVALID &&
+			rv != CKR_PIN_LEN_RANGE
+		) {
+			goto cleanup;
+		}
+
+		retry_count++;
+	}
+
+	/*
+	 * Retry limit
+	 */
+	if (!login_succeeded) {
+		rv = CKR_PIN_INCORRECT;
+		goto cleanup;
+	}
+
+	rv = CKR_OK;
+
+cleanup:
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: _pkcs11h_session_login_context return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
+CK_RV
 _pkcs11h_session_login (
 	IN const _pkcs11h_session_t session,
 	IN const PKCS11H_BOOL is_publicOnly,
@@ -989,119 +1210,15 @@ _pkcs11h_session_login (
 			session->provider->cert_is_private
 		)
 	) {
-		PKCS11H_BOOL login_succeeded = FALSE;
-		unsigned retry_count = 0;
-
-		if ((mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT) == 0) {
-			rv = CKR_USER_NOT_LOGGED_IN;
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
-			);
-		}
-
-		while (
-			!login_succeeded &&
-			retry_count < _g_pkcs11h_data->max_retries
+		if (
+			(rv = _pkcs11h_session_login_context (
+				session,
+				CKU_USER,
+				NULL,
+				user_data,
+				mask_prompt
+			)) != CKR_OK
 		) {
-			CK_UTF8CHAR_PTR utfPIN = NULL;
-			CK_ULONG lPINLength = 0;
-			char pin[1024];
-
-			if (
-				!(
-					_g_pkcs11h_data->allow_protected_auth  &&
-					session->provider->allow_protected_auth &&
-					session->allow_protected_auth_supported
-				)
-			) {
-				_PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Calling pin_prompt hook for '%s'",
-					session->token_id->display
-				);
-
-				if (
-					_g_pkcs11h_data->hooks.pin_prompt (
-						_g_pkcs11h_data->hooks.pin_prompt_data,
-						user_data,
-						session->token_id,
-						retry_count,
-						pin,
-						sizeof (pin)
-					)
-				) {
-					rv = CKR_OK;
-				}
-				else {
-					rv = CKR_CANCEL;
-				}
-
-				_PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: pin_prompt hook return rv=%ld",
-					rv
-				);
-
-				if (rv != CKR_OK ){
-					goto retry;
-				}
-
-				utfPIN = (CK_UTF8CHAR_PTR)pin;
-				lPINLength = strlen (pin);
-
-			}
-
-			if (
-				(rv = session->provider->f->C_Login (
-					session->session_handle,
-					CKU_USER,
-					utfPIN,
-					lPINLength
-				)) != CKR_OK &&
-				rv != CKR_USER_ALREADY_LOGGED_IN
-			) {
-				goto retry;
-			}
-
-			if ((rv = __pkcs11h_session_touch (session)) != CKR_OK) {
-				goto cleanup;
-			}
-
-			login_succeeded = TRUE;
-			rv = CKR_OK;
-
-		retry:
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG2,
-				"PKCS#11: _pkcs11h_session_login C_Login rv=%lu-'%s'",
-				rv,
-				pkcs11h_getMessage (rv)
-			);
-
-			/*
-			 * Clean PIN buffer
-			 */
-			memset (pin, 0, sizeof (pin));
-
-			if (
-				rv != CKR_OK &&
-				rv != CKR_PIN_INCORRECT &&
-				rv != CKR_PIN_INVALID &&
-				rv != CKR_PIN_LEN_RANGE
-			) {
-				goto cleanup;
-			}
-
-			retry_count++;
-		}
-
-		/*
-		 * Retry limit
-		 */
-		if (!login_succeeded) {
-			rv = CKR_PIN_INCORRECT;
 			goto cleanup;
 		}
 	}

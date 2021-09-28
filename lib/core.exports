@@ -5,6 +5,7 @@ pkcs11h_forkFixup
 pkcs11h_getFeatures
 pkcs11h_getLogLevel
 pkcs11h_getMessage
+pkcs11h_getProperty
 pkcs11h_getVersion
 pkcs11h_initialize
 pkcs11h_initializeProvider
@@ -18,6 +19,7 @@ pkcs11h_setLogLevel
 pkcs11h_setMaxLoginRetries
 pkcs11h_setPINCachePeriod
 pkcs11h_setPINPromptHook
+pkcs11h_setProperty
 pkcs11h_setProtectedAuthentication
 pkcs11h_setProviderProperty
 pkcs11h_setProviderPropertyByName

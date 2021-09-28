@@ -64,6 +64,7 @@ struct pkcs11h_certificate_s {
 	int pin_cache_period;
 
 	unsigned mask_private_mode;
+	PKCS11H_BOOL always_authenticate;
 
 	_pkcs11h_session_t session;
 	CK_OBJECT_HANDLE key_handle;

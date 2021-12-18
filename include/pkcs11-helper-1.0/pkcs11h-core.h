@@ -198,6 +198,113 @@ extern "C" {
 #define PKCS11H_ENUM_METHOD_RELOAD              2
 /** @} */
 
+
+/**
+ * @brief Library properties.
+ * @addtogroup PKCS11H_ENUM_PROPERTY
+ * @{
+ */
+
+/*
+ * @brief The current log level of the helper.
+ * Value type is @ref PKCS11H_LOG.
+ * Default is PKCS11H_LOG_INFO.
+ */
+#define PKCS11H_PROPERTY_LOG_LEVEL 0
+
+/**
+ * @brief How does the foked process bahaves after POSIX fork()
+ * Value is PKCS11H_BOOL.
+ * Default is FALSE.
+ * @attention
+ * This function should be called after @ref pkcs11h_initialize()
+ * @note
+ * This property is relevant if @ref PKCS11H_FEATURE_MASK_THREADING is set.
+ * If safe mode is on, the child process can use the loaded PKCS#11 providers
+ * but it cannot use fork(), while it is in one of the hooks functions, since
+ * locked mutexes cannot be released.
+ */
+#define PKCS11H_PROPERTY_FORK_MODE 1
+
+/**
+ * @brief A log callback.
+ * Value is pkcs11h_hook_log_t.
+ */
+#define PKCS11H_PROPERTY_LOG_HOOK 2
+
+/**
+ * @brief A log callback data.
+ * Value is void *.
+ */
+#define PKCS11H_PROPERTY_LOG_HOOK_DATA 3
+
+/**
+ * @brief A slot event callback.
+ * Value is pkcs11h_hook_slotevent_t.
+ * @attention
+ * Calling this function initialize slot event notifications, these
+ * notifications can be started, but never terminate due to PKCS#11 limitation.
+ * @note In order to use slot events you must have threading @ref PKCS11H_FEATURE_MASK_THREADING enabled.
+ */
+#define PKCS11H_PROPERTY_SLOT_EVENT_HOOK 4
+
+/**
+ * @brief A slot event callback data.
+ * Value is void *.
+ */
+#define PKCS11H_PROPERTY_SLOT_EVENT_HOOK_DATA 5
+
+/**
+ * @brief A token prompt callback.
+ * Value type is pkcs11h_hook_token_prompt_t.
+ * @attention
+ * If @ref pkcs11h_setForkMode() is true, you cannot fork while in hook.
+ */
+#define PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK 6
+
+/**
+ * @brief A token prompt callback data.
+ * Value is void *.
+ */
+#define PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK_DATA 7
+
+/**
+ * @brief A pin prompt callback.
+ * Value type is pkcs11h_hook_pin_prompt_t.
+ * @attention
+ * If @ref pkcs11h_setForkMode() is true, you cannot fork while in hook.
+ */
+#define PKCS11H_PROPERTY_PIN_PROMPT_HOOK 8
+
+/**
+ * @brief A PIN prompt callback data.
+ * Value is void *.
+ */
+#define PKCS11H_PROPERTY_PIN_PROMPT_HOOK_DATA 9
+
+/**
+ * @brief Global protected authentication mode.
+ * Value is PKCS11H_BOOL.
+ * Default is TRUE.
+ */
+#define PKCS11H_PROPERTY_ALLOW_PROTECTED_AUTHENTICATION 10
+
+/**
+ * @brief Global PIN cache timeout in seconds.
+ * Value is int.
+ * Default is infinite.
+ */
+#define PKCS11H_PROPERTY_PIN_CACHE_PERIOD 11
+
+/**
+ * @brief Global login retries attempts.
+ * Value is unsigned.
+ * Default is 3.
+ */
+#define PKCS11H_PROPERTY_MAX_LOGIN_RETRIES 12
+
+/** @} */
+
 /**
  * @brief Provider properties.
  * @addtogroup PKCS11H_ENUM_PROVIDER_PROPERTY
@@ -371,6 +478,36 @@ pkcs11h_initialize (void);
  */
 CK_RV
 pkcs11h_terminate (void);
+
+/**
+ * @brief Get library property.
+ * @param property              Property kind.
+ * @param value                 Property value.
+ * @param value_size            size of dereferenced property value.
+ * @return CK_RV.
+ * @note Referenced type has to satisfy @ref PKCS11H_ENUM_PROPERTY.
+ */
+CK_RV
+pkcs11h_getProperty (
+	IN const unsigned property,
+	OUT void * const value,
+	IN OUT size_t * const value_size
+);
+
+/**
+ * @brief Set library property.
+ * @param property              Property kind.
+ * @param value                 Property value.
+ * @param value_size            size of dereferenced property value.
+ * @return CK_RV.
+ * @note Referenced type has to satisfy @ref PKCS11H_ENUM_PROPERTY.
+ */
+CK_RV
+pkcs11h_setProperty (
+	IN const unsigned property,
+	IN const void * const value,
+	IN const size_t value_size
+);
 
 /**
  * @brief Set current log level of the helper.

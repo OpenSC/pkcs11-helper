@@ -12,6 +12,8 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
    thanks to Uipko Berghuis
  * certificate: add methods accept full mechanism, thanks to Selva Nair.
  * core: load provider library as private.
+ * core: add pkcs11h_getProperty, pkcs11h_setProperty to support adding
+   properties without breaking API.
  * core: add pkcs11h_initializeProvider, pkcs11h_registerProvider,
    pkcs11h_setProviderProperty, pkcs11h_setProviderPropertyByName to
    support adding properties without breaking API thanks to Михалицын Петр.

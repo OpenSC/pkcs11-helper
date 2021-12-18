@@ -532,32 +532,232 @@ pkcs11h_terminate (void) {
 	return CKR_OK;
 }
 
+static
+CK_RV
+__pkcs11h_propertyAddress(
+	IN const unsigned property,
+	OUT void ** value,
+	OUT size_t * value_size
+) {
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	switch (property) {
+		default:
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_ERROR,
+				"PKCS#11: Trying to lookup library provider property '%d'",
+				property
+			);
+			rv = CKR_ATTRIBUTE_TYPE_INVALID;
+			goto cleanup;
+		case PKCS11H_PROPERTY_LOG_LEVEL:
+			*value = &_g_pkcs11h_loglevel;
+			*value_size = sizeof(_g_pkcs11h_loglevel);
+		break;
+		case PKCS11H_PROPERTY_FORK_MODE:
+#if !defined(_WIN32)
+			*value = &_g_pkcs11h_data->safefork;
+			*value_size = sizeof(_g_pkcs11h_data->safefork);
+#else
+			rv = CKR_FUNCTION_NOT_SUPPORTED;
+			goto cleanup;
+#endif
+		break;
+		case PKCS11H_PROPERTY_LOG_HOOK:
+			*value = &_g_pkcs11h_data->hooks.log;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.log);
+		break;
+		case PKCS11H_PROPERTY_LOG_HOOK_DATA:
+			*value = &_g_pkcs11h_data->hooks.log_data;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.log_data);
+		break;
+		case PKCS11H_PROPERTY_SLOT_EVENT_HOOK:
+#if defined(ENABLE_PKCS11H_SLOTEVENT)
+			*value = &_g_pkcs11h_data->hooks.slotevent;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.slotevent);
+#else
+			rv = CKR_FUNCTION_NOT_SUPPORTED;
+			goto cleanup;
+#endif
+		break;
+		case PKCS11H_PROPERTY_SLOT_EVENT_HOOK_DATA:
+#if defined(ENABLE_PKCS11H_SLOTEVENT)
+			*value = &_g_pkcs11h_data->hooks.slotevent_data;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.slotevent_data);
+#else
+			rv = CKR_FUNCTION_NOT_SUPPORTED;
+			goto cleanup;
+#endif
+		break;
+		case PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK:
+			*value = &_g_pkcs11h_data->hooks.token_prompt;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.token_prompt);
+		break;
+		case PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK_DATA:
+			*value = &_g_pkcs11h_data->hooks.token_prompt_data;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.token_prompt_data);
+		break;
+		case PKCS11H_PROPERTY_PIN_PROMPT_HOOK:
+			*value = &_g_pkcs11h_data->hooks.pin_prompt;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.pin_prompt);
+		break;
+		case PKCS11H_PROPERTY_PIN_PROMPT_HOOK_DATA:
+			*value = &_g_pkcs11h_data->hooks.pin_prompt_data;
+			*value_size = sizeof(_g_pkcs11h_data->hooks.pin_prompt_data);
+		break;
+		case PKCS11H_PROPERTY_ALLOW_PROTECTED_AUTHENTICATION:
+			*value = &_g_pkcs11h_data->allow_protected_auth;
+			*value_size = sizeof(_g_pkcs11h_data->allow_protected_auth);
+		break;
+		case PKCS11H_PROPERTY_PIN_CACHE_PERIOD:
+			*value = &_g_pkcs11h_data->pin_cache_period;
+			*value_size = sizeof(_g_pkcs11h_data->pin_cache_period);
+		break;
+		case PKCS11H_PROPERTY_MAX_LOGIN_RETRIES:
+			*value = &_g_pkcs11h_data->max_retries;
+			*value_size = sizeof(_g_pkcs11h_data->max_retries);
+		break;
+	}
+	rv = CKR_OK;
+
+cleanup:
+	return rv;
+}
+
+CK_RV
+pkcs11h_getProperty (
+	IN const unsigned property,
+	OUT void * const value,
+	IN OUT size_t * const value_size
+) {
+	CK_RV rv = CKR_FUNCTION_FAILED;
+	void *source;
+	size_t size;
+
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (value != NULL);
+	_PKCS11H_ASSERT (value_size != NULL);
+
+	if ((rv = __pkcs11h_propertyAddress(property, &source, &size)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	if (size > *value_size) {
+		rv = CKR_BUFFER_TOO_SMALL;
+		goto cleanup;
+	}
+
+	memcpy(value, source, size);
+	rv = CKR_OK;
+
+cleanup:
+
+	return rv;
+}
+
+CK_RV
+pkcs11h_setProperty (
+	IN const unsigned property,
+	IN const void * value,
+	IN const size_t value_size
+) {
+	CK_RV rv = CKR_FUNCTION_FAILED;
+	void *target;
+	size_t size;
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_setProperty entry property='%d', value=%p, value_size=%ld",
+		property,
+		value,
+		value_size
+	);
+
+	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
+	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
+	_PKCS11H_ASSERT (value != NULL);
+
+	if ((rv = __pkcs11h_propertyAddress(property, &target, &size)) != CKR_OK) {
+		goto cleanup;
+	}
+
+	if (size != value_size) {
+		rv = CKR_DATA_LEN_RANGE;
+		goto cleanup;
+	}
+
+	if (value_size == sizeof(int)) {
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setting property %d=0x%x",
+			property,
+			*(int *)value
+		);
+	}
+	else if (value_size == sizeof(long)) {
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setting property %d=0x%lx",
+			property,
+			*(long *)value
+		);
+	}
+	else {
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setting property %d=*size*",
+			property
+		);
+	}
+
+	memcpy(target, value, size);
+	rv = CKR_OK;
+
+	switch (property) {
+		case PKCS11H_PROPERTY_SLOT_EVENT_HOOK:
+			if ((rv = _pkcs11h_slotevent_init ()) != CKR_OK) {
+				goto cleanup;
+			}
+		break;
+	}
+cleanup:
+
+	_PKCS11H_DEBUG (
+		PKCS11H_LOG_DEBUG2,
+		"PKCS#11: pkcs11h_setProperty return rv=%lu-'%s'",
+		rv,
+		pkcs11h_getMessage (rv)
+	);
+
+	return rv;
+}
+
 void
 pkcs11h_setLogLevel (
 	IN const unsigned flags
 ) {
-	_g_pkcs11h_loglevel = flags;
+	pkcs11h_setProperty(PKCS11H_PROPERTY_LOG_LEVEL, &flags, sizeof(flags));
 }
 
 CK_RV
 pkcs11h_setForkMode (
 	IN const PKCS11H_BOOL safe
 ) {
-#if !defined(_WIN32)
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-
-	_g_pkcs11h_data->safefork = safe;
-#endif
-	return CKR_OK;
+	CK_RV rv;
+	rv = pkcs11h_setProperty(PKCS11H_PROPERTY_FORK_MODE, &safe, sizeof(safe));
+	if (rv == CKR_FUNCTION_NOT_SUPPORTED) {	/* backward compatibility */
+		rv = CKR_OK;
+	}
+	return rv;
 }
 
 unsigned
 pkcs11h_getLogLevel (void) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-
-	return _g_pkcs11h_loglevel;
+	unsigned flags;
+	size_t size = sizeof(flags);
+	pkcs11h_getProperty(PKCS11H_PROPERTY_LOG_LEVEL, &flags, &size);
+	return flags;
 }
 
 CK_RV
@@ -565,13 +765,8 @@ pkcs11h_setLogHook (
 	IN const pkcs11h_hook_log_t hook,
 	IN void * const global_data
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-	_PKCS11H_ASSERT (hook!=NULL);
-
-	_g_pkcs11h_data->hooks.log = hook;
-	_g_pkcs11h_data->hooks.log_data = global_data;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_LOG_HOOK_DATA, &global_data, sizeof(global_data));
+	pkcs11h_setProperty(PKCS11H_PROPERTY_LOG_HOOK, &hook, sizeof(hook));
 	return CKR_OK;
 }
 
@@ -580,20 +775,8 @@ pkcs11h_setSlotEventHook (
 	IN const pkcs11h_hook_slotevent_t hook,
 	IN void * const global_data
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-	_PKCS11H_ASSERT (hook!=NULL);
-
-#if defined(ENABLE_PKCS11H_SLOTEVENT)
-	_g_pkcs11h_data->hooks.slotevent = hook;
-	_g_pkcs11h_data->hooks.slotevent_data = global_data;
-
-	return _pkcs11h_slotevent_init ();
-#else
-	(void)global_data;
-
-	return CKR_FUNCTION_NOT_SUPPORTED;
-#endif
+	pkcs11h_setProperty(PKCS11H_PROPERTY_SLOT_EVENT_HOOK_DATA, &global_data, sizeof(global_data));
+	return pkcs11h_setProperty(PKCS11H_PROPERTY_SLOT_EVENT_HOOK, &hook, sizeof(hook));
 }
 
 CK_RV
@@ -601,13 +784,8 @@ pkcs11h_setPINPromptHook (
 	IN const pkcs11h_hook_pin_prompt_t hook,
 	IN void * const global_data
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-	_PKCS11H_ASSERT (hook!=NULL);
-
-	_g_pkcs11h_data->hooks.pin_prompt = hook;
-	_g_pkcs11h_data->hooks.pin_prompt_data = global_data;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_PIN_PROMPT_HOOK_DATA, &global_data, sizeof(global_data));
+	pkcs11h_setProperty(PKCS11H_PROPERTY_PIN_PROMPT_HOOK, &hook, sizeof(hook));
 	return CKR_OK;
 }
 
@@ -616,13 +794,8 @@ pkcs11h_setTokenPromptHook (
 	IN const pkcs11h_hook_token_prompt_t hook,
 	IN void * const global_data
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-	_PKCS11H_ASSERT (hook!=NULL);
-
-	_g_pkcs11h_data->hooks.token_prompt = hook;
-	_g_pkcs11h_data->hooks.token_prompt_data = global_data;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK_DATA, &global_data, sizeof(global_data));
+	pkcs11h_setProperty(PKCS11H_PROPERTY_TOKEN_PROMPT_HOOK, &hook, sizeof(hook));
 	return CKR_OK;
 }
 
@@ -630,11 +803,7 @@ CK_RV
 pkcs11h_setPINCachePeriod (
 	IN const int pin_cache_period
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-
-	_g_pkcs11h_data->pin_cache_period = pin_cache_period;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_PIN_CACHE_PERIOD, &pin_cache_period, sizeof(pin_cache_period));
 	return CKR_OK;
 }
 
@@ -642,11 +811,7 @@ CK_RV
 pkcs11h_setMaxLoginRetries (
 	IN const unsigned max_retries
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-
-	_g_pkcs11h_data->max_retries = max_retries;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_MAX_LOGIN_RETRIES, &max_retries, sizeof(max_retries));
 	return CKR_OK;
 }
 
@@ -654,11 +819,7 @@ CK_RV
 pkcs11h_setProtectedAuthentication (
 	IN const PKCS11H_BOOL allow_protected_auth
 ) {
-	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
-	_PKCS11H_ASSERT (_g_pkcs11h_data->initialized);
-
-	_g_pkcs11h_data->allow_protected_auth = allow_protected_auth;
-
+	pkcs11h_setProperty(PKCS11H_PROPERTY_ALLOW_PROTECTED_AUTHENTICATION, &allow_protected_auth, sizeof(allow_protected_auth));
 	return CKR_OK;
 }
 

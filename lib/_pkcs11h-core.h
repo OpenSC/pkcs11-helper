@@ -128,6 +128,8 @@ struct _pkcs11h_provider_s {
 	unsigned slot_event_method;
 	unsigned slot_poll_interval;
 	CK_C_INITIALIZE_ARGS_PTR init_args;
+	pkcs11h_provider_destruct_hook_t destruct_hook;
+	void * destruct_hook_data;
 
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_thread_t slotevent_thread;

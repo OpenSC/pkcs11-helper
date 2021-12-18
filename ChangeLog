@@ -18,6 +18,7 @@ Copyright (c) 2005-2020 Alon Bar-Lev <alon.barlev@gmail.com>
    pkcs11h_setProviderProperty, pkcs11h_setProviderPropertyByName to
    support adding properties without breaking API thanks to Михалицын Петр.
  * core: add initialization arguments property, thanks for Михалицын Петр.
+ * core: add PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK.
  * session: respect login required token flag.
  * certificate: respect always authenticate flag.
 

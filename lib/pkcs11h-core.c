@@ -136,6 +136,8 @@ static const char * __pkcs11h_provider_preperty_names[] = {
 	"slot_poll_interval",
 	"cert_is_private",
 	"init_args",
+	"provider_destruct_hook",
+	"provider_destruct_hook_data",
 	NULL
 };
 
@@ -1073,6 +1075,14 @@ __pkcs11h_providerPropertyAddress(
 			*value = &provider->init_args;
 			*value_size = sizeof(provider->init_args);
 		break;
+		case PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK:
+			*value = &provider->destruct_hook;
+			*value_size = sizeof(provider->destruct_hook);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK_DATA:
+			*value = &provider->destruct_hook_data;
+			*value_size = sizeof(provider->destruct_hook_data);
+		break;
 	}
 	rv = CKR_OK;
 
@@ -1440,6 +1450,11 @@ free1:
 	if (provider == NULL) {
 		rv = CKR_OBJECT_HANDLE_INVALID;
 		goto cleanup;
+	}
+
+	if (provider->destruct_hook != NULL) {
+		provider->destruct_hook(provider->destruct_hook_data, reference);
+		provider->destruct_hook = NULL;
 	}
 
 	provider->reference[0] = '\0';

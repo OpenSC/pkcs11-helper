@@ -24,6 +24,16 @@ _pkcs11h_hooks_log (
 	fflush (stdout);
 }
 
+static
+void
+_pkcs11h_hooks_provider_destroy (
+	IN void * const * global_data,
+	IN const char * const reference
+) {
+	fprintf (stdout, "Provider '%s' destroyed\n", reference);
+	fflush (stdout);
+}
+
 int main () {
 	struct {
 		char *p;
@@ -76,6 +86,12 @@ int main () {
 		) {
 			fatal ("pkcs11h_setProviderPropertyByName failed", rv);
 		}
+	}
+
+	{
+		void *p;
+		p = &_pkcs11h_hooks_provider_destroy;
+		pkcs11h_setProviderProperty(reference, PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK, &p, sizeof(p));
 	}
 
 	memset(&init_args, 0, sizeof(init_args));

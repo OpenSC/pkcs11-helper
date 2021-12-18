@@ -372,8 +372,20 @@ extern "C" {
  */
 #define PKCS11H_PROVIDER_PROPERTY_INIT_ARGS 6
 
+/**
+ * @brief Provider destruct hook.
+ * Value type is pkcs11h_provider_destruct_hook_t.
+ */
+#define PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK 7
+
+/**
+ * @brief Provider destruct notification data.
+ * Value type is void *.
+ */
+#define PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK_DATA 8
+
 /** @private */
-#define _PKCS11H_PROVIDER_PROPERTY_LAST 7
+#define _PKCS11H_PROVIDER_PROPERTY_LAST 9
 
 /** @} */
 
@@ -459,6 +471,11 @@ typedef PKCS11H_BOOL (*pkcs11h_hook_key_prompt_t)(
 	IN const unsigned retry,
 	OUT char * const pin,
 	IN const size_t pin_max
+);
+
+typedef void (*pkcs11h_provider_destruct_hook_t)(
+	IN void * const global_data,
+	IN const char * const reference
 );
 
 /**

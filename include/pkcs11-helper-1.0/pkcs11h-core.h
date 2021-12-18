@@ -117,7 +117,6 @@ extern "C" {
 /**
  * @brief pkcs11-helper log level.
  * @addtogroup PKCS11H_LOG
- * @see pkcs11h_getLogLevel().
  * @see pkcs11h_setLogLevel().
  * @{
  */

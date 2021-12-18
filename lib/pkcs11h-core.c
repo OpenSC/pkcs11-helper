@@ -853,6 +853,64 @@ cleanup:
 	return rv;
 }
 
+static
+CK_RV
+__pkcs11h_providerPropertyAddress(
+	IN _pkcs11h_provider_t provider,
+	IN const unsigned property,
+	OUT void ** value,
+	OUT size_t * value_size,
+	OUT PKCS11H_BOOL *do_strdup
+) {
+	CK_RV rv = CKR_FUNCTION_FAILED;
+
+	*do_strdup = FALSE;
+
+	switch (property) {
+		default:
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_ERROR,
+				"PKCS#11: Trying to lookup unknown provider property '%d'",
+				property
+			);
+			rv = CKR_ATTRIBUTE_TYPE_INVALID;
+			goto cleanup;
+		case PKCS11H_PROVIDER_PROPERTY_LOCATION:
+			*value = &provider->provider_location;
+			*value_size = sizeof(provider->provider_location);
+			*do_strdup = TRUE;
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_ALLOW_PROTECTED_AUTH:
+			*value = &provider->allow_protected_auth;
+			*value_size = sizeof(provider->allow_protected_auth);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE:
+			*value = &provider->mask_private_mode;
+			*value_size = sizeof(provider->mask_private_mode);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD:
+			*value = &provider->slot_event_method;
+			*value_size = sizeof(provider->slot_event_method);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL:
+			*value = &provider->slot_poll_interval;
+			*value_size = sizeof(provider->slot_poll_interval);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE:
+			*value = &provider->cert_is_private;
+			*value_size = sizeof(provider->cert_is_private);
+		break;
+		case PKCS11H_PROVIDER_PROPERTY_INIT_ARGS:
+			*value = &provider->init_args;
+			*value_size = sizeof(provider->init_args);
+		break;
+	}
+	rv = CKR_OK;
+
+cleanup:
+	return rv;
+}
+
 CK_RV
 pkcs11h_setProviderProperty (
 	IN const char * const reference,
@@ -861,6 +919,9 @@ pkcs11h_setProviderProperty (
 	IN const size_t value_size
 ) {
 	_pkcs11h_provider_t provider = NULL;
+	void *target;
+	size_t size;
+	PKCS11H_BOOL do_strdup;
 	CK_RV rv = CKR_OK;
 
 	_PKCS11H_ASSERT (_g_pkcs11h_data!=NULL);
@@ -869,9 +930,11 @@ pkcs11h_setProviderProperty (
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
-		"PKCS#11: pkcs11h_setProviderProperty entry reference='%s', property='%d'",
+		"PKCS#11: pkcs11h_setProviderProperty entry reference='%s', property='%d', value=%p, value_size=%ld",
 		reference,
-		property
+		property,
+		value,
+		value_size
 	);
 
 	if ((provider = __pkcs11h_get_pkcs11_provider(reference)) == NULL) {
@@ -879,154 +942,85 @@ pkcs11h_setProviderProperty (
 		goto cleanup;
 	}
 
-	switch (property) {
-		case PKCS11H_PROVIDER_PROPERTY_LOCATION:
-		{
-			const char * provider_location = (const char *)value;
+	if ((rv = __pkcs11h_providerPropertyAddress(provider, property, &target, &size, &do_strdup)) != CKR_OK) {
+		goto cleanup;
+	}
 
+	if (do_strdup) {
+		const char *str = (const char *)value;
+		if (
+			target != NULL &&
+			(rv = _pkcs11h_mem_free((void *)target)) != CKR_OK
+		) {
+			goto cleanup;
+		}
+		if ((rv = _pkcs11h_mem_strdup(target, str)) != CKR_OK) {
+			goto cleanup;
+		}
+
+		_PKCS11H_DEBUG (
+			PKCS11H_LOG_DEBUG1,
+			"PKCS#11: Setting provider property %s:%s=%s",
+			reference,
+			__pkcs11h_provider_preperty_names[property],
+			str
+		);
+	}
+	else {
+		if (size != value_size) {
+			rv = CKR_DATA_LEN_RANGE;
+			goto cleanup;
+		}
+
+		if (value_size == sizeof(int)) {
 			_PKCS11H_DEBUG (
 				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s='%s'",
+				"PKCS#11: Setting provider property %s:%s=0x%x",
+				reference,
 				__pkcs11h_provider_preperty_names[property],
-				provider_location
+				*(int *)value
 			);
+		}
+		else if (value_size == sizeof(long)) {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting provider property %s:%s=0x%lx",
+				reference,
+				__pkcs11h_provider_preperty_names[property],
+				*(long *)value
+			);
+		}
+		else {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Setting provider property %s:%s=*size*",
+				reference,
+				__pkcs11h_provider_preperty_names[property]
+			);
+		}
 
-			if (provider_location == NULL) {
-				goto cleanup;
-			}
+		memcpy(target, value, size);
+	}
+	rv = CKR_OK;
 
-			if (
-				provider->provider_location != NULL &&
-				(rv = _pkcs11h_mem_free((void *)&provider->provider_location)) != CKR_OK
-			) {
-				break;
-			}
-
-			if ((rv = _pkcs11h_mem_strdup(&provider->provider_location, provider_location)) != CKR_OK) {
-				break;
-			}
-
+	switch (property) {
+		case PKCS11H_PROVIDER_PROPERTY_LOCATION:
 			strncpy (
 				provider->manufacturerID,
 				(
-					strlen (provider_location) < sizeof (provider->manufacturerID) ?
-					provider_location :
-					provider_location+strlen (provider_location)-sizeof (provider->manufacturerID)+1
+					strlen (provider->provider_location) < sizeof (provider->manufacturerID) ?
+					provider->provider_location :
+					provider->provider_location+strlen (provider->provider_location)-sizeof (provider->manufacturerID)+1
 				),
 				sizeof (provider->manufacturerID)-1
 			);
 			provider->manufacturerID[sizeof (provider->manufacturerID)-1] = '\x0';
-		}
 		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_ALLOW_PROTECTED_AUTH:
-		{
-			PKCS11H_BOOL allow_protected_auth = *(PKCS11H_BOOL*) value;
-			_PKCS11H_ASSERT (sizeof(allow_protected_auth) == value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s=%d",
-				__pkcs11h_provider_preperty_names[property],
-				allow_protected_auth
-			);
-
-			provider->allow_protected_auth = allow_protected_auth;
-		}
-		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE:
-		{
-			unsigned mask_private_mode = *(unsigned*) value;
-			_PKCS11H_ASSERT (sizeof(mask_private_mode) == value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s=0x%08x",
-				__pkcs11h_provider_preperty_names[property],
-				mask_private_mode
-			);
-
-			provider->mask_private_mode = mask_private_mode;
-		}
-		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD:
-		{
-			unsigned slot_event_method = *(unsigned*) value;
-			_PKCS11H_ASSERT (sizeof(slot_event_method) == value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s=0x%08x'",
-				__pkcs11h_provider_preperty_names[property],
-				slot_event_method
-			);
-
-			provider->slot_event_method = slot_event_method;
-		}
-		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL:
-		{
-			unsigned slot_poll_interval = *(unsigned*) value;
-			_PKCS11H_ASSERT (sizeof(slot_poll_interval) == value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s=0x%08x",
-				__pkcs11h_provider_preperty_names[property],
-				slot_poll_interval
-			);
-
-			provider->slot_poll_interval = slot_poll_interval;
-		}
-		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_CERT_IS_PRIVATE:
-		{
-			PKCS11H_BOOL cert_is_private = *(PKCS11H_BOOL*) value;
-			_PKCS11H_ASSERT (sizeof(cert_is_private) == value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s=%d",
-				__pkcs11h_provider_preperty_names[property],
-				cert_is_private
-			);
-
-			provider->cert_is_private = cert_is_private;
-		}
-		break;
-
-		case PKCS11H_PROVIDER_PROPERTY_INIT_ARGS:
-		{
-			CK_C_INITIALIZE_ARGS_PTR init_args = *(CK_C_INITIALIZE_ARGS_PTR*) value;
-			_PKCS11H_ASSERT (sizeof(init_args) <= value_size);
-
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_DEBUG1,
-				"PKCS#11: Setting property %s={flags: 0x%08lx}",
-				__pkcs11h_provider_preperty_names[property],
-				init_args->flags
-			);
-
-			provider->init_args = init_args;
-		}
-		break;
-
-		default:
-			_PKCS11H_DEBUG (
-				PKCS11H_LOG_ERROR,
-				"PKCS#11: Trying to set unknown property '%d'",
-				property
-			);
-			rv = CKR_ATTRIBUTE_TYPE_INVALID;
 	}
 
 cleanup:
 	_PKCS11H_DEBUG (
-		PKCS11H_LOG_DEBUG1,
+		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_setProviderProperty return rv=%lu-'%s'",
 		rv,
 		pkcs11h_getMessage (rv)

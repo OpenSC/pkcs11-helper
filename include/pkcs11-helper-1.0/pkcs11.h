@@ -552,6 +552,14 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_SHA512_RSA_PKCS_PSS		(0x45UL)
 #define CKM_SHA224_RSA_PKCS		(0x46UL)
 #define CKM_SHA224_RSA_PKCS_PSS		(0x47UL)
+#define CKM_SHA3_256_RSA_PKCS		(0x60UL)
+#define CKM_SHA3_384_RSA_PKCS		(0x61UL)
+#define CKM_SHA3_512_RSA_PKCS		(0x62UL)
+#define CKM_SHA3_256_RSA_PKCS_PSS	(0x63UL)
+#define CKM_SHA3_384_RSA_PKCS_PSS	(0x64UL)
+#define CKM_SHA3_512_RSA_PKCS_PSS	(0x65UL)
+#define CKM_SHA3_224_RSA_PKCS		(0x66UL)
+#define CKM_SHA3_224_RSA_PKCS_PSS	(0x67UL)
 #define CKM_RC2_KEY_GEN			(0x100UL)
 #define CKM_RC2_ECB			(0x101UL)
 #define	CKM_RC2_CBC			(0x102UL)
@@ -573,6 +581,7 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_DES3_MAC			(0x134UL)
 #define CKM_DES3_MAC_GENERAL		(0x135UL)
 #define CKM_DES3_CBC_PAD		(0x136UL)
+#define CKM_DES3_CMAC_GENERAL		(0x137UL)
 #define CKM_DES3_CMAC			(0x138UL)
 #define CKM_CDMF_KEY_GEN		(0x140UL)
 #define CKM_CDMF_ECB			(0x141UL)
@@ -610,15 +619,19 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_SHA3_256			(0x2B0UL)
 #define CKM_SHA3_256_HMAC		(0x2B1UL)
 #define CKM_SHA3_256_HMAC_GENERAL	(0x2B2UL)
+#define CKM_SHA3_256_KEY_GEN		(0x2B3UL)
 #define CKM_SHA3_224			(0x2B5UL)
 #define CKM_SHA3_224_HMAC		(0x2B6UL)
 #define CKM_SHA3_224_HMAC_GENERAL	(0x2B7UL)
+#define CKM_SHA3_224_KEY_GEN		(0x2B8UL)
 #define CKM_SHA3_384			(0x2C0UL)
 #define CKM_SHA3_384_HMAC		(0x2C1UL)
 #define CKM_SHA3_384_HMAC_GENERAL	(0x2C2UL)
+#define CKM_SHA3_384_KEY_GEN		(0x2C3UL)
 #define CKM_SHA3_512			(0x2D0UL)
 #define CKM_SHA3_512_HMAC		(0x2D1UL)
 #define CKM_SHA3_512_HMAC_GENERAL	(0x2D2UL)
+#define CKM_SHA3_512_KEY_GEN		(0x2D3UL)
 #define CKM_CAST_KEY_GEN		(0x300UL)
 #define CKM_CAST_ECB			(0x301UL)
 #define CKM_CAST_CBC			(0x302UL)
@@ -721,6 +734,10 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_ECDSA_SHA256		(0x1044UL)
 #define CKM_ECDSA_SHA384		(0x1045UL)
 #define CKM_ECDSA_SHA512		(0x1046UL)
+#define CKM_ECDSA_SHA3_224		(0x1047UL)
+#define CKM_ECDSA_SHA3_256		(0x1048UL)
+#define CKM_ECDSA_SHA3_384		(0x1049UL)
+#define CKM_ECDSA_SHA3_512		(0x104AUL)
 #define CKM_ECDH1_DERIVE		(0x1050UL)
 #define CKM_ECDH1_COFACTOR_DERIVE	(0x1051UL)
 #define CKM_ECMQV_DERIVE		(0x1052UL)
@@ -745,6 +762,10 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_AES_CCM				(0x1088UL)
 #define CKM_AES_CTS				(0x1089UL)
 #define CKM_AES_CMAC			(0x108AUL)
+#define CKM_AES_CMAC_GENERAL		(0x108BUL)
+#define CKM_AES_XCBC_MAC		(0x108CUL)
+#define CKM_AES_XCBC_MAC_96		(0x108DUL)
+#define CKM_AES_GMAC			(0x108EUL)
 #define CKM_BLOWFISH_KEY_GEN    (0x1090UL)
 #define CKM_BLOWFISH_CBC        (0x1091UL)
 #define CKM_TWOFISH_KEY_GEN     (0x1092UL)
@@ -780,10 +801,16 @@ typedef unsigned long ck_mechanism_type_t;
 #define CKM_DSA_PARAMETER_GEN		(0x2000UL)
 #define CKM_DH_PKCS_PARAMETER_GEN	(0x2001UL)
 #define CKM_X9_42_DH_PARAMETER_GEN	(0x2002UL)
+#define CKM_AES_OFB			(0x2104UL)
+#define CKM_AES_CFB64			(0x2105UL)
+#define CKM_AES_CFB8			(0x2106UL)
+#define CKM_AES_CFB128			(0x2107UL)
 #define CKM_AES_KEY_WRAP		(0x2109UL)
+#define CKM_AES_KEY_WRAP_PAD		(0x210AUL)
 #define CKM_XEDDSA			(0x4029UL)
-#define CKM_VENDOR_DEFINED		(1UL << 31)
 
+
+#define CKM_VENDOR_DEFINED		(1UL << 31)
 
 struct ck_mechanism
 {
@@ -801,6 +828,14 @@ struct ck_mechanism_info
 };
 
 #define CKF_HW			(1UL << 0)
+
+#define CKF_MESSAGE_ENCRYPT	(1UL << 1)
+#define CKF_MESSAGE_DECRYPT	(1UL << 2)
+#define CKF_MESSAGE_SIGN	(1UL << 3)
+#define CKF_MESSAGE_VERIFY	(1UL << 4)
+#define CKF_MULTI_MESSAGE	(1UL << 5)
+#define CKF_FIND_OBJECTS	(1UL << 6)
+
 #define CKF_ENCRYPT		(1UL << 8)
 #define CKF_DECRYPT		(1UL << 9)
 #define CKF_DIGEST		(1UL << 10)
@@ -878,6 +913,10 @@ typedef struct CK_RSA_PKCS_PSS_PARAMS {
 #define CKG_MGF1_SHA256		(0x00000002UL)
 #define CKG_MGF1_SHA384		(0x00000003UL)
 #define CKG_MGF1_SHA512		(0x00000004UL)
+#define CKG_MGF1_SHA3_224	(0x00000006UL)
+#define CKG_MGF1_SHA3_256	(0x00000007UL)
+#define CKG_MGF1_SHA3_384	(0x00000008UL)
+#define CKG_MGF1_SHA3_512	(0x00000009UL)
 
 #define CKZ_DATA_SPECIFIED	(0x00000001UL)
 
@@ -905,6 +944,13 @@ typedef struct CK_XEDDSA_PARAMS {
 } CK_XEDDSA_PARAMS;
 
 typedef CK_XEDDSA_PARAMS *CK_XEDDSA_PARAMS_PTR;
+
+typedef struct CK_AES_CTR_PARAMS {
+    unsigned long ulCounterBits;
+    unsigned char cb[16];
+} CK_AES_CTR_PARAMS;
+
+typedef CK_AES_CTR_PARAMS *CK_AES_CTR_PARAMS_PTR;
 
 typedef unsigned long ck_rv_t;
 
@@ -1210,7 +1256,7 @@ _CK_DECLARE_FUNCTION (C_GetInterfaceList,
 _CK_DECLARE_FUNCTION (C_GetInterface,
 		      (unsigned char *interface_name,
 		       struct ck_version *version,
-		       struct ck_interface **interface,
+		       struct ck_interface **interface_ptr,
 		       ck_flags_t flags));
 
 _CK_DECLARE_FUNCTION (C_LoginUser,

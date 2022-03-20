@@ -726,9 +726,11 @@ pkcs11h_setProperty (
 
 	switch (property) {
 		case PKCS11H_PROPERTY_SLOT_EVENT_HOOK:
+#if defined(ENABLE_PKCS11H_SLOTEVENT)
 			if ((rv = _pkcs11h_slotevent_init ()) != CKR_OK) {
 				goto cleanup;
 			}
+#endif
 		break;
 	}
 cleanup:

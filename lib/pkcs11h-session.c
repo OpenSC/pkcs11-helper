@@ -1058,7 +1058,7 @@ _pkcs11h_session_login_context (
 				_PKCS11H_DEBUG (
 					PKCS11H_LOG_DEBUG1,
 					"PKCS#11: Calling pin_prompt hook for '%s'",
-					compact_token_id->display
+					label == NULL ? session->token_id->display : compact_token_id->display
 				);
 				prompt_ret = _g_pkcs11h_data->hooks.pin_prompt (
 					_g_pkcs11h_data->hooks.pin_prompt_data,

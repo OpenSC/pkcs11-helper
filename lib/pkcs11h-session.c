@@ -173,13 +173,13 @@ _pkcs11h_session_getObjectAttributes (
 			count
 		)) != CKR_OK
 	) {
-		goto cleanup;
+		if (rv != CKR_ATTRIBUTE_SENSITIVE && rv != CKR_ATTRIBUTE_TYPE_INVALID) {
+			goto cleanup;
+		}
 	}
 
 	for (i=0;i<count;i++) {
-		if (attrs[i].ulValueLen == (CK_ULONG)-1) {
-			rv = CKR_ATTRIBUTE_VALUE_INVALID;
-			goto cleanup;
+		if (attrs[i].ulValueLen == CK_UNAVAILABLE_INFORMATION) {
 		}
 		else if (attrs[i].ulValueLen == 0) {
 			attrs[i].pValue = NULL;
@@ -204,8 +204,12 @@ _pkcs11h_session_getObjectAttributes (
 			count
 		)) != CKR_OK
 	) {
-		goto cleanup;
+		if (rv != CKR_ATTRIBUTE_SENSITIVE && rv != CKR_ATTRIBUTE_TYPE_INVALID) {
+			goto cleanup;
+		}
 	}
+
+	rv = CKR_OK;
 
 cleanup:
 

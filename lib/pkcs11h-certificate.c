@@ -300,6 +300,16 @@ __pkcs11h_certificate_loadCertificate (
 				pkcs11h_getMessage (rv)
 			);
 		}
+		else if (attrs[0].ulValueLen == CK_UNAVAILABLE_INFORMATION) {
+			_PKCS11H_DEBUG (
+				PKCS11H_LOG_DEBUG1,
+				"PKCS#11: Cannot certificate '%s' object %ld rv=%lu-'%s'",
+				certificate->session->provider->manufacturerID,
+				objects[i],
+				rv,
+				pkcs11h_getMessage (rv)
+			);
+		}
 		else {
 			if (
 				_pkcs11h_certificate_isBetterCertificate (
@@ -500,11 +510,12 @@ __pkcs11h_certificate_getKeyAttributes (
 			op_succeed = TRUE;
 		}
 		else {
-			CK_BBOOL *key_attrs_sign;
-			CK_BBOOL *key_attrs_sign_recover;
-			CK_BBOOL *key_attrs_decrypt;
-			CK_BBOOL *key_attrs_unwrap;
-			CK_BBOOL *key_attrs_always_authenticate;
+			CK_BBOOL *key_attrs_sign = NULL;
+			CK_BBOOL *key_attrs_sign_recover = NULL;
+			CK_BBOOL *key_attrs_decrypt = NULL;
+			CK_BBOOL *key_attrs_unwrap = NULL;
+			CK_BBOOL *key_attrs_always_authenticate = NULL;
+			int i;
 
 			if (
 				(rv = _pkcs11h_session_getObjectAttributes (
@@ -517,11 +528,26 @@ __pkcs11h_certificate_getKeyAttributes (
 				goto retry;
 			}
 
-			key_attrs_sign = (CK_BBOOL *)key_attrs[0].pValue;
-			key_attrs_sign_recover = (CK_BBOOL *)key_attrs[1].pValue;
-			key_attrs_decrypt = (CK_BBOOL *)key_attrs[2].pValue;
-			key_attrs_unwrap = (CK_BBOOL *)key_attrs[3].pValue;
-			key_attrs_always_authenticate = (CK_BBOOL *)key_attrs[4].pValue;
+			i=0;
+			if (key_attrs[i].ulValueLen != CK_UNAVAILABLE_INFORMATION) {
+				key_attrs_sign = (CK_BBOOL *)key_attrs[i].pValue;
+			}
+			i++;
+			if (key_attrs[i].ulValueLen != CK_UNAVAILABLE_INFORMATION) {
+				key_attrs_sign_recover = (CK_BBOOL *)key_attrs[i].pValue;
+			}
+			i++;
+			if (key_attrs[i].ulValueLen != CK_UNAVAILABLE_INFORMATION) {
+				key_attrs_decrypt = (CK_BBOOL *)key_attrs[i].pValue;
+			}
+			i++;
+			if (key_attrs[i].ulValueLen != CK_UNAVAILABLE_INFORMATION) {
+				key_attrs_unwrap = (CK_BBOOL *)key_attrs[i].pValue;
+			}
+			i++;
+			if (key_attrs[i].ulValueLen != CK_UNAVAILABLE_INFORMATION) {
+				key_attrs_always_authenticate = (CK_BBOOL *)key_attrs[i].pValue;
+			}
 
 			if (key_attrs_sign != NULL && *key_attrs_sign != CK_FALSE) {
 				certificate->mask_private_mode |= PKCS11H_PRIVATEMODE_MASK_SIGN;
@@ -541,7 +567,7 @@ __pkcs11h_certificate_getKeyAttributes (
 			}
 
 			if (key_attrs_always_authenticate != NULL) {
-				certificate->always_authenticate = *key_attrs_always_authenticate != 0;
+				certificate->always_authenticate = *key_attrs_always_authenticate != CK_FALSE;
 			}
 
 			if (strlen(certificate->id->displayName) == 0) {
@@ -2567,8 +2593,10 @@ _pkcs11h_certificate_enumSessionCertificates (
 			 * won't be able to retrieve them.
 			 */
 			if (
+				attrs[0].ulValueLen == CK_UNAVAILABLE_INFORMATION ||
 				attrs[0].pValue == NULL ||
-				attrs[0].ulValueLen == 0
+				attrs[0].ulValueLen == 0 ||
+				attrs[1].ulValueLen == CK_UNAVAILABLE_INFORMATION
 			) {
 				rv = CKR_OK;
 				goto retry1;

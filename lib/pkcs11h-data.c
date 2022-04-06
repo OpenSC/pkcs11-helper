@@ -216,6 +216,11 @@ pkcs11h_data_get (
 			goto retry;
 		}
 
+		if (attrs[0].ulValueLen == CK_UNAVAILABLE_INFORMATION) {
+			rv = CKR_ATTRIBUTE_TYPE_INVALID;
+			goto cleanup;
+		}
+
 		op_succeed = TRUE;
 		rv = CKR_OK;
 

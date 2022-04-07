@@ -5,6 +5,7 @@ Copyright (c) 2005-2021 Alon Bar-Lev <alon.barlev@gmail.com>
 
 * build: do not fail if slot evnets are disabled, thanks to Fabrice Fontaine.
 * core: do not assume standard objects supported by provider.
+* openssl: set back key into EVP for openssl-3 to work, thanks to apollo13.
 
 2021-12-31 - Version 1.28
 

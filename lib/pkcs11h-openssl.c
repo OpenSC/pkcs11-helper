@@ -653,6 +653,10 @@ __pkcs11h_openssl_session_setRSA(
 #if OPENSSL_VERSION_NUMBER < 0x10100001L
 	rsa->flags |= RSA_FLAG_SIGN_VER;
 #endif
+	if (EVP_PKEY_set1_RSA (evp, rsa) != 1) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot set RSA key");
+		goto cleanup;
+	}
 
 #ifdef BROKEN_OPENSSL_ENGINE
 	if (!rsa->engine) {
@@ -848,6 +852,11 @@ __pkcs11h_openssl_session_setDSA(
 
 	DSA_set_method (dsa, __openssl_methods.dsa);
 	DSA_set_ex_data (dsa, __openssl_methods.dsa_index, openssl_session);
+
+	if (EVP_PKEY_set1_DSA (evp, dsa) != 1) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot set DSA key");
+		goto cleanup;
+	}
 
 	ret = TRUE;
 
@@ -1046,6 +1055,11 @@ __pkcs11h_openssl_session_setECDSA(
 
 	EC_KEY_set_method (ec, __openssl_methods.eckey);
 	EC_KEY_set_ex_data (ec, __openssl_methods.eckey_index, openssl_session);
+
+	if (EVP_PKEY_set1_EC_KEY (evp, ec) != 1) {
+		_PKCS11H_LOG (PKCS11H_LOG_WARN, "PKCS#11: Cannot set EC key");
+		goto cleanup;
+	}
 
 	ret = TRUE;
 

@@ -1,6 +1,9 @@
 pkcs11-helper
 Copyright (c) 2005-2022 Alon Bar-Lev <alon.barlev@gmail.com>
 
+????-??-?? - Version 1.30.0
+
+
 2020-04-21 - Version 1.29.0
 
 * build: do not fail if slot evnets are disabled, thanks to Fabrice Fontaine.

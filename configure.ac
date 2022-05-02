@@ -300,7 +300,9 @@ if test "${have_openssl}" = "no"; then
 fi
 
 if test "${have_openssl}" = "yes"; then
+	old_CFLAGS="${CFLAGS}"
 	old_LIBS="${LIBS}"
+	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 	LIBS="${LIBS} ${OPENSSL_LIBS}"
 	AC_CHECK_FUNCS([ \
 		RSA_meth_dup RSA_meth_free \
@@ -344,6 +346,20 @@ if test "${have_openssl}" = "yes"; then
 	)
 	AC_MSG_CHECKING([for OpenSSL ec support])
 	AC_MSG_RESULT([${openssl_ec}])
+	# https://github.com/OpenSC/pkcs11-helper/pull/55
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[[#include <openssl/dsa.h>]],
+			[[
+				int foo() {
+					DSA_METHOD *meth = NULL;
+					sizeof(meth->name);
+				}
+			]]
+		)],
+		[AC_DEFINE([HAVE_DSA_METHOD_NAME], [1], [Have DSA_METHOD->name])]
+	)
+	CFLAGS="${old_CFLAGS}"
 	LIBS="${old_LIBS}"
 fi
 

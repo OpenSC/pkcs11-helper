@@ -2,6 +2,7 @@ pkcs11-helper
 Copyright (c) 2005-2022 Alon Bar-Lev <alon.barlev@gmail.com>
 
 ????-??-?? - Version 1.30.0
+* openssl: support DSA in libressl-3.5.0, thanks to Fabrice Fontaine.
 
 
 2020-04-21 - Version 1.29.0

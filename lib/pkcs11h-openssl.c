@@ -235,9 +235,13 @@ DSA_meth_free (DSA_METHOD *meth)
 static int
 DSA_meth_set1_name (DSA_METHOD *meth, const char *name)
 {
+#ifdef HAVE_DSA_METHOD_NAME
 	CK_RV rv;
 	rv = _pkcs11h_mem_strdup ((void *)&meth->name, name);
 	return rv == CKR_OK ? 1 : 0;
+#else
+	return 0;
+#endif
 }
 #endif
 

@@ -138,6 +138,7 @@ static const char * __pkcs11h_provider_preperty_names[] = {
 	"init_args",
 	"provider_destruct_hook",
 	"provider_destruct_hook_data",
+	"provider_loader_flags",
 	NULL
 };
 
@@ -916,6 +917,10 @@ pkcs11h_registerProvider (
 		reference
 	);
 
+#if !defined(_WIN32)
+	provider->loader_flags = RTLD_NOW | RTLD_LOCAL;
+#endif
+
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,
 		"PKCS#11: pkcs11h_registerProvider Provider '%s'",
@@ -1001,6 +1006,7 @@ pkcs11h_setProviderPropertyByName (
 		case PKCS11H_PROVIDER_PROPERTY_SLOT_EVENT_METHOD:
 		case PKCS11H_PROVIDER_PROPERTY_MASK_PRIVATE_MODE:
 		case PKCS11H_PROVIDER_PROPERTY_SLOT_POLL_INTERVAL:
+		case PKCS11H_PROVIDER_PROPERTY_LOADER_FLAGS:
 			*(unsigned *)value = (unsigned)strtol(value_str, 0, 0);
 			value_size = sizeof(unsigned);
 		break;
@@ -1084,6 +1090,9 @@ __pkcs11h_providerPropertyAddress(
 		case PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK_DATA:
 			*value = &provider->destruct_hook_data;
 			*value_size = sizeof(provider->destruct_hook_data);
+		case PKCS11H_PROVIDER_PROPERTY_LOADER_FLAGS:
+			*value = &provider->loader_flags;
+			*value_size = sizeof(provider->loader_flags);
 		break;
 	}
 	rv = CKR_OK;
@@ -1254,9 +1263,9 @@ pkcs11h_initializeProvider (
 	}
 
 #if defined(_WIN32)
-	provider->handle = LoadLibraryA (provider->provider_location);
+	provider->handle = LoadLibraryExA (provider->provider_location, NULL, provider->loader_flags);
 #else
-	provider->handle = dlopen (provider->provider_location, RTLD_NOW | RTLD_LOCAL);
+	provider->handle = dlopen (provider->provider_location, provider->loader_flags);
 #endif
 
 	if (provider->handle == NULL) {

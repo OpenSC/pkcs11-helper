@@ -384,8 +384,17 @@ extern "C" {
  */
 #define PKCS11H_PROVIDER_PROPERTY_PROVIDER_DESTRUCT_HOOK_DATA 8
 
+/**
+ * @brief Provider loader flags for platform.
+ * Value type is unsigned.
+ * Default value is platform dependent:
+ *     win32 -> 0
+ *    dlopen -> RTLD_NOW | RTLD_LOCAL
+ */
+#define PKCS11H_PROVIDER_PROPERTY_LOADER_FLAGS 9
+
 /** @private */
-#define _PKCS11H_PROVIDER_PROPERTY_LAST 9
+#define _PKCS11H_PROVIDER_PROPERTY_LAST 10
 
 /** @} */
 

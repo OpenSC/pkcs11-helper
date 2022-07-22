@@ -134,6 +134,8 @@ struct _pkcs11h_provider_s {
 #if defined(ENABLE_PKCS11H_SLOTEVENT)
 	_pkcs11h_thread_t slotevent_thread;
 #endif
+
+	unsigned loader_flags;
 };
 
 struct _pkcs11h_session_s {

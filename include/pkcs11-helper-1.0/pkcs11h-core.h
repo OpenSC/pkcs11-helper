@@ -134,7 +134,7 @@ extern "C" {
 #define PKCS11H_LOG_QUIET	0
 /** @} */
 
-/** Inifite session limit */
+/** Infinite session limit */
 #define PKCS11H_PIN_CACHE_INFINITE	-1
 
 /**
@@ -519,7 +519,7 @@ unsigned int
 pkcs11h_getFeatures (void);
 
 /**
- * @brief Inititalize helper interface.
+ * @brief Initialize helper interface.
  * @return CK_RV.
  * @see pkcs11h_terminate().
  * @attention This function must be called from the main thread.

@@ -340,7 +340,7 @@ int
 __pkcs11h_openssl_ex_data_dup (
 	CRYPTO_EX_DATA *to,
 	CRYPTO_EX_DATA *from,
-	void *from_d,
+	void **from_d,
 	int idx,
 	long argl,
 	void *argp
@@ -350,7 +350,7 @@ int
 __pkcs11h_openssl_ex_data_dup (
 	CRYPTO_EX_DATA *to,
 	const CRYPTO_EX_DATA *from,
-	void *from_d,
+	void **from_d,
 	int idx,
 	long argl,
 	void *argp

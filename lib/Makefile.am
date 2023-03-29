@@ -128,9 +128,11 @@ if ENABLE_PKCS11H_TOKEN
 endif
 
 if WIN32
+if ENABLE_SHARED
 mylibdir=$(libdir)
 mylib_DATA=.libs/@WIN_LIBPREFIX@pkcs11-helper-@LIBPKCS11_HELPER_LT_OLDEST@.dll.def
 .libs/@WIN_LIBPREFIX@pkcs11-helper-@LIBPKCS11_HELPER_LT_OLDEST@.dll.def:	libpkcs11-helper.la
+endif
 endif
 
 RCCOMPILE = $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \

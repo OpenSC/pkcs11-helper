@@ -1006,24 +1006,6 @@ _pkcs11h_session_login_context (
 
 	}
 
-	if (label == NULL && (mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT) == 0) {
-		rv = CKR_USER_NOT_LOGGED_IN;
-
-		_PKCS11H_DEBUG (
-			PKCS11H_LOG_DEBUG1,
-			"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
-		);
-	}
-
-	if (label != NULL && (mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT) == 0) {
-		rv = CKR_USER_NOT_LOGGED_IN;
-
-		_PKCS11H_DEBUG (
-			PKCS11H_LOG_DEBUG1,
-			"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
-		);
-	}
-
 	while (
 		!login_succeeded &&
 		retry_count < _g_pkcs11h_data->max_retries
@@ -1042,43 +1024,56 @@ _pkcs11h_session_login_context (
 			PKCS11H_BOOL prompt_ret;
 
 			if (label != NULL &&_g_pkcs11h_data->hooks.key_prompt != NULL) {
-				_PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Calling key_prompt hook for '%s':'%s'",
-					session->token_id->display,
-					label
-				);
-				prompt_ret = _g_pkcs11h_data->hooks.key_prompt (
-					_g_pkcs11h_data->hooks.key_prompt_data,
-					user_data,
-					session->token_id,
-					label,
-					retry_count,
-					pin,
-					sizeof (pin)
-				);
-			}
-			else {
-				_PKCS11H_DEBUG (
-					PKCS11H_LOG_DEBUG1,
-					"PKCS#11: Calling pin_prompt hook for '%s'",
-					label == NULL ? session->token_id->display : compact_token_id->display
-				);
-				prompt_ret = _g_pkcs11h_data->hooks.pin_prompt (
-					_g_pkcs11h_data->hooks.pin_prompt_data,
-					user_data,
-					label == NULL ? session->token_id : compact_token_id,
-					retry_count,
-					pin,
-					sizeof (pin)
-				);
-			}
+				if ((mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT) == 0) {
+					rv = CKR_USER_NOT_LOGGED_IN;
 
-			if (prompt_ret) {
-				rv = CKR_OK;
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Calling key_prompt hook denied because of prompt mask"
+					);
+				}
+				else {
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Calling key_prompt hook for '%s':'%s'",
+						session->token_id->display,
+						label
+					);
+					rv = _g_pkcs11h_data->hooks.key_prompt (
+						_g_pkcs11h_data->hooks.key_prompt_data,
+						user_data,
+						session->token_id,
+						label,
+						retry_count,
+						pin,
+						sizeof (pin)
+					) != 0 ? CKR_OK : CKR_CANCEL;
+				}
 			}
 			else {
-				rv = CKR_CANCEL;
+				if ((mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT) == 0) {
+					rv = CKR_USER_NOT_LOGGED_IN;
+
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Calling pin_prompt hook denied because of prompt mask"
+					);
+				}
+				else {
+					_PKCS11H_DEBUG (
+						PKCS11H_LOG_DEBUG1,
+						"PKCS#11: Calling pin_prompt hook for '%s'",
+						label == NULL ? session->token_id->display : compact_token_id->display
+					);
+					rv = _g_pkcs11h_data->hooks.pin_prompt (
+						_g_pkcs11h_data->hooks.pin_prompt_data,
+						user_data,
+						label == NULL ? session->token_id : compact_token_id,
+						retry_count,
+						pin,
+						sizeof (pin)
+					) != 0 ? CKR_OK : CKR_CANCEL;
+				}
 			}
 
 			_PKCS11H_DEBUG (

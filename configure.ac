@@ -48,7 +48,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-AC_PREREQ(2.60)
+AC_PREREQ([2.60])
 
 define([PACKAGE_VERSION_MAJOR], [1])
 define([PACKAGE_VERSION_MINOR], [30])
@@ -248,6 +248,7 @@ AC_ARG_WITH(
 	[AC_DEFINE_UNQUOTED([TEST_LOG_LEVEL], [3], [Test log level])]
 )
 
+AC_PROG_EGREP
 AC_PROG_CC
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
@@ -418,8 +419,6 @@ if test "${enable_strict}" = "yes"; then
 	CFLAGS="${CFLAGS} -Wall -Wextra -Wpointer-arith -Wsign-compare -Wno-unused-parameter -Wno-unused-function -Wno-variadic-macros -Wno-long-long"
 fi
 
-# Checks for header files.
-AC_HEADER_STDC
 AX_CPP_VARARG_MACRO_ISO
 AX_CPP_VARARG_MACRO_GCC
 AC_C_CONST
@@ -428,9 +427,10 @@ AC_C_VOLATILE
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
+
 AC_STRUCT_TM
 AX_SIZE_T_PRINTF
+AC_CHECK_INCLUDES_DEFAULT
 AC_CHECK_HEADERS([ \
 	stdio.h \
 	stdlib.h \

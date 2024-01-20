@@ -388,8 +388,7 @@ _pkcs11h_threading_condInit (
 	if (
 		(
 			pthread_mutex_init (&cond->mut, NULL) ||
-			pthread_cond_init (&cond->cond, NULL) ||
-			pthread_mutex_lock (&cond->mut)
+			pthread_cond_init (&cond->cond, NULL)
 		)
 	) {
 		rv = CKR_FUNCTION_FAILED;
@@ -423,7 +422,13 @@ _pkcs11h_threading_condWait (
 		goto cleanup;
 	}
 #else
+	int unlock_mutex = 0;
 	if (milli == PKCS11H_COND_INFINITE) {
+		if (pthread_mutex_lock (&cond->mut)) {
+			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
+		}
+		unlock_mutex = 1;
 		if (pthread_cond_wait (&cond->cond, &cond->mut)	) {
 			rv = CKR_FUNCTION_FAILED;
 			goto cleanup;
@@ -441,6 +446,11 @@ _pkcs11h_threading_condWait (
 		timeout.tv_sec = now.tv_sec + milli/1000;
 		timeout.tv_nsec = now.tv_usec*1000 + milli%1000;
 
+		if (pthread_mutex_trylock (&cond->mut)) {
+			rv = CKR_FUNCTION_FAILED;
+			goto cleanup;
+		}
+		unlock_mutex = 1;
 		if (pthread_cond_timedwait (&cond->cond, &cond->mut, &timeout)) {
 			rv = CKR_FUNCTION_FAILED;
 			goto cleanup;
@@ -449,6 +459,9 @@ _pkcs11h_threading_condWait (
 #endif
 	rv = CKR_OK;
 cleanup:
+	if (unlock_mutex) {
+		pthread_mutex_unlock (&cond->mut);
+	}
 	return rv;
 }
 

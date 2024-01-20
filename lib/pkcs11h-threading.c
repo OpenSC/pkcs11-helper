@@ -388,8 +388,7 @@ _pkcs11h_threading_condInit (
 	if (
 		(
 			pthread_mutex_init (&cond->mut, NULL) ||
-			pthread_cond_init (&cond->cond, NULL) ||
-			pthread_mutex_lock (&cond->mut)
+			pthread_cond_init (&cond->cond, NULL)
 		)
 	) {
 		rv = CKR_FUNCTION_FAILED;
@@ -423,6 +422,13 @@ _pkcs11h_threading_condWait (
 		goto cleanup;
 	}
 #else
+	PKCS11H_BOOL unlock_mutex = FALSE;
+
+	if (pthread_mutex_lock (&cond->mut)) {
+		goto cleanup;
+	}
+	unlock_mutex = TRUE;
+
 	if (milli == PKCS11H_COND_INFINITE) {
 		if (pthread_cond_wait (&cond->cond, &cond->mut)	) {
 			rv = CKR_FUNCTION_FAILED;
@@ -449,6 +455,13 @@ _pkcs11h_threading_condWait (
 #endif
 	rv = CKR_OK;
 cleanup:
+
+#if !defined(_WIN32)
+	if (unlock_mutex) {
+		pthread_mutex_unlock (&cond->mut);
+	}
+#endif
+
 	return rv;
 }
 

@@ -159,7 +159,7 @@ extern "C" {
  * @addtogroup PKCS11H_SLOTEVENT_METHOD
  * @{
  */
-/* Auto select by provider information. */
+/** Auto select by provider information. */
 #define PKCS11H_SLOTEVENT_METHOD_AUTO		0
 /** Force trigger. */
 #define PKCS11H_SLOTEVENT_METHOD_TRIGGER	1

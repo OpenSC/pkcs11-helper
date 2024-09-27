@@ -225,13 +225,22 @@ _pkcs11h_util_unescapeString (
 	const char *s = source;
 	char *t = target;
 	size_t n = 0;
+	size_t bytes_per_esc;
+	int high_nibble_pos;
 
 	/*_PKCS11H_ASSERT (target!=NULL); Not required*/
 	_PKCS11H_ASSERT (source!=NULL);
 	_PKCS11H_ASSERT (max!=NULL);
 
 	while (*s != '\x0') {
-		if (*s == '\\') {
+		if (*s == '\\' || *s == '%') {
+			if (*s == '%') {
+				bytes_per_esc = 3;
+				high_nibble_pos = 1;
+			} else {
+				bytes_per_esc = 4;
+				high_nibble_pos = 2;
+			}
 			if (t != NULL) {
 				if (n+1 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
@@ -240,15 +249,15 @@ _pkcs11h_util_unescapeString (
 				else {
 					char b[3];
 					unsigned u;
-					b[0] = s[2];
-					b[1] = s[3];
+					b[0] = s[high_nibble_pos];
+					b[1] = s[high_nibble_pos+1];
 					b[2] = '\x0';
 					sscanf (b, "%08x", &u);
 					*t = (char)(u & 0xff);
 					t++;
 				}
 			}
-			s+=4;
+			s+=bytes_per_esc;
 		}
 		else {
 			if (t != NULL) {

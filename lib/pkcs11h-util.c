@@ -148,7 +148,7 @@ _pkcs11h_util_escapeString (
 	IN OUT char * const target,
 	IN const char * const source,
 	IN size_t * const max,
-	IN const char * const invalid_chars
+	IN const char * const valid_chars
 ) {
 	static const char *x = "0123456789ABCDEF";
 	CK_RV rv = CKR_FUNCTION_FAILED;
@@ -162,7 +162,7 @@ _pkcs11h_util_escapeString (
 
 	while (*s != '\x0') {
 
-		if (*s == '\\' || strchr (invalid_chars, (unsigned char)*s) || !isgraph (*s)) {
+		if (!strchr (valid_chars, (unsigned char)*s)) {
 			if (t != NULL) {
 				if (n+4 > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;

@@ -56,7 +56,9 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
-#define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|:;,.+-"
+#define __PKCS11H_SERIALIZE_VALID_CHARS		"abcdefghijklmnopqrstuvwxyz" \
+                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                                            "0123456789_-."
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
 
@@ -99,7 +101,7 @@ pkcs11h_token_serializeTokenId (
 				NULL,
 				sources[e],
 				&t,
-				__PKCS11H_SERIALIZE_INVALID_CHARS
+				__PKCS11H_SERIALIZE_VALID_CHARS
 			)) != CKR_OK
 		) {
 			goto cleanup;
@@ -121,7 +123,7 @@ pkcs11h_token_serializeTokenId (
 					sz+n,
 					sources[e],
 					&t,
-					__PKCS11H_SERIALIZE_INVALID_CHARS
+					__PKCS11H_SERIALIZE_VALID_CHARS
 				)) != CKR_OK
 			) {
 				goto cleanup;

@@ -56,7 +56,10 @@
 #include "_pkcs11h-token.h"
 #include "_pkcs11h-certificate.h"
 
-#define __PKCS11H_SERIALIZE_INVALID_CHARS	"\\/\"'%&#@!?$* <>{}[]()`|:;,.+-"
+#define __PKCS11H_SERIALIZE_AS_PKCS11_URI	1
+#define __PKCS11H_SERIALIZE_VALID_CHARS		"abcdefghijklmnopqrstuvwxyz" \
+                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                                            "0123456789_-."
 
 #if defined(ENABLE_PKCS11H_TOKEN) || defined(ENABLE_PKCS11H_CERTIFICATE)
 
@@ -99,7 +102,8 @@ pkcs11h_token_serializeTokenId (
 				NULL,
 				sources[e],
 				&t,
-				__PKCS11H_SERIALIZE_INVALID_CHARS
+				__PKCS11H_SERIALIZE_VALID_CHARS,
+				__PKCS11H_SERIALIZE_AS_PKCS11_URI	
 			)) != CKR_OK
 		) {
 			goto cleanup;
@@ -121,7 +125,8 @@ pkcs11h_token_serializeTokenId (
 					sz+n,
 					sources[e],
 					&t,
-					__PKCS11H_SERIALIZE_INVALID_CHARS
+					__PKCS11H_SERIALIZE_VALID_CHARS,
+					__PKCS11H_SERIALIZE_AS_PKCS11_URI	
 				)) != CKR_OK
 			) {
 				goto cleanup;
@@ -325,7 +330,7 @@ pkcs11h_certificate_serializeCertificateId (
 		goto cleanup;
 	}
 
-	_max = n + certificate_id->attrCKA_ID_size*2 + 1;
+	_max = n + certificate_id->attrCKA_ID_size*3 + 1;
 
 	if (sz != NULL) {
 		if (saved_max < _max) {
@@ -334,12 +339,17 @@ pkcs11h_certificate_serializeCertificateId (
 		}
 
 		sz[n-1] = '/';
-		rv = _pkcs11h_util_binaryToHex (
-			sz+n,
-			saved_max-n,
-			certificate_id->attrCKA_ID,
-			certificate_id->attrCKA_ID_size
-		);
+		if (
+			(rv = _pkcs11h_util_binaryToHex (
+				sz+n,
+				saved_max-n,
+				certificate_id->attrCKA_ID,
+				certificate_id->attrCKA_ID_size,
+				__PKCS11H_SERIALIZE_AS_PKCS11_URI	
+			)) != CKR_OK
+		) {
+			goto cleanup;
+		}
 	}
 
 	*max = _max;

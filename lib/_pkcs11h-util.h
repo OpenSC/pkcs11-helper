@@ -74,7 +74,8 @@ _pkcs11h_util_binaryToHex (
 	OUT char * const target,
 	IN const size_t target_size,
 	IN const unsigned char * const source,
-	IN const size_t source_size
+	IN const size_t source_size,
+	IN int url_escape
 );
 
 CK_RV
@@ -82,7 +83,8 @@ _pkcs11h_util_escapeString (
 	IN OUT char * const target,
 	IN const char * const source,
 	IN size_t * const max,
-	IN const char * const invalid_chars
+	IN const char * const invalid_chars,
+	IN int url_escape
 );
 
 CK_RV

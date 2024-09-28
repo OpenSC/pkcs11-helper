@@ -122,23 +122,29 @@ _pkcs11h_util_binaryToHex (
 	OUT char * const target,
 	IN const size_t target_size,
 	IN const unsigned char * const source,
-	IN const size_t source_size
+	IN const size_t source_size,
+	IN int url_escape
 ) {
 	static const char *x = "0123456789ABCDEF";
-	size_t i;
+	size_t i, t;
+	size_t bytes_per_esc = url_escape ? 3 : 2;
 
 	_PKCS11H_ASSERT (target!=NULL);
 	_PKCS11H_ASSERT (source!=NULL);
 
-	if (target_size < source_size * 2 + 1) {
+	if (target_size < source_size * bytes_per_esc + 1) {
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
 	for (i=0;i<source_size;i++) {
-		target[i*2] =   x[(source[i]&0xf0)>>4];
-		target[i*2+1] = x[(source[i]&0x0f)>>0];
+		t = i*bytes_per_esc;
+		if (url_escape) {
+			target[t++] = '%';
+		}
+		target[t++] = x[(source[i]&0xf0)>>4];
+		target[t++] = x[(source[i]&0x0f)>>0];
 	}
-	target[source_size*2] = '\x0';
+	target[source_size*bytes_per_esc] = '\x0';
 
 	return CKR_OK;
 }
@@ -148,13 +154,15 @@ _pkcs11h_util_escapeString (
 	IN OUT char * const target,
 	IN const char * const source,
 	IN size_t * const max,
-	IN const char * const valid_chars
+	IN const char * const valid_chars,
+	IN const int url_escape
 ) {
 	static const char *x = "0123456789ABCDEF";
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	const char *s = source;
 	char *t = target;
 	size_t n = 0;
+	size_t bytes_per_esc = url_escape ? 3 : 4;
 
 	/*_PKCS11H_ASSERT (target!=NULL); Not required*/
 	_PKCS11H_ASSERT (source!=NULL);
@@ -164,19 +172,26 @@ _pkcs11h_util_escapeString (
 
 		if (!strchr (valid_chars, (unsigned char)*s)) {
 			if (t != NULL) {
-				if (n+4 > *max) {
+				if (n+bytes_per_esc > *max) {
 					rv = CKR_ATTRIBUTE_VALUE_INVALID;
 					goto cleanup;
 				}
 				else {
-					t[0] = '\\';
-					t[1] = 'x';
-					t[2] = x[(*s&0xf0)>>4];
-					t[3] = x[(*s&0x0f)>>0];
-					t+=4;
+					if (url_escape) {
+						t[0] = '%';
+						t[1] = x[(*s&0xf0)>>4];
+						t[2] = x[(*s&0x0f)>>0];
+						t+=3;
+					} else {
+						t[0] = '\\';
+						t[1] = 'x';
+						t[2] = x[(*s&0xf0)>>4];
+						t[3] = x[(*s&0x0f)>>0];
+						t+=4;
+					}
 				}
 			}
-			n+=4;
+			n+=bytes_per_esc;
 		}
 		else {
 			if (t != NULL) {

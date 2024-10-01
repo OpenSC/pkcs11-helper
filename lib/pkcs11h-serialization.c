@@ -261,6 +261,7 @@ __parse_pkcs11_uri (
 ) {
 	const char *end, *p;
 	CK_RV rv = CKR_OK;
+	unsigned int token_fields_found = 0;
 
 	_PKCS11H_ASSERT (token_id!=NULL);
 	_PKCS11H_ASSERT (sz!=NULL);
@@ -290,6 +291,7 @@ __parse_pkcs11_uri (
 					goto cleanup;
 				}
 
+				token_fields_found |= (1 << i);
 				goto matched;
 			}
 		}
@@ -327,8 +329,7 @@ cleanup:
 	 * *all* of manufacturer, model, serial and label attributes to be
 	 * defined. So reject partial URIs early instead of letting it do the
 	 * wrong thing. We can maybe improve this later. */
-	if (!token_id->model[0] || !token_id->label[0] ||
-	    !token_id->manufacturerID[0] || !token_id->serialNumber[0]) {
+	if (token_fields_found != 0xf) {
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 

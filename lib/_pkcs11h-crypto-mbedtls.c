@@ -87,13 +87,14 @@ __pkcs11h_crypto_mbedtls_certificate_get_expiration (
 
 	(void)global_data;
 
+	mbedtls_x509_crt_init(&x509);
+
 	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
 	_PKCS11H_ASSERT (blob!=NULL);
 	_PKCS11H_ASSERT (expiration!=NULL);
 
 	*expiration = (time_t)0;
 
-	memset(&x509, 0, sizeof(x509));
 	if (0 != mbedtls_x509_crt_parse (&x509, blob, blob_size)) {
 		goto cleanup;
 	}
@@ -134,6 +135,8 @@ __pkcs11h_crypto_mbedtls_certificate_get_dn (
 
 	(void)global_data;
 
+	mbedtls_x509_crt_init(&x509);
+
 	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
 	_PKCS11H_ASSERT (blob!=NULL);
 	_PKCS11H_ASSERT (dn!=NULL);
@@ -141,7 +144,6 @@ __pkcs11h_crypto_mbedtls_certificate_get_dn (
 
 	dn[0] = '\x0';
 
-	memset(&x509, 0, sizeof(x509));
 	if (0 != mbedtls_x509_crt_parse (&x509, blob, blob_size)) {
 		goto cleanup;
 	}
@@ -176,16 +178,17 @@ __pkcs11h_crypto_mbedtls_certificate_is_issuer (
 
 	(void)global_data;
 
+	mbedtls_x509_crt_init(&x509_issuer);
+	mbedtls_x509_crt_init(&x509_cert);
+
 	/*_PKCS11H_ASSERT (global_data!=NULL); NOT NEEDED*/
 	_PKCS11H_ASSERT (issuer_blob!=NULL);
 	_PKCS11H_ASSERT (cert_blob!=NULL);
 
-	memset(&x509_issuer, 0, sizeof(x509_issuer));
 	if (0 != mbedtls_x509_crt_parse (&x509_issuer, issuer_blob, issuer_blob_size)) {
 		goto cleanup;
 	}
 
-	memset(&x509_cert, 0, sizeof(x509_cert));
 	if (0 != mbedtls_x509_crt_parse (&x509_cert, cert_blob, cert_blob_size)) {
 		goto cleanup;
 	}

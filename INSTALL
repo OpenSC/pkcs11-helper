@@ -23,22 +23,22 @@ POSIX
 		$ make install
 
 	Build from a git clone:
-	    Ensure you have pkg-config and autotools,
+		Ensure you have pkg-config and autotools,
 
-	    ubuntu 22.04:
-	    $ sudo apt install autotools-dev autoconf automake libtool libssl-dev libnss3-dev libmbedtls-dev libgnutls28-dev pkg-config make
-	    $ autoreconf -ivf
-	    $ ./configure
-	    $ make
-	    $ make install
+		ubuntu 22.04:
+		$ sudo apt install autotools-dev autoconf automake libtool libssl-dev libnss3-dev libmbedtls-dev libgnutls28-dev pkg-config make
+		$ autoreconf -ivf
+		$ ./configure
+		$ make
+		$ make install
 
-	    RockyLinux / Fedora / RHEL:
-	    $ sudo yum install epel-release
-	    $ sudo yum install git pkg-config openssl-devel libtool make autoconf2.7x
-	    $ autoreconf27 -ivf
-	    $ ./configure
-        $ make
-        $ make install
+		RockyLinux / Fedora / RHEL:
+		$ sudo yum install epel-release
+		$ sudo yum install git pkg-config openssl-devel libtool make autoconf2.7x
+		$ autoreconf27 -ivf
+		$ ./configure
+		$ make
+		$ make install
 
 Cross-MinGW32
 	Dependencies:

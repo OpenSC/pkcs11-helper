@@ -35,7 +35,7 @@ POSIX
 	    RockyLinux / Fedora / RHEL:
 	    $ sudo yum install epel-release
 	    $ sudo yum install git pkg-config openssl-devel libtool make autoconf2.7x
-	    $ autoreconv27 -ivf
+	    $ autoreconf27 -ivf
 	    $ ./configure
         $ make
         $ make install

@@ -169,13 +169,25 @@ __generate_pkcs11_uri (
 	return CKR_OK;
 }
 
+static CK_BBOOL pkcs11h_use_serialize_token_uri(void) {
+  const char* override_serialize_type = getenv("PKCS11H_TOKEN_SERIALIZE_FORMAT");
+  if (override_serialize_type) {
+    if (strcmp(override_serialize_type, "uri") != 0) return CK_FALSE;
+    if (strcmp(override_serialize_type, "legacy") == 0) return CK_FALSE;
+  }
+  return CK_TRUE;
+}
+
 CK_RV
 pkcs11h_token_serializeTokenId (
 	OUT char * const sz,
 	IN OUT size_t *max,
 	IN const pkcs11h_token_id_t token_id
 ) {
+	const char *sources[5];
 	CK_RV rv = CKR_FUNCTION_FAILED;
+	size_t n;
+	int e;
 
 	/*_PKCS11H_ASSERT (sz!=NULL); Not required*/
 	_PKCS11H_ASSERT (max!=NULL);
@@ -189,7 +201,63 @@ pkcs11h_token_serializeTokenId (
 		(void *)token_id
 	);
 
-	rv = __generate_pkcs11_uri(sz, max, NULL, token_id);
+  if (pkcs11h_use_serialize_token_uri()) {
+    rv = __generate_pkcs11_uri(sz, max, NULL, token_id);
+  } else {
+    { /* Must be after assert */
+      sources[0] = token_id->manufacturerID;
+      sources[1] = token_id->model;
+      sources[2] = token_id->serialNumber;
+      sources[3] = token_id->label;
+      sources[4] = NULL;
+    }
+
+    n = 0;
+    for (e = 0; sources[e] != NULL; e++) {
+      size_t t;
+      if (
+        (rv = _pkcs11h_util_escapeString(
+          NULL,
+          sources[e],
+          &t,
+          __PKCS11H_SERIALIZE_INVALID_CHARS
+        )) != CKR_OK
+        ) {
+        goto cleanup;
+      }
+      n += t;
+    }
+
+    if (sz != NULL) {
+      if (*max < n) {
+        rv = CKR_ATTRIBUTE_VALUE_INVALID;
+        goto cleanup;
+      }
+
+      n = 0;
+      for (e = 0; sources[e] != NULL; e++) {
+        size_t t = *max - n;
+        if (
+          (rv = _pkcs11h_util_escapeString(
+            sz + n,
+            sources[e],
+            &t,
+            __PKCS11H_SERIALIZE_INVALID_CHARS
+          )) != CKR_OK
+          ) {
+          goto cleanup;
+        }
+        n += t;
+        sz[n - 1] = '/';
+      }
+      sz[n - 1] = '\x0';
+    }
+
+    *max = n;
+    rv = CKR_OK;
+  }
+
+cleanup:
 
 	_PKCS11H_DEBUG (
 		PKCS11H_LOG_DEBUG2,

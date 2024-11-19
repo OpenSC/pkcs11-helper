@@ -80,9 +80,9 @@ static struct {
 	{ NULL },
 };
 
-#define               P11_URL_VERBATIM      "abcdefghijklmnopqrstuvwxyz" \
-                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-                                            "0123456789_-."
+#define				       P11_URL_VERBATIM      "abcdefghijklmnopqrstuvwxyz" \
+																				    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+																				    "0123456789_-."
 
 static
 int
@@ -170,12 +170,12 @@ __generate_pkcs11_uri (
 }
 
 static CK_BBOOL pkcs11h_use_serialize_token_uri(void) {
-  const char* override_serialize_type = getenv("PKCS11H_TOKEN_SERIALIZE_FORMAT");
-  if (override_serialize_type) {
-    if (strcmp(override_serialize_type, "uri") != 0) return CK_FALSE;
-    if (strcmp(override_serialize_type, "legacy") == 0) return CK_FALSE;
-  }
-  return CK_TRUE;
+	const char* override_serialize_type = getenv("PKCS11H_TOKEN_SERIALIZE_FORMAT");
+	if (override_serialize_type) {
+		if (strcmp(override_serialize_type, "uri") != 0) return CK_FALSE;
+		if (strcmp(override_serialize_type, "legacy") == 0) return CK_FALSE;
+	}
+	return CK_TRUE;
 }
 
 CK_RV
@@ -201,61 +201,61 @@ pkcs11h_token_serializeTokenId (
 		(void *)token_id
 	);
 
-  if (pkcs11h_use_serialize_token_uri()) {
-    rv = __generate_pkcs11_uri(sz, max, NULL, token_id);
-  } else {
-    { /* Must be after assert */
-      sources[0] = token_id->manufacturerID;
-      sources[1] = token_id->model;
-      sources[2] = token_id->serialNumber;
-      sources[3] = token_id->label;
-      sources[4] = NULL;
-    }
+	if (pkcs11h_use_serialize_token_uri()) {
+		rv = __generate_pkcs11_uri(sz, max, NULL, token_id);
+	} else {
+		{ /* Must be after assert */
+			sources[0] = token_id->manufacturerID;
+			sources[1] = token_id->model;
+			sources[2] = token_id->serialNumber;
+			sources[3] = token_id->label;
+			sources[4] = NULL;
+		}
 
-    n = 0;
-    for (e = 0; sources[e] != NULL; e++) {
-      size_t t;
-      if (
-        (rv = _pkcs11h_util_escapeString(
-          NULL,
-          sources[e],
-          &t,
-          __PKCS11H_SERIALIZE_INVALID_CHARS
-        )) != CKR_OK
-        ) {
-        goto cleanup;
-      }
-      n += t;
-    }
+		n = 0;
+		for (e = 0; sources[e] != NULL; e++) {
+			size_t t;
+			if (
+				(rv = _pkcs11h_util_escapeString(
+					NULL,
+					sources[e],
+					&t,
+					__PKCS11H_SERIALIZE_INVALID_CHARS
+				)) != CKR_OK
+				) {
+				goto cleanup;
+			}
+			n += t;
+		}
 
-    if (sz != NULL) {
-      if (*max < n) {
-        rv = CKR_ATTRIBUTE_VALUE_INVALID;
-        goto cleanup;
-      }
+		if (sz != NULL) {
+			if (*max < n) {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto cleanup;
+			}
 
-      n = 0;
-      for (e = 0; sources[e] != NULL; e++) {
-        size_t t = *max - n;
-        if (
-          (rv = _pkcs11h_util_escapeString(
-            sz + n,
-            sources[e],
-            &t,
-            __PKCS11H_SERIALIZE_INVALID_CHARS
-          )) != CKR_OK
-          ) {
-          goto cleanup;
-        }
-        n += t;
-        sz[n - 1] = '/';
-      }
-      sz[n - 1] = '\x0';
-    }
+			n = 0;
+		for (e = 0; sources[e] != NULL; e++) {
+				size_t t = *max - n;
+				if (
+					 (rv = _pkcs11h_util_escapeString(
+						sz + n,
+						sources[e],
+						&t,
+						__PKCS11H_SERIALIZE_INVALID_CHARS
+					)) != CKR_OK
+					) {
+					goto cleanup;
+				}
+				n += t;
+				sz[n - 1] = '/';
+			}
+			sz[n - 1] = '\x0';
+		}
 
-    *max = n;
-    rv = CKR_OK;
-  }
+		*max = n;
+		rv = CKR_OK;
+	}
 
 cleanup:
 
@@ -342,7 +342,7 @@ __parse_pkcs11_uri (
 		int i;
 
 		p = end + 1;
-	        end = strchr (p, ';');
+					end = strchr (p, ';');
 		if (!end)
 			end = p + strlen(p);
 

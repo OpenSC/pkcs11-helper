@@ -4,6 +4,7 @@ Copyright (c) 2005-2022 Alon Bar-Lev <alon.barlev@gmail.com>
 ????-??-?? - Version 1.31.0
 * threading: fix mutex handling for cond_wait, thanks to Gleb Popov.
 * mbed: initialize certificate early using mbedtls_x509_crt_init.
+* util: fix deserialize buffer overflow. thanks to Aarnav Bos.
 
 2023-12-01 - Version 1.30.0
 * core: add dynamic loader provider attribute, thanks to Marc Becker.

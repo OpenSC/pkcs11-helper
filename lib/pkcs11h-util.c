@@ -51,6 +51,20 @@
 #include "common.h"
 #include "_pkcs11h-util.h"
 
+static
+int
+_ctoi(const char c) {
+	if ('0' <= c && c <= '9') {
+		return c - '0';
+	} else if ('A' <= c && c <= 'F') {
+		return c - 'A' + 10;
+	} else if ('a' <= c && c <= 'f') {
+		return c - 'a' + 10;
+	} else {
+		return -1;
+	}
+}
+
 void
 _pkcs11h_util_fixupFixedString (
 	OUT char * const target,			/* MUST BE >= length+1 */
@@ -78,6 +92,7 @@ _pkcs11h_util_hexToBinary (
 	IN const char * const source,
 	IN OUT size_t * const p_target_size
 ) {
+	CK_RV ret = CKR_ATTRIBUTE_VALUE_INVALID;
 	size_t target_max_size;
 	const char *p;
 	char buf[3] = {'\0', '\0', '\0'};
@@ -92,29 +107,31 @@ _pkcs11h_util_hexToBinary (
 	*p_target_size = 0;
 
 	while (*p != '\x0' && *p_target_size < target_max_size) {
-		if (isxdigit ((unsigned char)*p)) {
-			buf[i%2] = *p;
+		int b1, b2;
 
-			if ((i%2) == 1) {
-				unsigned v;
-				if (sscanf (buf, "%x", &v) != 1) {
-					v = 0;
-				}
-				target[*p_target_size] = (char)(v & 0xff);
-				(*p_target_size)++;
-			}
-
-			i++;
+		if ((b1 = _ctoi(*p)) == -1) {
+			goto cleanup;
 		}
 		p++;
+
+		if ((b2 = _ctoi(*p)) == -1) {
+			goto cleanup;
+		}
+		p++;
+
+		target[*p_target_size] = (char)((b1 << 4) | b2);
+		(*p_target_size)++;
 	}
 
 	if (*p != '\x0') {
-		return CKR_ATTRIBUTE_VALUE_INVALID;
+		goto cleanup;
 	}
-	else {
-		return CKR_OK;
-	}
+
+	ret = CKR_OK;
+
+cleanup:
+
+	return ret;
 }
 
 CK_RV
@@ -224,60 +241,69 @@ _pkcs11h_util_unescapeString (
 	CK_RV rv = CKR_FUNCTION_FAILED;
 	const char *s = source;
 	char *t = target;
+	size_t m = *max;
 	size_t n = 0;
 
 	/*_PKCS11H_ASSERT (target!=NULL); Not required*/
 	_PKCS11H_ASSERT (source!=NULL);
 	_PKCS11H_ASSERT (max!=NULL);
 
+#define __get_source(b) \
+	do { \
+		if (*s == '\0') { \
+			rv = CKR_ATTRIBUTE_VALUE_INVALID; \
+			goto cleanup; \
+		} \
+		b = *s; \
+		s++; \
+	} while(0)
+
+#define __add_target(c) \
+	do { \
+		if (t != NULL) { \
+			if (n >= m) { \
+				rv = CKR_ATTRIBUTE_VALUE_INVALID; \
+				goto cleanup; \
+			} \
+			*t = (c); \
+			t++; \
+		} \
+		n++; \
+	} while(0)
+
 	while (*s != '\x0') {
 		if (*s == '\\') {
-			if (t != NULL) {
-				if (n+1 > *max) {
-					rv = CKR_ATTRIBUTE_VALUE_INVALID;
-					goto cleanup;
-				}
-				else {
-					char b[3];
-					unsigned u;
-					b[0] = s[2];
-					b[1] = s[3];
-					b[2] = '\x0';
-					sscanf (b, "%08x", &u);
-					*t = (char)(u & 0xff);
-					t++;
-				}
-			}
-			s+=4;
-		}
-		else {
-			if (t != NULL) {
-				if (n+1 > *max) {
-					rv = CKR_ATTRIBUTE_VALUE_INVALID;
-					goto cleanup;
-				}
-				else {
-					*t = *s;
-					t++;
-				}
-			}
-			s++;
-		}
+			int bin;
+			int b1, b2;
 
-		n+=1;
+			__get_source(bin);
+
+			__get_source(bin);
+			if (bin != 'x') {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto cleanup;
+			}
+
+			__get_source(bin);
+			if ((b1 = _ctoi(bin)) == -1) {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto cleanup;
+			}
+
+			__get_source(bin);
+			if ((b2 = _ctoi(bin)) == -1) {
+				rv = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto cleanup;
+			}
+			__add_target((b1 << 4) | b2);
+		} else {
+			int bin;
+			__get_source(bin);
+			__add_target(bin);
+		}
 	}
 
-	if (t != NULL) {
-		if (n+1 > *max) {
-			rv = CKR_ATTRIBUTE_VALUE_INVALID;
-			goto cleanup;
-		}
-		else {
-			*t = '\x0';
-			t++;
-		}
-	}
-	n++;
+	__add_target('\0');
 
 	*max = n;
 	rv = CKR_OK;
@@ -285,5 +311,8 @@ _pkcs11h_util_unescapeString (
 cleanup:
 
 	return rv;
+
+#undef __get_source
+#undef __add_target
 }
 

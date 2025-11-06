@@ -53,6 +53,7 @@ MAINTAINERCLEANFILES=$(srcdir)/Makefile.in
 MY_TESTS = \
 	test-basic \
 	test-basic2 \
+	test-serialize \
 	$(NULL)
 
 TESTS=$(MY_TESTS)

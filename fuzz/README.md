@@ -1,6 +1,6 @@
 ## Prerequisites
 Install AFL++ (and it's pre-requisites such as clang)  
-https://github.com/AFLplusplus/AFLplusplus/
+https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md
 
 ## Building the harness
 1. Run ``build_fuzzer.sh`` from the fuzz directory

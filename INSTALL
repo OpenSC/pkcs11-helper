@@ -13,8 +13,29 @@ POSIX
 			OpenSSL>=0.9.7
 		doc: (Optional)
 			doxygen>=1.4
+		build:
+		    pkg-config
+		    autoconf 2.70 or later
 
-	Build:
+	Build from a released sources tar.gz archive (recommended):
+		$ ./configure
+		$ make
+		$ make install
+
+	Build from a git clone:
+		Ensure you have pkg-config and autotools,
+
+		ubuntu 22.04:
+		$ sudo apt install autotools-dev autoconf automake libtool libssl-dev libnss3-dev libmbedtls-dev libgnutls28-dev pkg-config make
+		$ autoreconf -ivf
+		$ ./configure
+		$ make
+		$ make install
+
+		RockyLinux / Fedora / RHEL:
+		$ sudo yum install epel-release
+		$ sudo yum install git pkg-config openssl-devel libtool make autoconf2.7x
+		$ autoreconf27 -ivf
 		$ ./configure
 		$ make
 		$ make install

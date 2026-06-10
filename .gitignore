@@ -55,3 +55,6 @@ copyright
 pkcs11-helper.spec
 
 doc/api/Doxyfile
+
+fuzz/output
+fuzz/fuzz_deserialize_cert

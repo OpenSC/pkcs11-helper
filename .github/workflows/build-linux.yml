@@ -15,7 +15,7 @@ jobs:
       - name: dependencies
         run: |
           sudo apt update
-          sudo apt install autotools-dev autoconf automake libtool libssl-dev libnss3-dev libmbedtls-dev libgnutls28-dev
+          sudo apt install autotools-dev autoconf automake libtool libssl-dev libnss3-dev libmbedtls-dev libgnutls28-dev pkg-config make
       - name: gen
         run: |
           autoreconf -ivf

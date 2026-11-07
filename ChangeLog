@@ -3,6 +3,8 @@ Copyright (c) 2005-2022 Alon Bar-Lev <alon.barlev@gmail.com>
 
 ????-??-?? - Version 1.32.0
 * crypto-openssl: use ASN1_TIME_to_tm, thanks to Ravi Kant Sharma.
+* certificate: allow key prompt for certificate authentication, thanks to
+  szdowk.
 
 2025-11-10 - Version 1.31.0
 * threading: fix mutex handling for cond_wait, thanks to Gleb Popov.

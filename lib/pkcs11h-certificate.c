@@ -959,7 +959,9 @@ __pkcs11h_certificate_doPrivateOperation (
 						CKU_CONTEXT_SPECIFIC,
 						certificate->id->displayName,
 						certificate->user_data,
-						(certificate->mask_prompt & PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT)
+						(certificate->mask_prompt &
+					 	 (PKCS11H_PROMPT_MASK_ALLOW_PIN_PROMPT |
+						  PKCS11H_PROMPT_MASK_ALLOW_KEY_PROMPT))
 					)) != CKR_OK
 				) {
 					_PKCS11H_DEBUG (

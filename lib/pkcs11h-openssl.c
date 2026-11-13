@@ -354,7 +354,11 @@ int
 __pkcs11h_openssl_ex_data_dup (
 	CRYPTO_EX_DATA *to,
 	const CRYPTO_EX_DATA *from,
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	void *from_d,
+#else
 	void **from_d,
+#endif
 	int idx,
 	long argl,
 	void *argp
